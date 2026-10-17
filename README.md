@@ -25,4 +25,10 @@ This project is part of the Laboratory of Software Engineering unit of the Maste
 
 - **External APIs**: Resend (email sending), Stripe (payment)
 
+## Sprint 0
 
+- [Vision](docs/sprints/sprint-0/vision.md)
+- [Definition of done](docs/sprints/sprint-0/definition-of-done.md)
+- [MVP](docs/sprints/sprint-0/MVP.md)
+- [AI log](docs/sprints/sprint-0/AI-log.md)
+- [CLAIM](docs/sprints/sprint-0/CLAIM.md)
