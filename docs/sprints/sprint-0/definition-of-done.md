@@ -7,3 +7,4 @@ A User Story is considered done when:
 4. The feature is tested locally by the author and verified by a second developer.
 5. Database migrations are backward compatible and run cleanly on staging.
 6. Docs are updated where needed (API, runbook, env vars, user-facing text).
+7. Blocks of code are well documented by the author.
