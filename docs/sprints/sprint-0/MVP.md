@@ -90,3 +90,28 @@ The MVP will provide a functional and trustworthy auction experience, allowing u
 
 ## MVP Sprint Flow
 
+### Sprint 0
+* Product Vision
+* MVP definition
+* Definition of Done
+* **Vertical Prototype:**
+    * Active auction page
+    * Current bid
+    * Place a bid
+    * Bid history
+    * Winner notification
+    * Payment page
+* `Claim.md` configuration
+
+### Sprint 1
+* **Authentication:**
+    * Register / Login / Logout
+* User profiles
+* Role-based access 
+* Admin dashboard
+* Create memorabilia listings
+* Memorabilia catalogue
+* Catalogue sections/categories
+* Item details
+
+### Sprint 2:
