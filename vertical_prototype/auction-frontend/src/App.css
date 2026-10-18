@@ -1,0 +1,560 @@
+@import url('https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@100..125,400..900&display=swap');
+
+:root {
+  --bg: #ebebeb;
+  --ink: #0a0a0a;
+  --muted: #7a7a7a;
+  --card: #ffffff;
+  --panel: #d4d4d4;
+  --orange: #d07430;
+  --purple: #4b16b8;
+  --red: #a85a5a;
+  --link: #2f86c6;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: 'Archivo', system-ui, sans-serif;
+  font-stretch: 112%;
+}
+
+img {
+  display: block;
+  max-width: 100%;
+}
+
+.loading {
+  padding: 2rem;
+}
+
+/* ---------- Layout ---------- */
+
+.page {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 40px;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 32px 24px;
+}
+
+.section-title {
+  font-size: 1.5rem;
+  font-weight: 800;
+  margin: 28px 0 14px;
+  text-transform: none;
+  color: #0a0a0a;
+}
+
+.left .section-title {
+  text-transform: uppercase;
+}
+
+/* ---------- Gallery ---------- */
+
+.gallery {
+  display: flex;
+  background: var(--card);
+  border-radius: 28px;
+  overflow: hidden;
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.08);
+  min-height: 420px;
+}
+
+.thumbs {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  padding: 22px 18px;
+  border-right: 2px solid #e3e3e3;
+}
+
+.thumb {
+  width: 88px;
+  aspect-ratio: 3 / 4;
+  padding: 0;
+  border: 3px solid transparent;
+  border-radius: 14px;
+  overflow: hidden;
+  background: #ebebeb;
+  cursor: pointer;
+}
+
+.thumb.active {
+  border-color: var(--ink);
+}
+
+.thumb img,
+.main-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.main-image {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+/* ---------- Player card ---------- */
+
+.player-card {
+  background: var(--card);
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.08);
+}
+
+.player-head {
+  display: flex;
+  align-items: baseline;
+  gap: 24px;
+  padding: 14px 24px;
+  background: var(--orange);
+  color: #fff;
+}
+
+.player-name {
+  font-size: 1.5rem;
+  font-weight: 800;
+}
+
+.player-nick {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #f1d3b9;
+}
+
+.stats-row {
+  display: flex;
+  justify-content: space-around;
+  gap: 12px;
+  padding: 14px 16px;
+}
+
+.stats-row.bordered {
+  border-top: 2px solid #e3e3e3;
+}
+
+.stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  text-align: center;
+}
+
+.stat-label {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #555;
+  text-transform: uppercase;
+}
+
+.stat-value {
+  font-size: 1.05rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+/* ---------- Title ---------- */
+
+.title-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.title-row h1 {
+  margin: 0;
+  font-size: 2.0rem;
+  line-height: 1;
+  font-weight: 900;
+  color: black;
+  text-transform: uppercase;
+}
+
+.tag {
+  padding: 5px 16px;
+  border-radius: 12px;
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: #fff;
+}
+
+.tag-worn {
+  background: var(--ink);
+}
+
+.tag-signed {
+  background: var(--purple);
+}
+
+.me {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 14px;
+  padding: 6px 14px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  background: var(--card);
+  border-radius: 999px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.me-dot {
+  width: 9px;
+  height: 9px;
+  background: #2e9d57;
+  border-radius: 50%;
+}
+
+.you-tag {
+  margin-left: 10px;
+  padding: 2px 8px;
+  font-size: 0.75rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  color: #fff;
+  background: var(--purple);
+  border-radius: 999px;
+}
+
+.subtitle {
+  margin: 6px 0 20px 8px;
+  font-weight: 700;
+  color: #555;
+}
+
+/* ---------- Bid box ---------- */
+
+.bid-box {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 24px;
+  padding: 22px 28px;
+  background: var(--panel);
+  border-radius: 8px;
+}
+
+.bid-label {
+  font-size: 1.5rem;
+  font-weight: 800;
+}
+
+.bid-value {
+  margin-top: 10px;
+  font-size: 2.8rem;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.bid-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 230px;
+}
+
+.bid-form input {
+  width: 100%;
+  padding: 12px 20px;
+  text-align: center;
+  font: inherit;
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: var(--ink);
+  background: #fff;
+  border: 2px solid #c4c4c4;
+  border-radius: 14px;
+  outline: none;
+  -moz-appearance: textfield;
+}
+
+.bid-form input::-webkit-outer-spin-button,
+.bid-form input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.bid-form input::placeholder {
+  color: #aaa;
+}
+
+.bid-form input:focus {
+  border-color: var(--ink);
+}
+
+.bid-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 12px;
+  font: inherit;
+  font-size: 1.2rem;
+  font-weight: 800;
+  color: #fff;
+  background: var(--ink);
+  border: 0;
+  border-radius: 16px;
+  cursor: pointer;
+  transition: transform 0.1s ease, opacity 0.15s ease;
+}
+
+.bid-btn:hover {
+  opacity: 0.88;
+}
+
+.bid-btn:active {
+  transform: scale(0.98);
+}
+
+.bid-btn:disabled,
+.bid-btn:disabled:hover {
+  opacity: 0.4;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.bid-form input:disabled {
+  background: #ececec;
+  cursor: not-allowed;
+}
+
+.error {
+  margin: 10px 0 0;
+  color: #b3261e;
+  font-weight: 700;
+}
+
+.bid-meta {
+  display: flex;
+  justify-content: space-between;
+  padding: 10px 14px 0;
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: #8a8a8a;
+}
+
+.bid-meta .time {
+  color: var(--red);
+}
+
+.bid-meta .time.urgent {
+  color: #d32f2f;
+}
+
+.you {
+  margin: 8px 14px 0;
+  font-weight: 700;
+  color: #555;
+}
+
+.winner-box {
+  padding: 24px 28px;
+  background: #d4edda;
+  border: 1px solid #c3e6cb;
+  border-radius: 8px;
+  color: #155724;
+}
+
+.winner-box h2 {
+  margin: 0 0 8px;
+  font-size: 1.8rem;
+  color: black;
+}
+
+.winner-box p {
+  margin: 4px 0;
+  font-size: 1.4rem;
+}
+
+/* ---------- Causes ---------- */
+
+.causes {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.causes li {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+}
+
+.cause-logo {
+  flex: none;
+  width: 112px;
+  height: 112px;
+  padding: 10px;
+  background: var(--card);
+  border-radius: 14px;
+}
+
+.cause-logo img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.causes h3 {
+  margin: 0 0 6px;
+  font-size: 1.4rem;
+  font-weight: 800;
+}
+
+.causes p {
+  margin: 0;
+  max-width: 460px;
+  font-size: 1.05rem;
+  line-height: 1.25;
+  font-weight: 400;
+}
+
+hr {
+  margin: 28px 0 18px;
+  border: 0;
+  border-top: 3px solid #d9d9d9;
+}
+
+/* ---------- Latest bids ---------- */
+
+.latest-bids {
+  max-width: 640px;
+  background: var(--card);
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.08);
+}
+
+.lb-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 28px;
+  background: #dcdcdc;
+}
+
+.lb-head h3 {
+  margin: 0;
+  font-size: 1.4rem;
+  font-weight: 800;
+}
+
+.lb-head a {
+  font-weight: 800;
+  font-size: 1.2rem;
+  color: var(--link);
+}
+
+.latest-bids table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.latest-bids th {
+  padding: 14px 20px 8px;
+  text-align: center;
+  font-size: 15px;
+  font-weight: 700;
+  color: #555;
+}
+
+.latest-bids td {
+  padding: 14px 20px;
+  text-align: center;
+  font-size: 15px;
+  font-weight: 800;
+  border-top: 2px solid #e8e8e8;
+}
+
+.latest-bids td:first-child {
+  text-align: left;
+}
+
+.latest-bids td.empty {
+  text-align: center;
+  color: var(--muted);
+}
+
+.flag {
+  margin-right: 18px;
+  font-size: 1.5rem;
+}
+
+/* ---------- Responsive ---------- */
+
+@media (max-width: 960px) {
+  .page {
+    grid-template-columns: 1fr;
+    gap: 32px;
+    padding: 24px 16px;
+  }
+
+  .title-row h1 {
+    font-size: 3rem;
+  }
+
+  .tag {
+    font-size: 1.3rem;
+    padding: 6px 16px;
+  }
+
+  .bid-box {
+    flex-direction: column;
+  }
+
+  .bid-form {
+    width: 100%;
+  }
+
+  .bid-label {
+    font-size: 1.6rem;
+  }
+
+  .bid-value {
+    font-size: 3rem;
+  }
+
+  .bid-meta {
+    font-size: 1.3rem;
+  }
+
+  .causes li {
+    gap: 14px;
+  }
+
+  .cause-logo {
+    width: 96px;
+    height: 96px;
+  }
+
+  .causes h3 {
+    font-size: 1.4rem;
+  }
+
+  .causes p {
+    font-size: 1.1rem;
+  }
+
+  .thumb {
+    width: 64px;
+  }
+}

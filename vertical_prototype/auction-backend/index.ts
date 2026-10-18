@@ -1,0 +1,131 @@
+import express from 'express';
+import { createServer } from 'http';
+import { Server } from 'socket.io';
+import cors from 'cors';
+import { promises as fs } from 'fs';
+
+const app = express();
+app.use(cors());
+
+const httpServer = createServer(app);
+const io = new Server(httpServer, {
+    cors: {
+        origin: "http://localhost:5173", // Default Vite React port
+        methods: ["GET", "POST"]
+    }
+});
+
+// ---------- Winner record ----------
+
+interface WinnerRecord {
+    itemName: string;
+    winner: string;      // socket id of the winning bidder (anonymous for now)
+    winningBid: number;
+    endedAt: string;     // ISO timestamp
+}
+
+const WINNERS_FILE = 'winners.json';
+
+// Appends the record to winners.json so it survives a server restart
+async function saveWinnerRecord(record: WinnerRecord): Promise<void> {
+    let records: WinnerRecord[] = [];
+    try {
+        records = JSON.parse(await fs.readFile(WINNERS_FILE, 'utf8'));
+    } catch {
+        // file doesn't exist yet (or is empty): start a new list
+    }
+    records.push(record);
+    await fs.writeFile(WINNERS_FILE, JSON.stringify(records, null, 2));
+}
+
+// ---------- Auction state ----------
+
+// Simple in-memory state for the prototype
+const AUCTION_DURATION = 120_000; // 120 seconds
+let auction = {
+    itemName: "Velocity",
+    currentBid: 50,
+    highestBidder: null as string | null,
+    endTime: Date.now() + AUCTION_DURATION,
+    isActive: true,
+};
+
+// Filled in when the auction ends (stays null if nobody bid)
+let winnerRecord: WinnerRecord | null = null;
+
+io.on("connection", (socket) => {
+    console.log(`New user connected: ${socket.id}`);
+
+    // Send current state to the newly connected user
+    socket.emit("auction_state", auction);
+
+    // Clients can ask for the state again (e.g. after their listeners are ready)
+    socket.on("get_auction_state", () => {
+        socket.emit("auction_state", auction);
+
+        // Late joiners after the auction ended should see the result too
+        if (!auction.isActive) {
+            socket.emit("auction_end", {
+                winner: auction.highestBidder,
+                winningBid: auction.currentBid,
+            });
+        }
+    });
+
+    socket.on("place_bid", (bidAmount: number) => {
+        if (!auction.isActive || Date.now() >= auction.endTime) return;
+        if (typeof bidAmount !== "number" || !Number.isFinite(bidAmount)) return;
+
+        // Only accept higher bids
+        if (bidAmount > auction.currentBid) {
+            auction.currentBid = bidAmount;
+            auction.highestBidder = socket.id;
+
+            // Broadcast the updated state to all connected clients
+            io.emit("auction_state", auction);
+        }
+    });
+
+    socket.on("disconnect", () => {
+        console.log(`User disconnected: ${socket.id}`);
+    });
+});
+
+// Timer to end the auction
+const timer = setInterval(() => {
+    if (auction.isActive && Date.now() >= auction.endTime) {
+        auction.isActive = false;
+        clearInterval(timer);
+
+        // Keep a record of the winner
+        if (auction.highestBidder) {
+            winnerRecord = {
+                itemName: auction.itemName,
+                winner: auction.highestBidder,
+                winningBid: auction.currentBid,
+                endedAt: new Date().toISOString(),
+            };
+
+            console.log("Auction ended. Winner record:", winnerRecord);
+            saveWinnerRecord(winnerRecord).catch((err) =>
+                console.error("Could not save winner record:", err)
+            );
+
+            // TODO: email the winner.
+            
+        } else {
+            console.log("Auction ended with no bids.");
+        }
+
+        // Announce the winner to all clients
+        io.emit("auction_end", {
+            winner: auction.highestBidder,
+            winningBid: auction.currentBid
+        });
+    }
+}, 1000);
+
+const PORT = 3000;
+httpServer.listen(PORT, () => {
+    console.log(`Bid server running on http://localhost:${PORT}`);
+});
