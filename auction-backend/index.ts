@@ -3,9 +3,16 @@ import { createServer } from 'http';
 import { Server } from 'socket.io';
 import cors from 'cors';
 import { promises as fs } from 'fs';
+import { createPaymentLink, stripeWebhook } from './src/payments';
 
 const app = express();
 app.use(cors());
+
+app.post(
+  '/api/stripe/webhook',
+  express.raw({ type: 'application/json' }),
+  stripeWebhook
+);
 
 const httpServer = createServer(app);
 const io = new Server(httpServer, {
@@ -22,6 +29,9 @@ interface WinnerRecord {
     winner: string;      // socket id of the winning bidder (anonymous for now)
     winningBid: number;
     endedAt: string;     // ISO timestamp
+    status?: string;
+    stripeSessionId?: string;
+    paidAt?: string;
 }
 
 const WINNERS_FILE = 'winners.json';
@@ -97,24 +107,27 @@ const timer = setInterval(() => {
         auction.isActive = false;
         clearInterval(timer);
 
-        // Keep a record of the winner
         if (auction.highestBidder) {
-            winnerRecord = {
+            const winnerId = auction.highestBidder;
+            const record: WinnerRecord = {
                 itemName: auction.itemName,
-                winner: auction.highestBidder,
+                winner: winnerId,
                 winningBid: auction.currentBid,
                 endedAt: new Date().toISOString(),
+                status: 'pending_payment',
             };
+            winnerRecord = record;
 
-            console.log("Auction ended. Winner record:", winnerRecord);
-            saveWinnerRecord(winnerRecord).catch((err) =>
-                console.error("Could not save winner record:", err)
-            );
-
-            // TODO: email the winner.
-            
+            createPaymentLink(record.itemName, record.winningBid)
+                .then(async (link) => {
+                record.stripeSessionId = link.id;
+                await saveWinnerRecord(record);
+                console.log('Payment link:', link.url);
+                io.to(winnerId).emit('payment_link', link.url);
+                })
+                .catch((err) => console.error('Could not create payment link:', err));
         } else {
-            console.log("Auction ended with no bids.");
+            console.log('Auction ended with no bids.');
         }
 
         // Announce the winner to all clients

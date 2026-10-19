@@ -10,5 +10,36 @@
     "winner": "VxW9mJw21Ky6jqJHAAAC",
     "winningBid": 99,
     "endedAt": "2026-10-18T14:44:33.710Z"
+  },
+  {
+    "itemName": "Velocity",
+    "winner": "MzxJ_ltvlaVAkW-4AAAA",
+    "winningBid": 90,
+    "endedAt": "2026-10-19T22:45:37.724Z"
+  },
+  {
+    "itemName": "Velocity",
+    "winner": "X3TbeeP22vXpVhKcAAAB",
+    "winningBid": 80,
+    "endedAt": "2026-10-19T23:35:02.775Z",
+    "status": "pending_payment",
+    "stripeSessionId": "cs_test_a1plqpkKPxYWkslEjmIQ0cqEFiHWaorNgHUHTuLBidYLglqrVtKLrv3Xbu"
+  },
+  {
+    "itemName": "Velocity",
+    "winner": "sw3_GjL50iJK9g5bAAAC",
+    "winningBid": 75,
+    "endedAt": "2026-10-19T23:40:50.886Z",
+    "status": "pending_payment",
+    "stripeSessionId": "cs_test_a1KCWTGeMWbeAU1vNnkxJU8jTm1XFU6NHmR3s781HUdc1veJ6WcC2aubMz"
+  },
+  {
+    "itemName": "Velocity",
+    "winner": "kYsDgBMhhCZOjHp9AAAC",
+    "winningBid": 80,
+    "endedAt": "2026-10-19T23:47:04.840Z",
+    "status": "paid",
+    "stripeSessionId": "cs_test_a1A30f0vdLxC2vIvM5zNTrebR0eHcvi1S4c2bDwbhEedQqeN4s97hcr3Gs",
+    "paidAt": "2026-10-19T23:49:46.973Z"
   }
 ]

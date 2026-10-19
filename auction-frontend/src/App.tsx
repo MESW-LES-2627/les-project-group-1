@@ -111,6 +111,7 @@ function App() {
   const [error, setError] = useState<string>('');
   const [myId, setMyId] = useState<string>(socket.id ?? '');
   const lastBidRef = useRef<number | null>(null);
+  const [paymentUrl, setPaymentUrl] = useState<string>('');
 
   useEffect(() => {
     socket.on('auction_state', (state: AuctionState) => {
@@ -132,6 +133,7 @@ function App() {
       setWinnerData(data);
       setAuction((prev) => (prev ? { ...prev, isActive: false } : null));
     });
+    socket.on('payment_link', (url: string) => setPaymentUrl(url));
 
     // The server's initial "auction_state" can arrive before these listeners
     // exist (the socket connects at import time, effects run after render).
@@ -155,6 +157,7 @@ function App() {
       socket.off('auction_end');
       socket.off('connect', onConnect);
       socket.off('connect_error', onError);
+      socket.off('payment_link');
       socket.disconnect();
     };
   }, []);
@@ -304,6 +307,11 @@ function App() {
             <p>
               Winning bid: <strong>{formatEuro(winnerData.winningBid)}</strong>
             </p>
+            {paymentUrl && (
+              <p>
+                <a href={paymentUrl}>Pay now</a>
+              </p>
+            )}
           </div>
         )}
 
