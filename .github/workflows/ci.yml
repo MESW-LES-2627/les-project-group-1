@@ -1,0 +1,79 @@
+name: CI
+
+on:
+  push:
+    branches: [develop, main]
+  pull_request:
+    branches: [develop, main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  frontend:
+    name: Frontend checks
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@v2
+
+      - name: Install dependencies
+        working-directory: auction-frontend
+        run: bun install --frozen-lockfile
+
+      - name: Lint
+        working-directory: auction-frontend
+        run: bun run lint
+
+      - name: Run tests
+        working-directory: auction-frontend
+        run: bun run test
+
+      - name: Build frontend
+        working-directory: auction-frontend
+        run: bun run build
+
+  backend:
+    name: Backend checks
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: auction
+          POSTGRES_PASSWORD: auction
+          POSTGRES_DB: auction
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U auction -d auction"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      DATABASE_URL: postgres://auction:auction@localhost:5432/auction
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@v2
+
+      - name: Install dependencies
+        working-directory: auction-backend
+        run: bun install --frozen-lockfile
+
+      - name: Compile backend
+        working-directory: auction-backend
+        run: bun build index.ts --target=bun --outdir=/tmp/assist-club-backend-build
+
+      - name: Apply database schema
+        working-directory: auction-backend
+        run: bun run src/migrate.ts

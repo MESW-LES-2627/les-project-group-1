@@ -13,7 +13,8 @@ Available checks and production commands:
 
 ```sh
 bun lint
-bun build
+bun test
+bun run build
 bun preview
 ```
 
