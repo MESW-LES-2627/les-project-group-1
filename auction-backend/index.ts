@@ -41,6 +41,22 @@ let auction = {
 };
 let highestBidderEmail: string | null = null;
 
+// Reset endpoint for sprint 0 demo, allows resetting the auction without having to redeploy or restart
+app.post("/api/auction/reset", (_req, res) => {
+    auction = {
+        itemName: "Velocity",
+        currentBid: 50,
+        highestBidder: null,
+        endTime: Date.now() + AUCTION_DURATION,
+        isActive: true,
+    };
+    highestBidderEmail = null;
+
+    io.emit("auction_state", auction);
+    io.emit("auction_reset");
+    res.json({ success: true, auction });
+});
+
 
 
 io.on("connection", (socket) => {
@@ -86,10 +102,9 @@ io.on("connection", (socket) => {
 });
 
 // Timer to end the auction
-const timer = setInterval(() => {
+setInterval(() => {
     if (auction.isActive && Date.now() >= auction.endTime) {
         auction.isActive = false;
-        clearInterval(timer);
 
         if (auction.highestBidder) {
             const winnerId = auction.highestBidder;
@@ -100,14 +115,18 @@ const timer = setInterval(() => {
 
             createPaymentLink(itemName, winningBid, email)
                 .then(async (link) => {
-                await saveWinner({
-                    itemName,
-                    socketId: winnerId,
-                    email,
-                    winningBid,
-                    endedAt,
-                    stripeSessionId: link.id,
-                });
+                try {
+                    await saveWinner({
+                        itemName,
+                        socketId: winnerId,
+                        email,
+                        winningBid,
+                        endedAt,
+                        stripeSessionId: link.id,
+                    });
+                } catch (err) {
+                    console.error('Could not save winner:', err);
+                }
                 console.log('Payment link:', link.url);
                 io.to(winnerId).emit('payment_link', link.url);
 
@@ -118,6 +137,8 @@ const timer = setInterval(() => {
                     `<p>Congratulations! Your winning bid was ${winningBid} €.</p>
                     <p><a href="${link.url}">Pay now</a></p>`,
                     ).catch((err) => console.error('Could not send email:', err));
+                } else {
+                    console.warn('Winner email unavailable; skipping auction email.');
                 }
                 })
                 .catch((err) => console.error('Could not create payment link:', err));

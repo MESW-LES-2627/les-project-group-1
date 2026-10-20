@@ -22,6 +22,9 @@ interface AuctionPageProps {
   onImageChange: (index: number) => void;
   now: number;
   onChangeEmail: () => void;
+  onReset: () => void;
+  isResetting: boolean;
+  resetError: string;
 }
 
 export function AuctionPage({
@@ -39,6 +42,9 @@ export function AuctionPage({
   onImageChange,
   now,
   onChangeEmail,
+  onReset,
+  isResetting,
+  resetError,
 }: AuctionPageProps) {
   return (
     <main className="mx-auto grid max-w-[1200px] grid-cols-2 gap-10 px-6 py-8 max-[960px]:grid-cols-1 max-[960px]:gap-8 max-[960px]:px-4 max-[960px]:py-6">
@@ -51,7 +57,18 @@ export function AuctionPage({
           <button type="button" className="ml-2 cursor-pointer border-0 bg-transparent text-inherit underline" onClick={onChangeEmail}>
             change email
           </button>
+          <button
+            type="button"
+            className="ml-1 cursor-pointer rounded-full border border-[#bbb] bg-transparent px-2 py-0.5 text-xs font-bold text-[#555] hover:bg-[#f0f0f0] disabled:cursor-wait disabled:opacity-50"
+            onClick={onReset}
+            disabled={isResetting}
+            aria-label="Reset auction"
+            title="Reset auction for demo"
+          >
+            {isResetting ? 'Resetting…' : 'Reset'}
+          </button>
         </div>
+        {resetError && <p role="alert" className="-mt-2 mb-3 text-sm text-red-700">{resetError}</p>}
         <div className="flex flex-wrap items-center gap-4">
           <h1 className="m-0 text-[2rem] leading-none font-black text-black uppercase max-[960px]:text-5xl">{auction.itemName}</h1>
           {ITEM.tags.map((tag) => (
