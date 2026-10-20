@@ -15,7 +15,7 @@ app.post(
   stripeWebhook
 );
 
-const httpServer = createServer(app);
+export const httpServer = createServer(app);
 const io = new Server(httpServer, {
     cors: {
         origin: process.env.FRONTEND_URL ?? "http://localhost:5173",
@@ -101,60 +101,64 @@ io.on("connection", (socket) => {
     });
 });
 
-// Timer to end the auction
-setInterval(() => {
-    if (auction.isActive && Date.now() >= auction.endTime) {
-        auction.isActive = false;
+function startAuctionTimer() {
+    setInterval(() => {
+        if (auction.isActive && Date.now() >= auction.endTime) {
+            auction.isActive = false;
 
-        if (auction.highestBidder) {
-            const winnerId = auction.highestBidder;
-            const email = highestBidderEmail ?? undefined;
-            const itemName = auction.itemName;
-            const winningBid = auction.currentBid;
-            const endedAt = new Date();
+            if (auction.highestBidder) {
+                const winnerId = auction.highestBidder;
+                const email = highestBidderEmail ?? undefined;
+                const itemName = auction.itemName;
+                const winningBid = auction.currentBid;
+                const endedAt = new Date();
 
-            createPaymentLink(itemName, winningBid, email)
-                .then(async (link) => {
-                try {
-                    await saveWinner({
-                        itemName,
-                        socketId: winnerId,
-                        email,
-                        winningBid,
-                        endedAt,
-                        stripeSessionId: link.id,
-                    });
-                } catch (err) {
-                    console.error('Could not save winner:', err);
-                }
-                console.log('Payment link:', link.url);
-                io.to(winnerId).emit('payment_link', link.url);
+                createPaymentLink(itemName, winningBid, email)
+                    .then(async (link) => {
+                        try {
+                            await saveWinner({
+                                itemName,
+                                socketId: winnerId,
+                                email,
+                                winningBid,
+                                endedAt,
+                                stripeSessionId: link.id,
+                            });
+                        } catch (err) {
+                            console.error('Could not save winner:', err);
+                        }
+                        console.log('Payment link:', link.url);
+                        io.to(winnerId).emit('payment_link', link.url);
 
-                if (email) {
-                    await sendEmail(
-                    email,
-                    `You won the auction: ${itemName}`,
-                    `<p>Congratulations! Your winning bid was ${winningBid} €.</p>
-                    <p><a href="${link.url}">Pay now</a></p>`,
-                    ).catch((err) => console.error('Could not send email:', err));
-                } else {
-                    console.warn('Winner email unavailable; skipping auction email.');
-                }
-                })
-                .catch((err) => console.error('Could not create payment link:', err));
-        } else {
-            console.log('Auction ended with no bids.');
+                        if (email) {
+                            await sendEmail(
+                                email,
+                                `You won the auction: ${itemName}`,
+                                `<p>Congratulations! Your winning bid was ${winningBid} €.</p>
+                                <p><a href="${link.url}">Pay now</a></p>`,
+                            ).catch((err) => console.error('Could not send email:', err));
+                        } else {
+                            console.warn('Winner email unavailable; skipping auction email.');
+                        }
+                    })
+                    .catch((err) => console.error('Could not create payment link:', err));
+            } else {
+                console.log('Auction ended with no bids.');
+            }
+
+            // Announce the winner to all clients
+            io.emit("auction_end", {
+                winner: auction.highestBidder,
+                winningBid: auction.currentBid
+            });
         }
+    }, 1000);
+}
 
-        // Announce the winner to all clients
-        io.emit("auction_end", {
-            winner: auction.highestBidder,
-            winningBid: auction.currentBid
-        });
-    }
-}, 1000);
-
-const PORT = Number(process.env.PORT ?? 3000);
-httpServer.listen(PORT, () => {
-    console.log(`Bid server running on http://localhost:${PORT}`);
-});
+if (import.meta.main) {
+    startAuctionTimer();
+    const PORT = Number(process.env.PORT ?? 3000);
+    httpServer.listen(PORT, () => {
+        console.log(`Bid server running on http://localhost:${PORT}`);
+    });
+}
