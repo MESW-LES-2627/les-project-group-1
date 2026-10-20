@@ -1,117 +1,215 @@
 # Assist Club - MVP
 
 ## MVP Goal
+
 The MVP will provide a functional and trustworthy auction experience, allowing users to discover authentic sports memorabilia, participate in timed auctions, purchase items they win, and see the charitable cause supported by each auction.
+
+The MVP aims to validate Assist Club's core value proposition by combining authenticity, convenience, and social impact in a single platform.
 
 ## User Roles
 
 ### Visitor
-* Register/log in
-* Browse available memorabilia
-* View item and auction details
-* Search and filter items
-* Learn about us and the charities supported by the platform
-* See clubs and athletes involved with the platform
+- Register and log in.
+- Browse available memorabilia.
+- View item and auction details.
+- Search for items by item, club, or player name.
+- Filter items by category.
+- View club pages and the items they offer.
+- Learn about Assist Club and its supported charities.
+- View the charitable contribution.
 
-### Registered User 
-* Manage their account
-* View and track their purchases
-* Place bids
-* Track their active bids
-* Receive notifications when they win an auction
-* Complete a purchase
+### Registered User (Buyer)
+- Manage their account.
+- Place bids on active auctions.
+- View their active bids and bidding history.
+- Receive an email notification when they win an auction.
+- Complete the payment for an auction they have won.
+- View and track their purchases.
+- View the charitable contribution associated with their purchase.
 
-### Seller
-* Create and manage auctions
-* Monitor auctions 
-* Create memorabilia listings
-* Provide real pictures of the item 
-* Provide item information and proof of authenticity
+### Seller (Club)
+- Manage the club's profile.
+- Create and manage memorabilia listings.
+- Provide item descriptions, real pictures, and proof of authenticity.
+- Submit listings for administrator verification.
+- Create and manage auctions for verified items.
+- Set the starting price and auction duration.
+- Choose a charitable organisation and the percentage of the final sale to donate.
+- Monitor auction and bidding activity.
+- View completed and cancelled sales.
 
 ### Administrator
-* Manage users
-* Manage memorabilia and auctions
-* Verify authenticity 
-* Add information about the supported charities
+- Manage user accounts and roles.
+- Approve or reject memorabilia listings based on their authenticity evidence.
+- Manage listings and auctions when necessary.
+- Manage the charitable organisations available on the platform.
 
 ## Core MVP Features
 
 ### F1: Authentication & User Management
-* User registration
-* Login/logout 
-* Profile management
-* Role-based access
+- User registration, including shipping address.
+- Login/logout.
+- Profile management.
+- Role-based access.
 
 ### F2: Memorabilia Catalogue
-* Browse available items
-* Browse items by category or section
-* Search items
-* Filter items
-* View item details
-* Display authenticity information
+- Browse available memorabilia.
+- Browse items by category or section.
+- View club pages and their available items.
+- Search for items by item, club, or player name.
+- Filter catalogue items.
+- View item details, including description, images, club, and player information.
+- Display authenticity evidence and verification status.
+- Provide a digital certificate of authenticity for each approved item, accessible online and printable as a PDF.
+- Support listing states: draft, pending verification, verified, and rejected.
+- Display only verified listings in the public catalogue.
 
-### F3: Auctions
-* Create an auction 
-* Set starting price
-* Set auction duration
-* Display current highest bid
-* Display remaining time
-* Start/end auctions
+### F3: Auctions Management
+- Create auctions for verified memorabilia.
+- Set the starting price and auction duration.
+- Define the auction start and end times.
+- Display auction status, current highest bid, and remaining time.
+- Allow clubs to monitor and manage their auctions.
+- Support auction states such as scheduled, active, ended, awaiting payment, completed, and cancelled.
+- Allow clubs to view their completed and cancelled sales.
 
 ### F4: Bidding
-* Place a bid
-* Validate bids
-* Update the current highest bid
-* Display bidding history
-* Track the user’s active bids
+- Allow registered users to place bids on active auctions.
+- Validate bids.
+- Update the current highest bid.
+- Display bidding history.
+- Allow users to track their active bids.
 
 ### F5: Auction Completion
-* Close auction when its timer expires
-* Determine the winner
-* Notify the winner
-* Make the item available for purchase by the winner
+- Automatically close auctions when their timers expire.
+- Determine the winner based on the highest valid bid.
+- Notify the winner by email.
+- Make the item available for purchase by the winner.
+- Set a 48-hour payment deadline.
+- Cancel the sale if the winner does not pay within the deadline.
+- Allow the club to relist an item after a cancelled sale.
+- Mark the auction as completed after successful payment.
 
-### F6: Purchase 
-* Checkout 
-* Confirm purchase
-* Store order information
-* Display purchase history
+### F6: Purchase
+- Provide a checkout process for auction winners.
+- Allow winners to confirm their purchase and shipping details.
+- Integrate Stripe in test mode to simulate payment processing.
+- Confirm successful payments and store order information.
+- Display purchase history.
 
-### F7: Charity
-* Associate an auction with a charitable cause
-* Display the percentage/amount donated
-* Show the impact generated by the purchase
-* Provide transparency about the supported cause
+### F7: Charity and Social Impact
+- Allow clubs to select a charitable organisation for each auction.
+- Allow clubs to define the percentage of the final sale price donated to the selected organisation.
+- Display the donation percentage on the auction page.
+- Provide information about supported organisations and the impact generated by completed sales.
 
 ### F8: Administration
-* Manage users 
-* Manage auctions
-* Verify memorabilia and charities
+- Manage user accounts.
+- Approve or reject memorabilia listings.
+- Manage auctions.
+- Manage charitable organisations.
 
-## MVP Sprint Flow
+## MVP Sprint Flow/Breakdown
 
-### Sprint 0
-* Product Vision
-* MVP definition
-* Definition of Done
-* **Vertical Prototype:**
-    * Active auction page
-    * Current bid
-    * Place a bid
-    * Bid history
-    * Winner notification
-    * Payment page
-* `Claim.md` configuration
+### Sprint 0: Project Setup and Initial Prototype
+- Define the Product Vision and MVP scope.
+- Define the Definition of Done.
+- Set up the project repository and development environment.
+- Configure the required project tooling, including `Claim.md`.
+- Develop a vertical prototype demonstrating the core auction flow:
+  - View an active auction.
+  - Display the current highest bid and remaining time.
+  - Submit and validate a bid.
+  - Update and display the bidding history.
+  - Determine the winner when the auction ends.
+  - Display the winner notification and a simulated payment page.
+  - Send the winner an email notification and display a payment page (Stripe test mode).
 
-### Sprint 1
-* **Authentication:**
-    * Register / Login / Logout
-* User profiles
-* Role-based access 
-* Admin dashboard
-* Create memorabilia listings
-* Memorabilia catalogue
-* Catalogue sections/categories
-* Item details
+### Sprint 1: Authentication, Catalogue, and Listing Verification
+- Implement registration, login, and logout.
+- Implement user profiles and shipping address management.
+- Implement role-based access control.
+- Develop the administrator dashboard.
+- Implement club profiles.
+- Allow clubs to create and manage memorabilia listings.
+- Implement listing verification and listing states.
+- Develop the memorabilia catalogue.
+- Implement catalogue categories and club pages.
+- Develop item detail pages.
+- Display authenticity evidence and digital certificates.
+- Implement catalogue search and filtering.
+- Allow administrators to manage charitable organisations.
 
-### Sprint 2:
+### Sprint 2: Auctions, Bidding, and Charity Configuration
+- Allow clubs to create auctions for verified items.
+- Implement auction configuration and management.
+- Implement auction statuses and countdown timers.
+- Implement the bidding system and bid validation.
+- Display the current highest bid and bidding history.
+- Allow users to track their active bids.
+- Implement automatic auction completion and winner selection.
+- Allow clubs to select a verified charitable organisation and set the donation percentage.
+- Develop the About Us page.
+
+### Sprint 3: Payments, Purchases, and Social Impact
+- Implement winner email notifications.
+- Develop the checkout and purchase confirmation flow.
+- Integrate Stripe in test mode.
+- Store purchase and payment information.
+- Implement purchase management and purchase history.
+- Enforce the 48-hour payment deadline.
+- Handle unpaid auctions and allow clubs to relist the items.
+- Allow clubs to view completed and cancelled sales.
+- Display the donation amount and charitable impact of completed sales.
+
+### Sprint 4: Testing and Final Validation
+- Test the complete user flows for buyers, clubs, and administrators.
+- Perform integration testing.
+- Fix identified bugs.
+- Improve UI/UX.
+- Test authentication and role permissions.
+- Validate bidding rules and auction edge cases.
+- Perform a final review.
+
+## MVP Flow
+
+The following flow represents the core value of Assist Club and must be fully functional by the end of the MVP:
+
+1. Browse available sports memorabilia.
+2. View an item's details and authenticity information.
+3. Register or log in.
+4. Place a valid bid on an active auction.
+5. Track the auction until it ends.
+6. Win the auction and receive an email notification.
+7. Complete the purchase within 48 hours.
+8. Receive purchase confirmation.
+9. View the donation amount and charitable impact associated with the sale.
+
+## Assumed MVP Rules
+
+### Bidding
+Each bid must exceed the current highest bid by at least a fixed minimum increment, defined by the platform (e.g., €10). If no bids have been placed, the first bid must meet the starting price.
+
+### Authenticity
+Only memorabilia listings verified by an administrator can appear in the public catalogue or be auctioned. Each approved item must have a digital certificate of authenticity.
+
+### Auction Completion
+When an auction ends, the highest valid bidder wins. If no bids have been placed, the item can be relisted by the club.
+
+### Payments
+The winner has 48 hours to complete the purchase through Stripe in test mode. If payment is not completed within this period, the sale is cancelled and the club can relist the item.
+
+### Charitable Contribution
+Before an auction starts, the club selects a verified charitable organisation and defines the donation percentage.
+
+### Notifications
+Winner notifications are sent by email.
+
+### Platform Fee
+A fixed percentage of each completed sale goes to Assist Club.
+
+### Out of Scope
+- Real payments and payouts involving actual money.
+- Transfers to clubs and charitable organisations.
+- Shipment tracking.
+- Advanced financial reporting.
