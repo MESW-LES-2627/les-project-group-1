@@ -22,6 +22,8 @@ function AuctionApp() {
   const [activeImage, setActiveImage] = useState(0);
   const [localBids, setLocalBids] = useState<Bid[]>([]);
   const [error, setError] = useState('');
+  const [resetError, setResetError] = useState('');
+  const [isResetting, setIsResetting] = useState(false);
   const [myId, setMyId] = useState(socket.id ?? '');
   const lastBidRef = useRef<number | null>(null);
   const [paymentUrl, setPaymentUrl] = useState('');
@@ -49,6 +51,14 @@ function AuctionApp() {
       setWinnerData(data);
       setAuction((previous) => (previous ? { ...previous, isActive: false } : null));
     });
+    socket.on('auction_reset', () => {
+      setWinnerData(null);
+      setPaymentUrl('');
+      setLocalBids([]);
+      setBidAmount('');
+      setError('');
+      lastBidRef.current = 50;
+    });
     socket.on('payment_link', (url: string) => setPaymentUrl(url));
 
     const requestState = () => socket.emit('get_auction_state');
@@ -67,6 +77,7 @@ function AuctionApp() {
     return () => {
       socket.off('auction_state');
       socket.off('auction_end');
+      socket.off('auction_reset');
       socket.off('connect', onConnect);
       socket.off('connect_error', onError);
       socket.off('payment_link');
@@ -106,6 +117,20 @@ function AuctionApp() {
     setEmail(value);
   };
 
+  const handleReset = async () => {
+    setIsResetting(true);
+    setResetError('');
+    try {
+      const backendUrl = socketUrl.replace(/\/+$/, '');
+      const response = await fetch(`${backendUrl}/api/auction/reset`, { method: 'POST' });
+      if (!response.ok) throw new Error(`Reset failed with status ${response.status}`);
+    } catch {
+      setResetError('Reset failed. Please try again.');
+    } finally {
+      setIsResetting(false);
+    }
+  };
+
   if (!email) {
     return (
       <EmailGate
@@ -134,6 +159,9 @@ function AuctionApp() {
       onImageChange={setActiveImage}
       now={now}
       onChangeEmail={() => setEmail('')}
+      onReset={handleReset}
+      isResetting={isResetting}
+      resetError={resetError}
     />
   );
 }
