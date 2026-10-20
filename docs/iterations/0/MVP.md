@@ -115,6 +115,7 @@ The MVP aims to validate Assist Club's core value proposition by combining authe
 - Define the Product Vision and MVP scope.
 - Define the Definition of Done.
 - Set up the project repository and development environment.
+- Integrate Postgres, Stripe (test mode) and Resend.
 - Configure the required project tooling, including `Claim.md`.
 - Develop a vertical prototype demonstrating the core auction flow:
   - View an active auction.
@@ -152,9 +153,8 @@ The MVP aims to validate Assist Club's core value proposition by combining authe
 - Develop the About Us page.
 
 ### Sprint 3: Payments, Purchases, and Social Impact
-- Implement winner email notifications.
-- Develop the checkout and purchase confirmation flow.
-- Integrate Stripe in test mode.
+- Replace the simulated payment with the complete checkout flow (Stripe test mode), including confirmation of shipping details.
+- Confirm successful payments and update the auction and order status.
 - Store purchase and payment information.
 - Implement purchase management and purchase history.
 - Enforce the 48-hour payment deadline.
