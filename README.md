@@ -136,10 +136,36 @@ Use any future expiry date, any CVC and any postal code. These cards only work i
 | `4000 0025 0000 3155` | Requires 3D Secure authentication |
 
 
-## Sprint 0
+## Running the tests
 
-- [Vision](docs/sprints/sprint-0/vision.md)
-- [Definition of done](docs/sprints/sprint-0/definition-of-done.md)
-- [MVP](docs/sprints/sprint-0/MVP.md)
-- [AI log](docs/sprints/sprint-0/AI-log.md)
-- [CLAIM](docs/sprints/sprint-0/CLAIM.md)
+Frontend:
+
+```bash
+cd auction-frontend
+bun run test
+```
+
+Backend:
+
+```bash
+cd auction-backend
+bun run test
+```
+
+The backend tests need Postgres running with `DATABASE_URL` set (see [Database](#2-database) and [Backend setup](#4-backend-setup)).
+
+The tests also run automatically in CI on every push and pull request to `develop` and `main`. The CI pipeline ([`.github/workflows/ci.yml`](.github/workflows/ci.yml)) runs:
+
+- Frontend: lint, tests and build
+- Backend: compile, tests and database schema migration
+
+
+
+## Iteration 0
+
+- [Vision](docs/iterations/0/vision.md)
+- [Definition of done](docs/iterations/0/definition-of-done.md)
+- [MVP](docs/iterations/0/MVP.md)
+- [AI log](docs/iterations/0/AI-log.md)
+- [Retrospective](docs/iterations/0/retrospective.md)
+- [CLAIM](docs/iterations/0/CLAIM.md)
