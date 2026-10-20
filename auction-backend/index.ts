@@ -2,9 +2,9 @@ import express from 'express';
 import { createServer } from 'http';
 import { Server } from 'socket.io';
 import cors from 'cors';
-import { promises as fs } from 'fs';
 import { createPaymentLink, stripeWebhook } from './src/payments';
 import { sendEmail } from './src/email';
+import { saveWinner } from './src/winners';
 
 const app = express();
 app.use(cors());
@@ -23,32 +23,10 @@ const io = new Server(httpServer, {
     }
 });
 
-// ---------- Winner record ----------
 
-interface WinnerRecord {
-    itemName: string;
-    winner: string;      // socket id of the winning bidder (anonymous for now)
-    winningBid: number;
-    endedAt: string;     // ISO timestamp
-    email?: string;
-    status?: string;
-    stripeSessionId?: string;
-    paidAt?: string;
-}
 
-const WINNERS_FILE = 'winners.json';
 
-// Appends the record to winners.json so it survives a server restart
-async function saveWinnerRecord(record: WinnerRecord): Promise<void> {
-    let records: WinnerRecord[] = [];
-    try {
-        records = JSON.parse(await fs.readFile(WINNERS_FILE, 'utf8'));
-    } catch {
-        // file doesn't exist yet (or is empty): start a new list
-    }
-    records.push(record);
-    await fs.writeFile(WINNERS_FILE, JSON.stringify(records, null, 2));
-}
+
 
 // ---------- Auction state ----------
 
@@ -63,8 +41,7 @@ let auction = {
 };
 let highestBidderEmail: string | null = null;
 
-// Filled in when the auction ends (stays null if nobody bid)
-let winnerRecord: WinnerRecord | null = null;
+
 
 io.on("connection", (socket) => {
     console.log(`New user connected: ${socket.id}`);
@@ -117,28 +94,28 @@ const timer = setInterval(() => {
         if (auction.highestBidder) {
             const winnerId = auction.highestBidder;
             const email = highestBidderEmail ?? undefined;
-            const record: WinnerRecord = {
-                itemName: auction.itemName,
-                winner: winnerId,
-                winningBid: auction.currentBid,
-                endedAt: new Date().toISOString(),
-                email,
-                status: 'pending_payment',
-            };
-            winnerRecord = record;
+            const itemName = auction.itemName;
+            const winningBid = auction.currentBid;
+            const endedAt = new Date();
 
-            createPaymentLink(record.itemName, record.winningBid, email)
+            createPaymentLink(itemName, winningBid, email)
                 .then(async (link) => {
-                record.stripeSessionId = link.id;
-                await saveWinnerRecord(record);
+                await saveWinner({
+                    itemName,
+                    socketId: winnerId,
+                    email,
+                    winningBid,
+                    endedAt,
+                    stripeSessionId: link.id,
+                });
                 console.log('Payment link:', link.url);
                 io.to(winnerId).emit('payment_link', link.url);
 
                 if (email) {
                     await sendEmail(
                     email,
-                    `You won the auction: ${record.itemName}`,
-                    `<p>Congratulations! Your winning bid was ${record.winningBid} €.</p>
+                    `You won the auction: ${itemName}`,
+                    `<p>Congratulations! Your winning bid was ${winningBid} €.</p>
                     <p><a href="${link.url}">Pay now</a></p>`,
                     ).catch((err) => console.error('Could not send email:', err));
                 }

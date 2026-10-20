@@ -1,9 +1,7 @@
 import type { Request, Response } from "express";
-import { promises as fs } from "fs";
 import { stripe } from "./stripe";
 import { sendEmail } from "./email";
-
-const WINNERS_FILE = "winners.json";
+import { markPaid } from "./winners";
 
 export async function createPaymentLink(
   itemName: string,
@@ -29,14 +27,7 @@ export async function createPaymentLink(
   return { id: session.id, url: session.url! };
 }
 
-async function markPaid(sessionId: string) {
-  const records = JSON.parse(await fs.readFile(WINNERS_FILE, "utf8"));
-  const record = records.find((r: any) => r.stripeSessionId === sessionId);
-  if (!record) return;
-  record.status = "paid";
-  record.paidAt = new Date().toISOString();
-  await fs.writeFile(WINNERS_FILE, JSON.stringify(records, null, 2));
-}
+
 
 export async function stripeWebhook(req: Request, res: Response) {
   let event;
