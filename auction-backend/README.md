@@ -1,4 +1,4 @@
-# auction-backend
+# Backend
 
 To install dependencies:
 

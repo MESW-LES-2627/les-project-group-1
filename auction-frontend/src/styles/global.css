@@ -1,0 +1,38 @@
+@import url('https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@100..125,400..900&display=swap');
+@import 'tailwindcss';
+
+@theme {
+  --color-auction-bg: #ebebeb;
+  --color-ink: #0a0a0a;
+  --color-muted: #7a7a7a;
+  --color-card: #ffffff;
+  --color-panel: #d4d4d4;
+  --color-orange: #d07430;
+  --color-purple: #4b16b8;
+  --color-red: #a85a5a;
+  --color-link: #2f86c6;
+  --font-archivo: 'Archivo', system-ui, sans-serif;
+}
+
+* {
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  margin: 0;
+  background: var(--color-auction-bg);
+  color: var(--color-ink);
+  font-family: var(--font-archivo);
+  font-stretch: 112%;
+}
+
+img {
+  display: block;
+}
+
+#root {
+  min-height: 100vh;
+}

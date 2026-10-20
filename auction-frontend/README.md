@@ -1,32 +1,35 @@
-# React + TypeScript + Vite
+# Frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+React, TypeScript, Tailwind CSS, and Vite client for the live auction. We also use Stripe and Resend as external APIs for payment gateway and email sending.
 
-Currently, two official plugins are available:
+## Development
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
-
-## React Compiler
-
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the Oxlint configuration
-
-If you are developing a production application, we recommend enabling type-aware lint rules by installing `oxlint-tsgolint` and editing `.oxlintrc.json`:
-
-```json
-{
-  "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": ["react", "typescript", "oxc"],
-  "options": {
-    "typeAware": true
-  },
-  "rules": {
-    "react/rules-of-hooks": "error",
-    "react/only-export-components": ["warn", { "allowConstantExport": true }]
-  }
-}
+```sh
+bun install
+bun dev
 ```
 
-See the [Oxlint rules documentation](https://oxc.rs/docs/guide/usage/linter/rules) for the full list of rules and categories.
+Available checks and production commands:
+
+```sh
+bun lint
+bun build
+bun preview
+```
+
+## Source structure
+
+```text
+src/
+  App.tsx                    # Application entry component
+  main.tsx                   # React root and global stylesheet
+  styles/global.css          # Tailwind import, theme tokens, and global defaults
+  auction/
+    AuctionApp.tsx           # Auction state and Socket.IO lifecycle
+    AuctionPage.tsx          # Auction page composition
+    data.ts                  # Static auction item content and constants
+    types.ts                 # Auction and bid data types
+    utils.ts                 # Formatting helpers
+    components/              # Focused auction UI components
+public/                      # Auction imagery and icons served as static files
+```
