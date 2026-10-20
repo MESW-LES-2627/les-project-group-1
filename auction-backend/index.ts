@@ -18,7 +18,7 @@ app.post(
 const httpServer = createServer(app);
 const io = new Server(httpServer, {
     cors: {
-        origin: "http://localhost:5173", // Default Vite React port
+        origin: process.env.FRONTEND_URL ?? "http://localhost:5173",
         methods: ["GET", "POST"]
     }
 });
@@ -133,7 +133,7 @@ const timer = setInterval(() => {
     }
 }, 1000);
 
-const PORT = 3000;
+const PORT = Number(process.env.PORT ?? 3000);
 httpServer.listen(PORT, () => {
     console.log(`Bid server running on http://localhost:${PORT}`);
 });

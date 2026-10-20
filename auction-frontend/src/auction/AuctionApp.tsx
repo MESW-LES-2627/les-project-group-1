@@ -8,7 +8,10 @@ import type { AuctionState, Bid, WinnerData } from './types';
 import { formatEuro } from './utils';
 
 // Register event listeners before connecting so the initial state is not missed.
-const socket = io('http://localhost:3000', { autoConnect: false });
+const socketUrl =
+  import.meta.env.VITE_SOCKET_URL ||
+  (import.meta.env.DEV ? 'http://localhost:3000' : window.location.origin);
+const socket = io(socketUrl, { autoConnect: false });
 const INITIAL_NOW = Date.now();
 
 function AuctionApp() {

@@ -1,0 +1,58 @@
+services:
+  db:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-auction}
+      POSTGRES_USER: ${POSTGRES_USER:-auction}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U \"$${POSTGRES_USER}\" -d \"$${POSTGRES_DB}\""]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  backend:
+    build: ./auction-backend
+    restart: unless-stopped
+    env_file:
+      - ./auction-backend/.env
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgres://${POSTGRES_USER:-auction}:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}@db:5432/${POSTGRES_DB:-auction}
+      NODE_ENV: production
+      PORT: 3000
+    expose:
+      - "3000"
+    networks:
+      default:
+      edge:
+        aliases:
+          - ${COMPOSE_PROJECT_NAME}-api
+
+  frontend:
+    build:
+      context: ./auction-frontend
+      args:
+        VITE_SOCKET_URL: ""
+    restart: unless-stopped
+    depends_on:
+      - backend
+    expose:
+      - "80"
+    networks:
+      default:
+      edge:
+        aliases:
+          - ${COMPOSE_PROJECT_NAME}-web
+
+networks:
+  edge:
+    external: true
+
+volumes:
+  postgres_data:
