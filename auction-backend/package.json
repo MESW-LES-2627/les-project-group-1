@@ -1,5 +1,5 @@
 {
-  "name": "auction-backend",
+  "name": "ac-backend",
   "module": "index.ts",
   "type": "module",
   "private": true,
