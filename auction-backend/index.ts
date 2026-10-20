@@ -4,6 +4,7 @@ import { Server } from 'socket.io';
 import cors from 'cors';
 import { promises as fs } from 'fs';
 import { createPaymentLink, stripeWebhook } from './src/payments';
+import { sendEmail } from './src/email';
 
 const app = express();
 app.use(cors());
@@ -29,6 +30,7 @@ interface WinnerRecord {
     winner: string;      // socket id of the winning bidder (anonymous for now)
     winningBid: number;
     endedAt: string;     // ISO timestamp
+    email?: string;
     status?: string;
     stripeSessionId?: string;
     paidAt?: string;
@@ -59,12 +61,16 @@ let auction = {
     endTime: Date.now() + AUCTION_DURATION,
     isActive: true,
 };
+let highestBidderEmail: string | null = null;
 
 // Filled in when the auction ends (stays null if nobody bid)
 let winnerRecord: WinnerRecord | null = null;
 
 io.on("connection", (socket) => {
     console.log(`New user connected: ${socket.id}`);
+    const email = socket.handshake.auth.email;
+    socket.data.email =
+        typeof email === "string" && email.includes("@") ? email.trim() : "";
 
     // Send current state to the newly connected user
     socket.emit("auction_state", auction);
@@ -90,6 +96,7 @@ io.on("connection", (socket) => {
         if (bidAmount > auction.currentBid) {
             auction.currentBid = bidAmount;
             auction.highestBidder = socket.id;
+            highestBidderEmail = socket.data.email;
 
             // Broadcast the updated state to all connected clients
             io.emit("auction_state", auction);
@@ -109,21 +116,32 @@ const timer = setInterval(() => {
 
         if (auction.highestBidder) {
             const winnerId = auction.highestBidder;
+            const email = highestBidderEmail ?? undefined;
             const record: WinnerRecord = {
                 itemName: auction.itemName,
                 winner: winnerId,
                 winningBid: auction.currentBid,
                 endedAt: new Date().toISOString(),
+                email,
                 status: 'pending_payment',
             };
             winnerRecord = record;
 
-            createPaymentLink(record.itemName, record.winningBid)
+            createPaymentLink(record.itemName, record.winningBid, email)
                 .then(async (link) => {
                 record.stripeSessionId = link.id;
                 await saveWinnerRecord(record);
                 console.log('Payment link:', link.url);
                 io.to(winnerId).emit('payment_link', link.url);
+
+                if (email) {
+                    await sendEmail(
+                    email,
+                    `You won the auction: ${record.itemName}`,
+                    `<p>Congratulations! Your winning bid was ${record.winningBid} €.</p>
+                    <p><a href="${link.url}">Pay now</a></p>`,
+                    ).catch((err) => console.error('Could not send email:', err));
+                }
                 })
                 .catch((err) => console.error('Could not create payment link:', err));
         } else {

@@ -1,12 +1,18 @@
 import type { Request, Response } from "express";
 import { promises as fs } from "fs";
 import { stripe } from "./stripe";
+import { sendEmail } from "./email";
 
 const WINNERS_FILE = "winners.json";
 
-export async function createPaymentLink(itemName: string, amountEuros: number) {
+export async function createPaymentLink(
+  itemName: string,
+  amountEuros: number,
+  email?: string,
+) {
   const session = await stripe.checkout.sessions.create({
     mode: "payment",
+    customer_email: email,
     line_items: [
       {
         quantity: 1,
@@ -50,6 +56,14 @@ export async function stripeWebhook(req: Request, res: Response) {
     if (session.payment_status === "paid") {
       await markPaid(session.id);
       console.log(`Payment received for session ${session.id}`);
+      const email = session.customer_details?.email;
+      if (email) {
+        await sendEmail(
+          email,
+          "Payment received",
+          `<p>We received your payment of ${(session.amount_total ?? 0) / 100} €. Thank you!</p>`,
+        ).catch((err) => console.error("Could not send confirmation email:", err));
+      }
     }
   }
 

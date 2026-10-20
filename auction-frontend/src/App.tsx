@@ -66,7 +66,6 @@ const LATEST_BIDS_SHOWN = 5;
 // (see the useEffect below). Otherwise the server's first "auction_state"
 // can arrive before anyone is listening and the page stays on "Connecting".
 const socket: Socket = io('http://localhost:3000', { autoConnect: false });
-
 const formatEuro = (n: number) => `€${new Intl.NumberFormat('de-DE').format(n)}`;
 const formatEuroSuffix = (n: number) => `${new Intl.NumberFormat('de-DE').format(n)} €`;
 
@@ -112,8 +111,11 @@ function App() {
   const [myId, setMyId] = useState<string>(socket.id ?? '');
   const lastBidRef = useRef<number | null>(null);
   const [paymentUrl, setPaymentUrl] = useState<string>('');
+  const [email, setEmail] = useState<string>('');
+  const [emailInput, setEmailInput] = useState<string>(() => localStorage.getItem('bidderEmail') ?? '');
 
   useEffect(() => {
+    if (!email) return;
     socket.on('auction_state', (state: AuctionState) => {
       setAuction(state);
 
@@ -148,7 +150,7 @@ function App() {
     socket.on('connect', onConnect);
     socket.on('connect_error', onError);
 
-    // Connect only now that every listener is in place
+    socket.auth = { email };
     if (socket.connected) onConnect();
     else socket.connect();
 
@@ -160,7 +162,7 @@ function App() {
       socket.off('payment_link');
       socket.disconnect();
     };
-  }, []);
+  }, [email]);
 
   // Tick every second for the countdown
   useEffect(() => {
@@ -186,6 +188,36 @@ function App() {
       setError(`Your bid must be at least ${formatEuro(auction.currentBid + MIN_INCREMENT)}`);
     }
   };
+
+  const handleEmailSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const value = emailInput.trim();
+    if (!value) return;
+    localStorage.setItem('bidderEmail', value);
+    setEmail(value);
+  };
+
+  if (!email) {
+    return (
+      <main className="email-gate">
+        <form className="email-form" onSubmit={handleEmailSubmit}>
+          <h1>Join the auction</h1>
+          <p>Enter your email to place bids and receive the payment link if you win.</p>
+          <input
+            type="email"
+            required
+            autoFocus
+            value={emailInput}
+            onChange={(e) => setEmailInput(e.target.value)}
+            placeholder="you@example.com"
+          />
+          <button type="submit" className="bid-btn">
+            CONTINUE
+          </button>
+        </form>
+      </main>
+    );
+  }
 
   if (!auction) return <div className="loading">Connecting to live bid…</div>;
 
@@ -245,6 +277,13 @@ function App() {
         <div className="me">
           <span className="me-dot" />
           You are bidder <strong>{shortId(myId)}</strong>
+          <button
+            type="button"
+            className="link-btn"
+            onClick={() => setEmail('')}
+          >
+            change email
+          </button>
         </div>
         <div className="title-row">
           <h1>{auction.itemName}</h1>

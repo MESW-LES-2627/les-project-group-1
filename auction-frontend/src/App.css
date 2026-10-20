@@ -499,6 +499,72 @@ hr {
   font-size: 1.5rem;
 }
 
+.email-gate {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+.email-form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  width: 100%;
+  max-width: 380px;
+  text-align: center;
+}
+
+.email-form h1 {
+  margin: 0;
+  font-size: 2.4rem;
+  line-height: 1.1;
+  font-weight: 900;
+  text-transform: uppercase;
+  color: var(--ink);
+}
+
+.email-form p {
+  margin: 0 0 6px;
+  font-size: 1rem;
+  line-height: 1.35;
+  font-weight: 600;
+  color: #555;
+}
+
+.email-form input {
+  width: 100%;
+  padding: 12px 20px;
+  text-align: center;
+  font: inherit;
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--ink);
+  background: #fff;
+  border: 2px solid #c4c4c4;
+  border-radius: 14px;
+  outline: none;
+}
+
+.email-form input::placeholder {
+  color: #aaa;
+}
+
+.email-form input:focus {
+  border-color: var(--ink);
+}
+
+.link-btn {
+  margin-left: 8px;
+  background: none;
+  border: none;
+  color: inherit;
+  text-decoration: underline;
+  cursor: pointer;
+  font-size: inherit;
+}
+
 /* ---------- Responsive ---------- */
 
 @media (max-width: 960px) {

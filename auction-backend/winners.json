@@ -41,5 +41,25 @@
     "status": "paid",
     "stripeSessionId": "cs_test_a1A30f0vdLxC2vIvM5zNTrebR0eHcvi1S4c2bDwbhEedQqeN4s97hcr3Gs",
     "paidAt": "2026-10-19T23:49:46.973Z"
+  },
+  {
+    "itemName": "Velocity",
+    "winner": "oJJfrN2T6djBKZxFAAAC",
+    "winningBid": 76,
+    "endedAt": "2026-10-20T00:12:28.651Z",
+    "email": "afonsomcae@gmail.com",
+    "status": "paid",
+    "stripeSessionId": "cs_test_a1sjuKOFCOWq8nVcywlq0ttMLvOLZlozUcflq8n8cfDQj6CehS6LRqKCef",
+    "paidAt": "2026-10-20T00:13:49.047Z"
+  },
+  {
+    "itemName": "Velocity",
+    "winner": "coFbzw-3Zrx8EZ5TAAAC",
+    "winningBid": 78,
+    "endedAt": "2026-10-20T00:31:05.570Z",
+    "email": "afonsomcae@gmail.com",
+    "status": "paid",
+    "stripeSessionId": "cs_test_a1ZUbz8kLBTKOcgKhF4gfDWl6ooQjnv9G6dIi6doDzhzoxwj4NVenoWWNd",
+    "paidAt": "2026-10-20T00:32:30.937Z"
   }
 ]
