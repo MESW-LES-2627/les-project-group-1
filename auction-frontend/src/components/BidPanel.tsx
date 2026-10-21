@@ -3,6 +3,7 @@ import type { AuctionState, WinnerData } from '../auction/types';
 import { MIN_INCREMENT } from '../auction/data';
 import { formatEuro, formatTimeLeft, shortId } from '../auction/utils';
 
+//Props for the BidPanel component
 interface BidPanelProps {
   auction: AuctionState;
   bidCount: number;
@@ -16,6 +17,7 @@ interface BidPanelProps {
   now: number;
 }
 
+//BidPanel component display for duration of the auction and adter the auction has ended
 export function BidPanel({
   auction,
   bidCount,
@@ -50,6 +52,7 @@ export function BidPanel({
     );
   }
 
+  //Calculate the minimum bid, time left, and whether teh auction has ended or is urgent
   const minBid = auction.currentBid + MIN_INCREMENT;
   const msLeft = auction.endTime - now;
   const ended = !auction.isActive || msLeft <= 0;

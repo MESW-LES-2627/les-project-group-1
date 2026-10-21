@@ -7,6 +7,13 @@ import { ITEM } from './data';
 import type { AuctionState, Bid, WinnerData } from './types';
 import { shortId } from './utils';
 
+/**
+ * Props for the AuctionPage component.
+ * Displays the auction page with item details, bidding panel, and latest bids.
+ * It does not handle side effects or direct WebSocket connections.
+ */
+
+// Data and functions needed to display the auction page and handle user interactions.
 interface AuctionPageProps {
   auction: AuctionState;
   bids: Bid[];
@@ -27,6 +34,7 @@ interface AuctionPageProps {
   resetError: string;
 }
 
+//Main page view for the auction.
 export function AuctionPage({
   auction,
   bids,

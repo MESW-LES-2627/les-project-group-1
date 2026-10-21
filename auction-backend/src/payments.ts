@@ -3,6 +3,13 @@ import { stripe } from "./stripe";
 import { sendEmail } from "./email";
 import { markPaid } from "./winners";
 
+/**
+ * Stripe Payment Service
+ * 
+ * Provides functions to create Stripe payment links and handle Stripe webhook events.
+ */
+
+//Generates a hosted Sprite Checkout session for the auction winner.
 export async function createPaymentLink(
   itemName: string,
   amountEuros: number,
@@ -28,7 +35,7 @@ export async function createPaymentLink(
 }
 
 
-
+//Listens for completed checkout events to mark bids as paid and send confirmation emails to the winners.
 export async function stripeWebhook(req: Request, res: Response) {
   let event;
   try {

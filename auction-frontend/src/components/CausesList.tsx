@@ -1,5 +1,6 @@
 import { ITEM } from '../auction/data';
 
+//Displays the list of chariable causes supported by this auction
 export function CausesList() {
   return (
     <>
