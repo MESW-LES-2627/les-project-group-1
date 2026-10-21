@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test';
-import { formatTimeLeft, shortId } from '../auction/utils';
+import { formatTimeLeft, shortId } from '../src/auction/utils';
 
 // This test suite verifies the utility functions used in the auction frontend.
 
