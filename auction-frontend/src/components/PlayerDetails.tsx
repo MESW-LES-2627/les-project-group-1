@@ -1,5 +1,11 @@
 import { ITEM } from '../auction/data';
 
+/**
+ * PlayerDetails Component
+ * 
+ * Displays the visual gallery and athlete biography for the auctioned item.
+ */
+
 interface PlayerDetailsProps {
   itemName: string;
   activeImage: number;

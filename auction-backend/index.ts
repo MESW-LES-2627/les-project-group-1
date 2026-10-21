@@ -6,6 +6,12 @@ import { createPaymentLink, stripeWebhook } from './src/payments';
 import { sendEmail } from './src/email';
 import { saveWinner } from './src/winners';
 
+/**
+ * Main auction server
+ * 
+ * Manages live bids via Socket.IO, closes the auction when the timer expires, generates Stripe payment links for the winners and send emails.
+ */
+
 const app = express();
 app.use(cors());
 

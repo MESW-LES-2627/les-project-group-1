@@ -2,6 +2,12 @@ import { LATEST_BIDS_SHOWN } from '../auction/data';
 import type { Bid } from '../auction/types';
 import { flagEmoji, formatDate, formatEuroSuffix, shortId } from '../auction/utils';
 
+/**
+ * LastestBids Component
+ * 
+ * Displays a table of recent bids for the auction item.
+ */
+
 interface LatestBidsProps {
   bids: Bid[];
   myId: string;

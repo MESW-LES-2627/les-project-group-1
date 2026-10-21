@@ -1,5 +1,12 @@
 import { sql } from "./db";
 
+/**
+ * Winner database operations
+ * 
+ * Provides functions to save winner information and mark payments as paid.
+ */
+
+
 interface WinnerInput {
   itemName: string;
   socketId: string;
