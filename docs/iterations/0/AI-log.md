@@ -10,6 +10,5 @@
 | 2026-10-20 | Claude | Resend integration: sending the payment link to the auction winner and a payment confirmation email | Added it to the backend and tested it end to end; learned that the Resend test sender only delivers to the email of the account that owns the API key |
 | 2026-10-20 | Claude | Postgres integration: database schema for the winners, connection, migration script and replacing the winners.json file | Applied the code, checked the rows in DBeaver while testing the full flow, and removed winners.json |
 | 2026-10-20 | GPT | Help on reviewing our CI workflow | After revision and testing, we adopted the file as our CI workflow on this first prototype. |
-| 2026-10-20 | GPT | Help on reviewing our CI workflow | After revision and testing, we adopted the file as our CI workflow on this first prototype. |
 | 2026-10-20 | GPT | Help on creating a demo reset endpoint | After revision and testing, the endpoint is being used to reset the auction on the demo. |
 | 2026-10-20 | GPT | Help on deciding which tests could be made for our vertical prototype | After revision, we used the information to create working tests for our prototype that pass the CI pipeline. |
