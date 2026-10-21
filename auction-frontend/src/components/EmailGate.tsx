@@ -1,5 +1,10 @@
 import type { FormEvent } from 'react';
 
+/**
+ * EmailGate Component
+ * 
+ * Inicial screen for collectinf user's email before entering the auction.
+ */
 interface EmailGateProps {
   emailInput: string;
   onEmailInputChange: (value: string) => void;
