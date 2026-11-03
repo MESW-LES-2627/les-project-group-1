@@ -6,8 +6,16 @@ import { BidPanel } from '@/components/BidPanel';
 import { CausesList } from '@/components/CausesList';
 import { LatestBids } from '@/components/LatestBids';
 import { Navbar } from '@/components/Navbar';
-import { PlayerDetails } from '@/components/PlayerDetails';
+import { PlayerGallery, PlayerProfile } from '@/components/PlayerDetails';
 import type { AuctionState, Bid, WinnerData } from './types';
+
+const styles = {
+  main:
+    'mx-auto grid w-[calc(100%_-_112px)] max-w-[1888px] grid-cols-1 items-start gap-x-[clamp(60px,10vw,200px)] gap-y-0 py-[60px] pb-[70px] tablet:grid-cols-[minmax(0,0.8fr)_minmax(0,1fr)] max-tablet:w-[calc(100%_-_64px)] max-tablet:max-w-[900px] max-tablet:gap-x-0 max-tablet:gap-y-11 max-tablet:pt-[38px] max-mobile:w-[calc(100%_-_36px)] max-mobile:gap-y-[34px] max-mobile:py-6 max-mobile:pb-[42px]',
+  info: 'min-w-0 max-tablet:order-2 tablet:col-start-2 tablet:row-start-1',
+  media: 'relative min-w-0 max-tablet:contents tablet:col-start-1 tablet:row-start-1 tablet:row-span-2',
+  bids: 'min-w-0 max-tablet:order-5 tablet:col-start-2 tablet:row-start-2',
+};
 
 /**
  * Props for the AuctionPage component.
@@ -60,22 +68,8 @@ export function AuctionPage({
     <>
       <Navbar />
 
-      <main
-        id="top"
-        className="mx-auto grid w-[calc(100%_-_112px)] max-w-[1888px] grid-cols-[minmax(0,0.8fr)_minmax(0,1fr)] items-start gap-[clamp(60px,10vw,200px)] py-[60px] pb-[70px] max-[1100px]:w-[calc(100%_-_64px)] max-[1100px]:max-w-[900px] max-[1100px]:grid-cols-1 max-[1100px]:gap-11 max-[1100px]:pt-[38px] max-[620px]:w-[calc(100%_-_36px)] max-[620px]:gap-[34px] max-[620px]:py-6 max-[620px]:pb-[42px]"
-      >
-        <div className="relative min-w-0">
-          <BidderControls
-            bidderId={myId}
-            onChangeEmail={onChangeEmail}
-            onReset={onReset}
-            isResetting={isResetting}
-            resetError={resetError}
-          />
-          <PlayerDetails itemName={auction.itemName} activeImage={activeImage} onImageChange={onImageChange} />
-        </div>
-
-        <section className="relative min-w-0">
+      <main id="top" className={styles.main}>
+        <section className={styles.info}>
           <AuctionItemHeading itemName={auction.itemName} />
 
           <BidPanel
@@ -92,9 +86,30 @@ export function AuctionPage({
           />
 
           <CausesList />
-          <Separator className="my-7 h-[3px] bg-[#d9d9d9]" />
-          <LatestBids bids={bids} myId={myId} />
+          <Separator className="my-7 h-[3px] bg-panel-strong" />
         </section>
+
+        <div className={styles.media}>
+          <BidderControls
+            bidderId={myId}
+            onChangeEmail={onChangeEmail}
+            onReset={onReset}
+            isResetting={isResetting}
+            resetError={resetError}
+            className="max-tablet:order-3"
+          />
+          <PlayerGallery
+            itemName={auction.itemName}
+            activeImage={activeImage}
+            onImageChange={onImageChange}
+            className="max-tablet:order-1"
+          />
+          <PlayerProfile className="max-tablet:order-4" />
+        </div>
+
+        <div className={styles.bids}>
+          <LatestBids bids={bids} myId={myId} />
+        </div>
       </main>
     </>
   );

@@ -1,4 +1,5 @@
-import { Search } from 'lucide-react';
+import { useState } from 'react';
+import { Menu, Search, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 
@@ -9,47 +10,96 @@ const NAV_LINKS = [
   ['SUPPORT', '#support'],
 ] as const;
 
+const styles = {
+  header:
+    'relative flex min-h-[88px] items-center gap-[clamp(22px,3vw,58px)] border-b-4 border-ink-line px-[clamp(30px,3vw,58px)] py-2 max-wide:gap-[22px] max-tablet:min-h-[80px] max-mobile:min-h-[64px] max-mobile:flex-wrap max-mobile:gap-4 max-mobile:px-[18px] max-mobile:py-1.5',
+  logoLink: 'block w-[clamp(105px,7.5vw,145px)] shrink-0 max-mobile:w-[96px]',
+  search:
+    'flex h-[52px] w-[clamp(260px,23vw,440px)] basis-[440px] items-center gap-3 rounded-[20px] border-[1.5px] border-ink-soft px-5 max-tablet:ml-auto max-mobile:order-3 max-mobile:h-[42px] max-mobile:w-full max-mobile:basis-full max-mobile:gap-[7px] max-mobile:rounded-[14px] max-mobile:px-[10px]',
+  searchIcon: 'size-[26px] shrink-0 max-mobile:size-5',
+  searchInput:
+    'h-auto min-w-0 border-0 bg-transparent px-0 py-0 text-[clamp(0.95rem,1vw,1.25rem)] font-normal shadow-none outline-none placeholder:text-ink-soft focus-visible:border-0 focus-visible:ring-0 max-mobile:text-[0.85rem]',
+  nav: 'flex flex-1 items-center justify-between gap-[clamp(12px,1.4vw,28px)] max-wide:gap-3 max-tablet:hidden',
+  liveLink:
+    'inline-flex items-center gap-1.5 rounded-full border-[1.5px] border-ink-line px-2 py-px text-[clamp(0.9rem,1.05vw,1.3rem)] font-bold whitespace-nowrap text-ink-strong no-underline',
+  navLink:
+    'text-[clamp(0.9rem,1.05vw,1.3rem)] font-bold whitespace-nowrap text-ink-strong no-underline',
+  account:
+    'flex shrink-0 items-center gap-[14px] max-wide:gap-2 max-mobile:order-2 max-mobile:ml-auto max-mobile:gap-[6px]',
+  menuButton:
+    'inline-flex size-10 shrink-0 items-center justify-center rounded-[14px] border-2 border-ink-strong bg-white text-ink-strong tablet:hidden max-mobile:size-9',
+  mobileMenu:
+    'absolute inset-x-0 top-full z-30 flex flex-col gap-3 border-b-4 border-ink-line bg-white px-[18px] py-4 shadow-[0_8px_24px_rgba(0,0,0,0.12)] tablet:hidden',
+  mobileLive:
+    'inline-flex w-fit items-center gap-1.5 rounded-full border-[1.5px] border-ink-line px-2 py-px text-[clamp(0.9rem,1.05vw,1.3rem)] font-bold text-ink-strong no-underline',
+  mobileLink:
+    'text-[clamp(1rem,1.05vw,1.3rem)] font-bold text-ink-strong no-underline',
+  mobileSignup:
+    'inline-flex w-fit rounded-[22px] border-2 border-ink-strong bg-ink-strong px-5 py-2 text-[clamp(0.9rem,1.05vw,1.3rem)] font-bold text-white no-underline',
+};
+
 // Slim responsive site navigation, using the public brand mark and shadcn inputs/buttons.
 export function Navbar() {
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+
+  const closeMenu = () => setIsMenuOpen(false);
+
   return (
-    <header className="flex min-h-[88px] items-center gap-[clamp(22px,3vw,58px)] border-b-4 border-[#090909] px-[clamp(30px,3vw,58px)] py-2 max-[1450px]:gap-[22px] max-[1100px]:min-h-[80px] max-[620px]:min-h-[64px] max-[620px]:gap-4 max-[620px]:px-[18px] max-[620px]:py-1.5">
-      <a
-        className="block w-[clamp(105px,7.5vw,145px)] shrink-0 max-[620px]:w-[96px]"
-        href="#top"
-        aria-label="Assist Club home"
-      >
+    <header className={styles.header}>
+      <a className={styles.logoLink} href="#top" aria-label="Assist Club home">
         <img className="h-auto w-full" src="/ac_logo.svg" alt="Assist Club" />
       </a>
 
-      <label className="flex h-[52px] w-[clamp(260px,23vw,440px)] basis-[440px] items-center gap-3 rounded-[20px] border-[1.5px] border-[#111] px-5 max-[1100px]:ml-auto max-[620px]:h-[42px] max-[620px]:w-auto max-[620px]:basis-auto max-[620px]:flex-1 max-[620px]:gap-[7px] max-[620px]:rounded-[14px] max-[620px]:px-[10px]">
-        <Search className="size-[26px] shrink-0 max-[620px]:size-5" aria-hidden="true" />
-        <Input
-          className="h-auto min-w-0 border-0 bg-transparent px-0 py-0 text-[clamp(0.95rem,1vw,1.25rem)] font-normal shadow-none outline-none placeholder:text-[#111] focus-visible:border-0 focus-visible:ring-0 max-[620px]:text-[0.85rem]"
-          type="search"
-          placeholder="Search for a club, player, leagues..."
-          aria-label="Search auctions"
-        />
+      <label className={styles.search}>
+        <Search className={styles.searchIcon} aria-hidden="true" />
+        <Input className={styles.searchInput} type="search" placeholder="Search auctions" aria-label="Search auctions" />
       </label>
 
-      <nav className="flex flex-1 items-center justify-between gap-[clamp(12px,1.4vw,28px)] max-[1450px]:gap-3 max-[1100px]:hidden" aria-label="Main navigation">
-        <a className="inline-flex items-center gap-1.5 rounded-full border-[1.5px] border-[#090909] px-2 py-px text-[clamp(0.9rem,1.05vw,1.3rem)] font-bold whitespace-nowrap text-[#050505] no-underline" href="#live">
-          <span className="size-[13px] rounded-full bg-[#d3262d]" />NOW LIVE
+      <nav className={styles.nav} aria-label="Main navigation">
+        <a className={styles.liveLink} href="#live">
+          <span className="size-[13px] rounded-full bg-live" />NOW LIVE
         </a>
         {NAV_LINKS.map(([label, href]) => (
-          <a key={href} className="text-[clamp(0.9rem,1.05vw,1.3rem)] font-bold whitespace-nowrap text-[#050505] no-underline" href={href}>
+          <a key={href} className={styles.navLink} href={href}>
             {label}
           </a>
         ))}
       </nav>
 
-      <div className="flex shrink-0 items-center gap-[14px] max-[1450px]:gap-2 max-[620px]:gap-[6px]">
-        <Button asChild className="h-auto min-w-[150px] rounded-[22px] border-2 border-[#050505] bg-[#050505] px-[22px] py-[9px] text-[clamp(0.9rem,1.05vw,1.3rem)] font-bold hover:bg-[#222] max-[1450px]:min-w-[110px] max-[1450px]:px-[14px] max-[620px]:hidden">
+      <div className={styles.account}>
+        <Button asChild variant="navbarPrimary" size="navbar">
           <a href="#signup">SIGN UP</a>
         </Button>
-        <Button asChild variant="outline" className="h-auto min-w-[150px] rounded-[22px] border-2 border-[#050505] bg-white px-[22px] py-[9px] text-[clamp(0.9rem,1.05vw,1.3rem)] font-bold text-[#050505] hover:bg-[#f4f4f4] max-[1450px]:min-w-[110px] max-[1450px]:px-[14px] max-[620px]:min-w-0 max-[620px]:rounded-[14px] max-[620px]:px-[10px] max-[620px]:py-[7px] max-[620px]:text-[0.75rem]">
+        <Button asChild variant="navbarOutline" size="navbar">
           <a href="#login">LOGIN</a>
         </Button>
+        <button
+          type="button"
+          className={styles.menuButton}
+          aria-label={isMenuOpen ? 'Close menu' : 'Open menu'}
+          aria-expanded={isMenuOpen}
+          aria-controls="mobile-menu"
+          onClick={() => setIsMenuOpen((open) => !open)}
+        >
+          {isMenuOpen ? <X className="size-5" /> : <Menu className="size-5" />}
+        </button>
       </div>
+
+      {isMenuOpen && (
+        <div id="mobile-menu" className={styles.mobileMenu}>
+          <a className={styles.mobileLive} href="#live" onClick={closeMenu}>
+            <span className="size-[13px] rounded-full bg-live" />NOW LIVE
+          </a>
+          {NAV_LINKS.map(([label, href]) => (
+            <a key={href} className={styles.mobileLink} href={href} onClick={closeMenu}>
+              {label}
+            </a>
+          ))}
+          <a className={styles.mobileSignup} href="#signup" onClick={closeMenu}>
+            SIGN UP
+          </a>
+        </div>
+      )}
     </header>
   );
 }

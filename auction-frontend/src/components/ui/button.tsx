@@ -18,6 +18,10 @@ const buttonVariants = cva(
         destructive:
           "bg-destructive/10 text-destructive hover:bg-destructive/20 focus-visible:border-destructive/40 focus-visible:ring-destructive/20 dark:bg-destructive/20 dark:hover:bg-destructive/30 dark:focus-visible:ring-destructive/40",
         link: "text-primary underline-offset-4 hover:underline",
+        navbarPrimary:
+          "border-2 border-ink-strong bg-ink-strong font-bold text-white hover:bg-ink-hover max-tablet:hidden",
+        navbarOutline:
+          "border-2 border-ink-strong bg-white font-bold text-ink-strong hover:bg-surface max-mobile:min-w-0 max-mobile:rounded-[14px] max-mobile:px-[10px] max-mobile:py-[7px] max-mobile:text-[0.75rem]",
       },
       size: {
         default:
@@ -31,6 +35,8 @@ const buttonVariants = cva(
         "icon-sm":
           "size-7 rounded-[min(var(--radius-md),12px)] in-data-[slot=button-group]:rounded-lg",
         "icon-lg": "size-9",
+        navbar:
+          "h-auto min-w-[150px] rounded-[22px] px-[22px] py-[9px] text-[clamp(0.9rem,1.05vw,1.3rem)] max-wide:min-w-[110px] max-wide:px-[14px]",
       },
     },
     defaultVariants: {
