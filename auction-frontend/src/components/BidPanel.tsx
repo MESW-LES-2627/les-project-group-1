@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 
-//Props for the BidPanel component
+// Props for the active and completed auction states.
 interface BidPanelProps {
   auction: AuctionState;
   bidCount: number;
@@ -20,7 +20,7 @@ interface BidPanelProps {
   now: number;
 }
 
-//BidPanel component display for duration of the auction and adter the auction has ended
+// Renders the shadcn bid card, with the current amount, bid form, and countdown.
 export function BidPanel({
   auction,
   bidCount,
@@ -33,6 +33,7 @@ export function BidPanel({
   socketId,
   now,
 }: BidPanelProps) {
+  // Keep the completed-auction result in the same card-based visual language.
   if (winnerData) {
     return (
       <Card className="gap-0 rounded-lg border border-[#c3e6cb] bg-[#d4edda] px-7 py-6 text-[#155724] ring-0">
@@ -55,7 +56,7 @@ export function BidPanel({
     );
   }
 
-  //Calculate the minimum bid, time left, and whether teh auction has ended or is urgent
+  // Derive the next allowed bid and urgency state from the live auction clock.
   const minBid = auction.currentBid + MIN_INCREMENT;
   const msLeft = auction.endTime - now;
   const ended = !auction.isActive || msLeft <= 0;

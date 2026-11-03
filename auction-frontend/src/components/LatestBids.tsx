@@ -6,9 +6,10 @@ import { Card, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 
 /**
- * LastestBids Component
+ * LatestBids component
  * 
- * Displays a table of recent bids for the auction item.
+ * Displays recent bids in shadcn Card/Table primitives, restyled to the auction reference.
+ * Bidder IDs are extra-bold; the date and amount columns are bold.
  */
 
 interface LatestBidsProps {

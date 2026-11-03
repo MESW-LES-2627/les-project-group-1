@@ -9,6 +9,7 @@ interface BidderControlsProps {
   resetError: string;
 }
 
+// Temporary demo reset bar
 export function BidderControls({ bidderId, onChangeEmail, onReset, isResetting, resetError }: BidderControlsProps) {
   return (
     <div className="absolute -top-[46px] left-1/2 z-10 w-max -translate-x-1/2 max-[1100px]:relative max-[1100px]:top-auto max-[1100px]:left-auto max-[1100px]:mb-4 max-[1100px]:w-full max-[1100px]:translate-x-0">

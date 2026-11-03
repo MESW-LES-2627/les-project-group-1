@@ -9,6 +9,7 @@ const NAV_LINKS = [
   ['SUPPORT', '#support'],
 ] as const;
 
+// Slim responsive site navigation, using the public brand mark and shadcn inputs/buttons.
 export function Navbar() {
   return (
     <header className="flex min-h-[88px] items-center gap-[clamp(22px,3vw,58px)] border-b-4 border-[#090909] px-[clamp(30px,3vw,58px)] py-2 max-[1450px]:gap-[22px] max-[1100px]:min-h-[80px] max-[620px]:min-h-[64px] max-[620px]:gap-4 max-[620px]:px-[18px] max-[620px]:py-1.5">
