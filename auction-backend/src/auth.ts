@@ -9,10 +9,10 @@ import {sql} from "./db";
 // Register a new user with email and a hashed password.
 export async function registerUser(req: Request, res: Response){
     try{
-        const {email, password} = req.body;
+        const {username, email, password} = req.body;
 
-        if(!email || !password) return res.status(400).json({error: "Email and password are required."});
-        if(password.length < 8) return res.status(400).json({error: "Passowrd must be at least 8 characters long."});
+        if(!username || !email || !password) return res.status(400).json({error: "Username, email and password are required."});
+        if(password.length < 8) return res.status(400).json({error: "Password must be at least 8 characters long."});
 
         const existsUser = await sql`select id from users where email = ${email}`;
         if(existsUser.length > 0) return res.status(400).json({error: "User already exists."});
@@ -20,13 +20,14 @@ export async function registerUser(req: Request, res: Response){
         const hashedPassword = await Bun.password.hash(password, {algorithm: "argon2id"});
 
         const info = await sql`
-            insert into users (email, password_hash)
-            values (${email}, ${hashedPassword})
-            returning email, created_at`;
+            insert into users (username,email, password_hash)
+            values (${username}, ${email}, ${hashedPassword})
+            returning username, email, created_at`;
         const newUser = info[0];
 
-        return res.status(201).json({message: "User registred successfully.", 
+        return res.status(201).json({message: "User registered successfully.", 
             user: { 
+                username: newUser.username,
                 email: newUser.email,
                 created_at: newUser.created_at
             },

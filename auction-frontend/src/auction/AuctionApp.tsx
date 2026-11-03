@@ -2,10 +2,11 @@ import { useEffect, useRef, useState } from 'react';
 import type { FormEvent } from 'react';
 import { io } from 'socket.io-client';
 import { AuctionPage } from './AuctionPage';
-import { EmailGate } from '../components/EmailGate';
+//import { EmailGate } from '../components/EmailGate';
 import { MIN_INCREMENT } from './data';
 import type { AuctionState, Bid, WinnerData } from './types';
 import { formatEuro } from './utils';
+import { RegisterForm } from '../components/RegisterForm';
 
 // Register event listeners before connecting so the initial state is not missed.
 const socketUrl =
@@ -30,8 +31,15 @@ function AuctionApp() {
   const [email, setEmail] = useState('');
   const [emailInput, setEmailInput] = useState(() => localStorage.getItem('bidderEmail') ?? '');
 
+  //Register
+  const [showRegisterForm, setShowRegisterForm] = useState(false);
+  const [registerUsername, setRegisterUsername] = useState('');
+  const [registerPassword, setRegisterPassword] = useState('');
+  const [registerLoading, setRegisterLoading] = useState(false);
+  const [registerError, setRegisterError] = useState<string | null>(null);
+  const [registerSuccessMessage, setRegisterSuccessMessage] = useState<string | null>(null);
+
   useEffect(() => {
-    if (!email) return;
 
     socket.on('auction_state', (state: AuctionState) => {
       setAuction(state);
@@ -70,7 +78,12 @@ function AuctionApp() {
     socket.on('connect', onConnect);
     socket.on('connect_error', onError);
 
-    socket.auth = { email };
+    if (email) {
+      socket.auth = { email };
+    } else {
+      socket.auth = {};
+    }
+
     if (socket.connected) onConnect();
     else socket.connect();
 
@@ -93,6 +106,12 @@ function AuctionApp() {
 
   const handleBid = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+
+    if(!email){ // If email is not set, show the register form
+      setShowRegisterForm(true);
+      return;
+    }
+
     if (!auction) return;
     if (!auction.isActive || Date.now() >= auction.endTime) {
       setError('The auction has ended.');
@@ -109,12 +128,46 @@ function AuctionApp() {
     }
   };
 
-  const handleEmailSubmit = (event: FormEvent<HTMLFormElement>) => {
+  const handleRegisterSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    const valueUsername = registerUsername.trim();
     const value = emailInput.trim();
-    if (!value) return;
-    localStorage.setItem('bidderEmail', value);
-    setEmail(value);
+    if (!valueUsername ||!value || !registerPassword) return;
+
+    setRegisterLoading(true);
+    setRegisterError(null);
+    setRegisterSuccessMessage(null);
+
+    try {
+      const backendUrl = socketUrl.replace(/\/+$/, '');
+      const response = await fetch(`${backendUrl}/api/auth/register`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username: valueUsername,email: value, password: registerPassword }),
+      });
+
+      const data = (await response.json()) as { error?: string };
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Error registering user. Please try again.');
+      }
+
+      setRegisterSuccessMessage('Account created successfully! You can now place bids.');
+
+      setTimeout(() => {
+        localStorage.setItem('bidderUsername', valueUsername);
+        localStorage.setItem('bidderEmail', value);
+        setEmail(value);
+        setShowRegisterForm(false);
+        setRegisterSuccessMessage(null);
+        setRegisterPassword('');
+      }, 1200);
+
+    } catch (err: any) {
+      setRegisterError(err.message);
+    } finally {
+      setRegisterLoading(false);
+    }
   };
 
   const handleReset = async () => {
@@ -131,13 +184,34 @@ function AuctionApp() {
     }
   };
 
-  if (!email) {
+  if (showRegisterForm) {
     return (
-      <EmailGate
-        emailInput={emailInput}
-        onEmailInputChange={setEmailInput}
-        onSubmit={handleEmailSubmit}
-      />
+      <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center py-12 px-4">
+        <div className="w-full max-w-md">
+          <RegisterForm
+            username={registerUsername}
+            email={emailInput}
+            password={registerPassword}
+            onUsernameChange={setRegisterUsername}
+            onEmailChange={setEmailInput}
+            onPasswordChange={setRegisterPassword}
+            onSubmit={handleRegisterSubmit}
+            loading={registerLoading}
+            error={registerError}
+            successMessage={registerSuccessMessage}
+          />
+
+          <div className="text-center mt-4">
+            <button
+              type="button"
+              onClick={() => setShowRegisterForm(false)}
+              className="text-sm text-gray-600 hover:underline font-medium cursor-pointer"
+            >
+              ← Back to auction
+            </button>
+          </div>
+        </div>
+      </div>
     );
   }
 

@@ -1,0 +1,95 @@
+import { describe, it, expect, beforeAll, afterAll } from "bun:test";
+import { httpServer } from "../index"; 
+import {sql} from "../src/db";
+
+const PORT = 3001; // diffent port for testing to avoid conflicts with the main server
+const BASE_URL = `http://localhost:${PORT}`;
+
+// Clean up the users table before and after tests
+beforeAll(async () => {
+  if (!httpServer.listening) {
+    httpServer.listen(PORT);
+  }
+  await sql`DELETE FROM users;`;
+});
+
+// CLose the server after all tests
+afterAll(async () => {
+  httpServer.close();
+});
+
+describe("POST /api/auth/register", () => {
+  
+  it("should successfully register a new user with valid data", async () => {
+    const response = await fetch(`${BASE_URL}/api/auth/register`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        username: "testuser",
+        email: "test@feup.pt",
+        password: "securepassword123",
+      }),
+    });
+
+    const data = await response.json();
+
+    expect(response.status).toBe(201);
+    expect(data.message).toBe("User registered successfully.");
+    expect(data.user.email).toBe("test@feup.pt");
+    expect(data.user.username).toBe("testuser");
+    expect(data.user.password_hash).toBeUndefined(); 
+  });
+
+  it("should fail if required fields are missing", async () => {
+    const response = await fetch(`${BASE_URL}/api/auth/register`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        email: "incomplete@feup.pt",
+        password: "securepassword123",
+        // Username is missing
+      }),
+    });
+
+    const data = await response.json();
+
+    expect(response.status).toBe(400);
+    expect(data.error).toBe("Username, email and password are required.");
+  });
+
+  it("should fail if password is less than 8 characters", async () => {
+    const response = await fetch(`${BASE_URL}/api/auth/register`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        username: "shortpassuser",
+        email: "short@feup.pt",
+        password: "123", // <8 
+      }),
+    });
+
+    const data = await response.json();
+
+    expect(response.status).toBe(400);
+    expect(data.error).toBe("Password must be at least 8 characters long.");
+  });
+
+  it("should reject duplicate email registrations", async () => {
+    // Tries to register the same email again
+    const response = await fetch(`${BASE_URL}/api/auth/register`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        username: "anotheruser",
+        email: "test@feup.pt", // email aldeady registered in the first test
+        password: "securepassword123",
+      }),
+    });
+
+    const data = await response.json();
+
+    expect(response.status).toBe(400);
+    expect(data.error).toBe("User already exists.");
+  });
+
+});
