@@ -37,6 +37,7 @@ function AuctionApp() {
   const [showRegisterForm, setShowRegisterForm] = useState(false);
   const [registerUsername, setRegisterUsername] = useState('');
   const [registerPassword, setRegisterPassword] = useState('');
+  const [registerCountry, setRegisterCountry] = useState('');
   const [registerLoading, setRegisterLoading] = useState(false);
   const [registerError, setRegisterError] = useState<string | null>(null);
   const [registerSuccessMessage, setRegisterSuccessMessage] = useState<string | null>(null);
@@ -156,7 +157,7 @@ function AuctionApp() {
       const response = await fetch(`${backendUrl}/api/auth/register`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username: valueUsername,email: value, password: registerPassword }),
+        body: JSON.stringify({ username: valueUsername,email: value, password: registerPassword, country: registerCountry }),
       });
 
       const data = (await response.json()) as { error?: string };
@@ -291,9 +292,11 @@ function AuctionApp() {
             username={registerUsername}
             email={email}
             password={registerPassword}
+            country={registerCountry}
             onUsernameChange={setRegisterUsername}
             onEmailChange={setEmail}
             onPasswordChange={setRegisterPassword}
+            onCountryChange={setRegisterCountry}
             onSubmit={handleRegisterSubmit}
             loading={registerLoading}
             error={registerError}

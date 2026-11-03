@@ -4,9 +4,11 @@ interface RegisterFormProps {
     username: string;
     email: string;
     password: string;
+    country: string;
     onUsernameChange: (value: string) => void;
     onEmailChange: (value: string) => void;
     onPasswordChange: (value: string) => void;
+    onCountryChange: (value: string) => void;
     onSubmit: (event: React.FormEvent<HTMLFormElement>) => void;
     loading: boolean;
     error: string|null;
@@ -17,9 +19,11 @@ export function RegisterForm({
     username,
     email,
     password,
+    country,
     onUsernameChange,
     onEmailChange,
     onPasswordChange,
+    onCountryChange,
     onSubmit,
     loading,
     error,
@@ -69,6 +73,20 @@ export function RegisterForm({
             required
             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             placeholder="teu.email@feup.pt"
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Country
+          </label>
+          <input
+            type="text"
+            value={country}
+            onChange={(e) => onCountryChange(e.target.value)}
+            required
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            placeholder="Portugal"
           />
         </div>
 
