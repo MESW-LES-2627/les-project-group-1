@@ -21,7 +21,7 @@ export const ITEM = {
   causes: [
     {
       name: 'Fundação Semear Futuro',
-      description: '100% of proceeds support sports access for underpriveleged children.',
+      description: '100% of proceeds support sports access for underprivileged children.',
       logo: '/cause-semear-futuro.png',
     },
     {

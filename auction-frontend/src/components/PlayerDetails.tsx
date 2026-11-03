@@ -1,4 +1,5 @@
 import { ITEM } from '../auction/data';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 /**
  * PlayerDetails Component
@@ -17,52 +18,51 @@ export function PlayerDetails({ itemName, activeImage, onImageChange }: PlayerDe
 
   return (
     <section>
-      <div className="flex min-h-[420px] overflow-hidden rounded-[28px] bg-card shadow-[0_6px_24px_rgba(0,0,0,0.08)]">
-        <div className="flex flex-col gap-[18px] border-r-2 border-[#e3e3e3] px-[18px] py-[22px]">
+      <Card className="h-[clamp(420px,32.6vw,652px)] flex-row gap-0 rounded-[7px] bg-[#f4f4f4] p-0 shadow-[4px_6px_8px_rgba(0,0,0,0.25)] ring-0 max-[1100px]:h-[min(78vw,650px)] max-[620px]:h-[min(112vw,520px)] max-[620px]:rounded-2xl">
+        <div className="flex basis-[30%] flex-col gap-[13%] border-r-[6px] border-[#dedede] px-[3.2%] py-[26px] max-[1100px]:basis-1/4 max-[1100px]:gap-[10%] max-[1100px]:px-[3%] max-[1100px]:py-[22px] max-[620px]:basis-[24%] max-[620px]:gap-[12%] max-[620px]:border-r-[3px] max-[620px]:py-[14px]">
           {ITEM.images.map((src, index) => (
             <button
               key={src}
               type="button"
-              className={`aspect-[3/4] w-[88px] cursor-pointer overflow-hidden rounded-[14px] border-[3px] bg-[#ebebeb] p-0 max-[960px]:w-16 ${index === activeImage ? 'border-ink' : 'border-transparent'}`}
+              className={`aspect-[0.68] w-full cursor-pointer overflow-hidden rounded-xl border-0 bg-[#dedede] p-[10px] max-[620px]:rounded-lg max-[620px]:p-[5px] ${index === activeImage ? 'outline-2 outline-offset-1 outline-[#c8c8c8]' : ''}`}
               onClick={() => onImageChange(index)}
               aria-label={`Show image ${index + 1}`}
             >
-              <img className="h-full w-full object-contain" src={src} alt="" />
+              <img className="block h-full w-full object-contain" src={src} alt="" />
             </button>
           ))}
         </div>
-        <div className="flex flex-1 items-center justify-center p-6">
-          <img className="h-full w-full object-contain" src={ITEM.images[activeImage]} alt={itemName} />
+        <div className="flex min-w-0 flex-1 items-center justify-center p-[22px] max-[620px]:p-[10px]">
+          <img className="block h-full w-full object-contain" src={ITEM.images[activeImage]} alt={itemName} />
         </div>
-      </div>
+      </Card>
 
-      <h2 className="mt-7 mb-[14px] text-2xl font-extrabold text-[#0a0a0a] uppercase">THE PLAYER</h2>
-      <div className="overflow-hidden rounded-2xl bg-card shadow-[0_6px_24px_rgba(0,0,0,0.08)]">
-        <div className="flex items-baseline gap-6 bg-orange px-6 py-[14px] text-white">
-          <span className="text-2xl font-extrabold">{player.name}</span>
-          <span className="text-[1.1rem] font-bold text-[#f1d3b9]">{player.nickname}</span>
-        </div>
-        <div className="flex justify-around gap-3 px-4 py-[14px]">
+      <Card className="mt-12 gap-0 rounded-[7px] bg-[#f4f4f4] p-0 shadow-[4px_6px_8px_rgba(0,0,0,0.25)] ring-0 max-[620px]:mt-7">
+        <CardHeader className="flex min-h-16 items-center justify-between gap-4 rounded-none bg-orange px-[22px] py-2 max-[620px]:min-h-[54px] max-[620px]:px-[14px]">
+          <CardTitle className="text-[clamp(1.6rem,2.2vw,2.6rem)] font-black text-[#080808]">{player.name}</CardTitle>
+          <span className="text-[clamp(1rem,1.35vw,1.5rem)] text-[#51280b]">{player.nickname}</span>
+        </CardHeader>
+        <CardContent className="grid grid-cols-4 gap-3 px-4 py-[14px] max-[620px]:gap-[7px] max-[620px]:px-[7px] max-[620px]:py-3">
           <Stat label="Age" value={String(player.age)} />
           <Stat label="Position" value={player.position} />
           <Stat label="Number" value={String(player.number)} />
           <Stat label="Size" value={player.size} />
-        </div>
-        <div className="flex justify-around gap-3 border-t-2 border-[#e3e3e3] px-4 py-[14px]">
+        </CardContent>
+        <CardContent className="grid grid-cols-3 gap-3 border-t-2 border-[#d9d9d9] px-4 py-[14px] max-[620px]:gap-[7px] max-[620px]:px-[7px] max-[620px]:py-3">
           <Stat label="Nationality" value={player.nationality} />
           <Stat label="Place of birth" value={player.placeOfBirth} />
           <Stat label="Preferred foot" value={player.preferredFoot} />
-        </div>
-      </div>
+        </CardContent>
+      </Card>
     </section>
   );
 }
 
 function Stat({ label, value }: { label: string; value: string }) {
   return (
-    <div className="flex flex-col items-center gap-1 text-center">
-      <span className="text-[0.95rem] font-bold text-[#555] uppercase">{label}</span>
-      <span className="text-[1.05rem] font-extrabold uppercase">{value}</span>
+    <div className="flex min-w-0 flex-col items-center gap-[3px] text-center">
+      <span className="text-[clamp(0.75rem,1.05vw,1.2rem)] font-bold text-[#666] capitalize max-[620px]:text-[0.68rem]">{label}</span>
+      <strong className="text-[clamp(0.8rem,1.1vw,1.25rem)] font-black capitalize max-[620px]:text-[0.75rem]">{value}</strong>
     </div>
   );
 }

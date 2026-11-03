@@ -1,6 +1,9 @@
 import { LATEST_BIDS_SHOWN } from '../auction/data';
 import type { Bid } from '../auction/types';
 import { flagEmoji, formatDate, formatEuroSuffix, shortId } from '../auction/utils';
+import { Button } from '@/components/ui/button';
+import { Card, CardHeader, CardTitle } from '@/components/ui/card';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 
 /**
  * LastestBids Component
@@ -15,45 +18,47 @@ interface LatestBidsProps {
 
 export function LatestBids({ bids, myId }: LatestBidsProps) {
   return (
-    <div className="max-w-[640px] overflow-hidden rounded-[14px] bg-card shadow-[0_6px_24px_rgba(0,0,0,0.08)]">
-      <div className="flex items-center justify-between bg-[#dcdcdc] px-7 py-4">
-        <h3 className="m-0 text-[1.4rem] font-extrabold">LATEST BIDS</h3>
-        <a className="text-[1.2rem] font-extrabold text-link" href="#all-bids">VIEW ALL</a>
-      </div>
-      <table className="w-full border-collapse">
-        <thead>
-          <tr>
-            <th className="px-5 pt-[14px] pb-2 text-center text-[15px] font-bold text-[#555]">BIDDER</th>
-            <th className="px-5 pt-[14px] pb-2 text-center text-[15px] font-bold text-[#555]">DATE</th>
-            <th className="px-5 pt-[14px] pb-2 text-center text-[15px] font-bold text-[#555]">BID</th>
-          </tr>
-        </thead>
-        <tbody>
+    <Card className="gap-0 overflow-hidden rounded-xl bg-[#f5f5f5] p-0 shadow-[4px_6px_8px_rgba(0,0,0,0.23)] ring-0">
+      <CardHeader className="flex items-center justify-between gap-0 rounded-none bg-[#d9d9d9] px-[18px] py-2 max-[620px]:px-3 max-[620px]:py-[9px]">
+        <CardTitle className="text-[clamp(1.8rem,2.35vw,2.8rem)] font-black tracking-[-0.04em] max-[620px]:text-2xl">Latest bids</CardTitle>
+        <Button asChild variant="link" className="h-auto p-0 text-[clamp(1rem,1.2vw,1.4rem)] font-extrabold text-[#3493ce] underline decoration-1 underline-offset-[3px] max-[620px]:text-[0.9rem]">
+          <a href="#all-bids">View all</a>
+        </Button>
+      </CardHeader>
+      <Table>
+        <TableHeader>
+          <TableRow className="border-b-0 hover:bg-transparent">
+            <TableHead className="px-[10px] pt-3 pb-2 text-center text-[clamp(0.8rem,1vw,1.15rem)] font-bold text-[#666] capitalize max-[620px]:px-1 max-[620px]:text-[0.7rem]">Bidder</TableHead>
+            <TableHead className="px-[10px] pt-3 pb-2 text-center text-[clamp(0.8rem,1vw,1.15rem)] font-bold text-[#666] capitalize max-[620px]:px-1 max-[620px]:text-[0.7rem]">Date</TableHead>
+            <TableHead className="px-[10px] pt-3 pb-2 text-center text-[clamp(0.8rem,1vw,1.15rem)] font-bold text-[#666] capitalize max-[620px]:px-1 max-[620px]:text-[0.7rem]">Bid</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
           {bids.length === 0 ? (
-            <tr>
-              <td colSpan={3} className="border-t-2 border-[#e8e8e8] px-5 py-[14px] text-center text-[15px] font-extrabold text-muted">
+            <TableRow className="hover:bg-transparent">
+              <TableCell colSpan={3} className="border-t-2 border-[#e1e1e1] px-4 py-4 text-center font-extrabold text-[#888]">
                 No bids yet
-              </td>
-            </tr>
+              </TableCell>
+            </TableRow>
           ) : (
             bids.slice(0, LATEST_BIDS_SHOWN).map((bid, index) => (
-              <tr key={`${bid.timestamp}-${index}`}>
-                <td className="border-t-2 border-[#e8e8e8] px-5 py-[14px] text-center text-[15px] font-extrabold first:text-left">
-                  <span className="mr-[18px] text-2xl">{flagEmoji(bid.country)}</span>
+              <TableRow key={`${bid.timestamp}-${index}`} className="hover:bg-transparent">
+                <TableCell className="border-t-2 border-[#e1e1e1] px-[14px] py-[10px] text-center text-[clamp(0.9rem,1.1vw,1.25rem)] font-extrabold max-[620px]:px-1 max-[620px]:py-[9px] max-[620px]:text-[0.72rem]">
+                  <span className="mr-4 text-[1.25em] align-[-2px] max-[620px]:mr-1">{flagEmoji(bid.country)}</span>
                   {shortId(bid.bidder)}
                   {bid.bidder === myId && (
                     <span className="ml-2.5 rounded-full bg-purple px-2 py-0.5 text-xs font-extrabold text-white uppercase">
                       you
                     </span>
                   )}
-                </td>
-                <td className="border-t-2 border-[#e8e8e8] px-5 py-[14px] text-center text-[15px] font-extrabold">{formatDate(bid.timestamp)}</td>
-                <td className="border-t-2 border-[#e8e8e8] px-5 py-[14px] text-center text-[15px] font-extrabold">{formatEuroSuffix(bid.amount)}</td>
-              </tr>
+                </TableCell>
+                <TableCell className="border-t-2 border-[#e1e1e1] px-[14px] py-[10px] text-center text-[clamp(0.9rem,1.1vw,1.25rem)] font-extrabold max-[620px]:px-1 max-[620px]:py-[9px] max-[620px]:text-[0.72rem]">{formatDate(bid.timestamp)}</TableCell>
+                <TableCell className="border-t-2 border-[#e1e1e1] px-[14px] py-[10px] text-center text-[clamp(0.9rem,1.1vw,1.25rem)] font-extrabold max-[620px]:px-1 max-[620px]:py-[9px] max-[620px]:text-[0.72rem]">{formatEuroSuffix(bid.amount)}</TableCell>
+              </TableRow>
             ))
           )}
-        </tbody>
-      </table>
-    </div>
+        </TableBody>
+      </Table>
+    </Card>
   );
 }

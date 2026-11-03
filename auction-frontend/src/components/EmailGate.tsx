@@ -1,4 +1,6 @@
 import type { FormEvent } from 'react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 
 /**
  * EmailGate Component
@@ -17,8 +19,8 @@ export function EmailGate({ emailInput, onEmailInputChange, onSubmit }: EmailGat
       <form className="flex w-full max-w-[380px] flex-col gap-[14px] text-center" onSubmit={onSubmit}>
         <h1 className="m-0 text-[2.4rem] leading-[1.1] font-black text-ink uppercase">Join the auction</h1>
         <p className="mb-1.5 text-base leading-[1.35] font-semibold text-[#555]">Enter your email to place bids and receive the payment link if you win.</p>
-        <input
-          className="w-full rounded-[14px] border-2 border-[#c4c4c4] bg-white px-5 py-3 text-center text-[1.2rem] font-bold text-ink outline-none placeholder:text-[#aaa] focus:border-ink"
+        <Input
+          className="h-auto w-full rounded-[14px] border-2 border-[#c4c4c4] bg-white px-5 py-3 text-center text-[1.2rem] font-bold text-ink shadow-none outline-none placeholder:text-[#aaa] focus-visible:border-ink focus-visible:ring-0"
           type="email"
           required
           autoFocus
@@ -26,9 +28,9 @@ export function EmailGate({ emailInput, onEmailInputChange, onSubmit }: EmailGat
           onChange={(event) => onEmailInputChange(event.target.value)}
           placeholder="you@example.com"
         />
-        <button type="submit" className="flex cursor-pointer items-center justify-center gap-3 rounded-2xl border-0 bg-ink p-3 text-[1.2rem] font-extrabold text-white transition-[transform,opacity] duration-150 hover:opacity-[0.88] active:scale-[0.98]">
+        <Button type="submit" className="h-auto cursor-pointer rounded-2xl border-0 bg-ink p-3 text-[1.2rem] font-extrabold text-white transition-[transform,opacity] duration-150 hover:bg-ink hover:opacity-[0.88] active:scale-[0.98]">
           CONTINUE
-        </button>
+        </Button>
       </form>
     </main>
   );
