@@ -9,9 +9,9 @@ import {sql} from "./db";
 // Register a new user with email and a hashed password.
 export async function registerUser(req: Request, res: Response){
     try{
-        const {username, email, password} = req.body;
+        const {username, email, password, country} = req.body;
 
-        if(!username || !email || !password) return res.status(400).json({error: "Username, email and password are required."});
+        if(!username || !email || !password || !country) return res.status(400).json({error: "Username, email, password and country are required."});
         if(password.length < 8) return res.status(400).json({error: "Password must be at least 8 characters long."});
 
         const existsUser = await sql`select id from users where email = ${email}`;
@@ -20,8 +20,8 @@ export async function registerUser(req: Request, res: Response){
         const hashedPassword = await Bun.password.hash(password, {algorithm: "argon2id"});
 
         const info = await sql`
-            insert into users (username,email, password_hash)
-            values (${username}, ${email}, ${hashedPassword})
+            insert into users (username,email, password_hash, country)
+            values (${username}, ${email}, ${hashedPassword}, ${country})
             returning username, email, created_at`;
         const newUser = info[0];
 
