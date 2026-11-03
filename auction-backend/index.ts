@@ -5,6 +5,7 @@ import cors from 'cors';
 import { createPaymentLink, stripeWebhook } from './src/payments';
 import { sendEmail } from './src/email';
 import { saveWinner } from './src/winners';
+import { registerUser } from './src/auth';
 
 /**
  * Main auction server
@@ -14,6 +15,7 @@ import { saveWinner } from './src/winners';
 
 const app = express();
 app.use(cors());
+app.use(express.json())
 
 app.post(
   '/api/stripe/webhook',
@@ -28,6 +30,8 @@ const io = new Server(httpServer, {
         methods: ["GET", "POST"]
     }
 });
+
+app.post("/api/auth/register", registerUser);
 
 
 
