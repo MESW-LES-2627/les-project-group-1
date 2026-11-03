@@ -12,4 +12,3 @@
 | 2026-10-20 | GPT | Help on reviewing our CI workflow | After revision and testing, we adopted the file as our CI workflow on this first prototype. |
 | 2026-10-20 | GPT | Help on creating a demo reset endpoint | After revision and testing, the endpoint is being used to reset the auction on the demo. |
 | 2026-10-20 | GPT | Help on deciding which tests could be made for our vertical prototype | After revision, we used the information to create working tests for our prototype that pass the CI pipeline. |
-| 2026-11-03 | Deepseek | Help on CSS class rework | After revision, the model helped rebuilding the structure of Tailwind CSS classes to adopt a more readable format. |
