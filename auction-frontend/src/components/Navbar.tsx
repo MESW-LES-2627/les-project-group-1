@@ -23,7 +23,7 @@ export function Navbar() {
       <label className="flex h-[52px] w-[clamp(260px,23vw,440px)] basis-[440px] items-center gap-3 rounded-[20px] border-[1.5px] border-[#111] px-5 max-[1100px]:ml-auto max-[620px]:h-[42px] max-[620px]:w-auto max-[620px]:basis-auto max-[620px]:flex-1 max-[620px]:gap-[7px] max-[620px]:rounded-[14px] max-[620px]:px-[10px]">
         <Search className="size-[26px] shrink-0 max-[620px]:size-5" aria-hidden="true" />
         <Input
-          className="h-auto min-w-0 border-0 bg-transparent px-0 py-0 text-[clamp(0.95rem,1vw,1.25rem)] shadow-none outline-none placeholder:text-[#111] focus-visible:border-0 focus-visible:ring-0 max-[620px]:text-[0.85rem]"
+          className="h-auto min-w-0 border-0 bg-transparent px-0 py-0 text-[clamp(0.95rem,1vw,1.25rem)] font-normal shadow-none outline-none placeholder:text-[#111] focus-visible:border-0 focus-visible:ring-0 max-[620px]:text-[0.85rem]"
           type="search"
           placeholder="Search for a club, player, leagues..."
           aria-label="Search auctions"
@@ -31,21 +31,21 @@ export function Navbar() {
       </label>
 
       <nav className="flex flex-1 items-center justify-between gap-[clamp(12px,1.4vw,28px)] max-[1450px]:gap-3 max-[1100px]:hidden" aria-label="Main navigation">
-        <a className="inline-flex items-center gap-1.5 rounded-full border-[1.5px] border-[#090909] px-2 py-px text-[clamp(0.9rem,1.05vw,1.3rem)] font-black whitespace-nowrap text-[#050505] no-underline" href="#live">
+        <a className="inline-flex items-center gap-1.5 rounded-full border-[1.5px] border-[#090909] px-2 py-px text-[clamp(0.9rem,1.05vw,1.3rem)] font-bold whitespace-nowrap text-[#050505] no-underline" href="#live">
           <span className="size-[13px] rounded-full bg-[#d3262d]" />NOW LIVE
         </a>
         {NAV_LINKS.map(([label, href]) => (
-          <a key={href} className="text-[clamp(0.9rem,1.05vw,1.3rem)] font-black whitespace-nowrap text-[#050505] no-underline" href={href}>
+          <a key={href} className="text-[clamp(0.9rem,1.05vw,1.3rem)] font-bold whitespace-nowrap text-[#050505] no-underline" href={href}>
             {label}
           </a>
         ))}
       </nav>
 
       <div className="flex shrink-0 items-center gap-[14px] max-[1450px]:gap-2 max-[620px]:gap-[6px]">
-        <Button asChild className="h-auto min-w-[150px] rounded-[22px] border-2 border-[#050505] bg-[#050505] px-[22px] py-[9px] text-[clamp(0.9rem,1.05vw,1.3rem)] font-black hover:bg-[#222] max-[1450px]:min-w-[110px] max-[1450px]:px-[14px] max-[620px]:hidden">
+        <Button asChild className="h-auto min-w-[150px] rounded-[22px] border-2 border-[#050505] bg-[#050505] px-[22px] py-[9px] text-[clamp(0.9rem,1.05vw,1.3rem)] font-bold hover:bg-[#222] max-[1450px]:min-w-[110px] max-[1450px]:px-[14px] max-[620px]:hidden">
           <a href="#signup">SIGN UP</a>
         </Button>
-        <Button asChild variant="outline" className="h-auto min-w-[150px] rounded-[22px] border-2 border-[#050505] bg-white px-[22px] py-[9px] text-[clamp(0.9rem,1.05vw,1.3rem)] font-black text-[#050505] hover:bg-[#f4f4f4] max-[1450px]:min-w-[110px] max-[1450px]:px-[14px] max-[620px]:min-w-0 max-[620px]:rounded-[14px] max-[620px]:px-[10px] max-[620px]:py-[7px] max-[620px]:text-[0.75rem]">
+        <Button asChild variant="outline" className="h-auto min-w-[150px] rounded-[22px] border-2 border-[#050505] bg-white px-[22px] py-[9px] text-[clamp(0.9rem,1.05vw,1.3rem)] font-bold text-[#050505] hover:bg-[#f4f4f4] max-[1450px]:min-w-[110px] max-[1450px]:px-[14px] max-[620px]:min-w-0 max-[620px]:rounded-[14px] max-[620px]:px-[10px] max-[620px]:py-[7px] max-[620px]:text-[0.75rem]">
           <a href="#login">LOGIN</a>
         </Button>
       </div>

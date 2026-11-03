@@ -64,9 +64,7 @@ export function AuctionPage({
         id="top"
         className="mx-auto grid w-[calc(100%_-_112px)] max-w-[1888px] grid-cols-[minmax(0,0.8fr)_minmax(0,1fr)] items-start gap-[clamp(60px,10vw,200px)] py-[60px] pb-[70px] max-[1100px]:w-[calc(100%_-_64px)] max-[1100px]:max-w-[900px] max-[1100px]:grid-cols-1 max-[1100px]:gap-11 max-[1100px]:pt-[38px] max-[620px]:w-[calc(100%_-_36px)] max-[620px]:gap-[34px] max-[620px]:py-6 max-[620px]:pb-[42px]"
       >
-        <PlayerDetails itemName={auction.itemName} activeImage={activeImage} onImageChange={onImageChange} />
-
-        <section className="relative min-w-0">
+        <div className="relative min-w-0">
           <BidderControls
             bidderId={myId}
             onChangeEmail={onChangeEmail}
@@ -74,6 +72,10 @@ export function AuctionPage({
             isResetting={isResetting}
             resetError={resetError}
           />
+          <PlayerDetails itemName={auction.itemName} activeImage={activeImage} onImageChange={onImageChange} />
+        </div>
+
+        <section className="relative min-w-0">
           <AuctionItemHeading itemName={auction.itemName} />
 
           <BidPanel

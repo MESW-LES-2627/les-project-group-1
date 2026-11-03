@@ -39,8 +39,8 @@ export function PlayerDetails({ itemName, activeImage, onImageChange }: PlayerDe
 
       <Card className="mt-12 gap-0 rounded-[7px] bg-[#f4f4f4] p-0 shadow-[4px_6px_8px_rgba(0,0,0,0.25)] ring-0 max-[620px]:mt-7">
         <CardHeader className="flex min-h-16 items-center justify-between gap-4 rounded-none bg-orange px-[22px] py-2 max-[620px]:min-h-[54px] max-[620px]:px-[14px]">
-          <CardTitle className="text-[clamp(1.6rem,2.2vw,2.6rem)] font-black text-[#080808]">{player.name}</CardTitle>
-          <span className="text-[clamp(1rem,1.35vw,1.5rem)] text-[#51280b]">{player.nickname}</span>
+          <CardTitle className="text-[clamp(1.6rem,2.2vw,2.6rem)] font-extrabold text-[#080808]">{player.name}</CardTitle>
+          <span className="text-[clamp(1rem,1.35vw,1.5rem)] font-bold text-[#51280b]">{player.nickname}</span>
         </CardHeader>
         <CardContent className="grid grid-cols-4 gap-3 px-4 py-[14px] max-[620px]:gap-[7px] max-[620px]:px-[7px] max-[620px]:py-3">
           <Stat label="Age" value={String(player.age)} />
@@ -62,7 +62,7 @@ function Stat({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex min-w-0 flex-col items-center gap-[3px] text-center">
       <span className="text-[clamp(0.75rem,1.05vw,1.2rem)] font-bold text-[#666] capitalize max-[620px]:text-[0.68rem]">{label}</span>
-      <strong className="text-[clamp(0.8rem,1.1vw,1.25rem)] font-black capitalize max-[620px]:text-[0.75rem]">{value}</strong>
+      <strong className="text-[clamp(0.8rem,1.1vw,1.25rem)] font-extrabold capitalize max-[620px]:text-[0.75rem]">{value}</strong>
     </div>
   );
 }
