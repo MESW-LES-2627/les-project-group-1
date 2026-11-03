@@ -18,6 +18,10 @@ afterAll(async () => {
   httpServer.close();
 });
 
+/*****************
+ * REGISTRATION: *
+ *****************/
+
 describe("POST /api/auth/register", () => {
   
   it("should successfully register a new user with valid data", async () => {
@@ -90,6 +94,63 @@ describe("POST /api/auth/register", () => {
 
     expect(response.status).toBe(400);
     expect(data.error).toBe("User already exists.");
+  });
+
+});
+
+/*****************
+ *     LOGIN:    *
+ *****************/
+
+describe("POST /api/auth/login", () => {
+  
+  it("should successfully log in with valid credentials", async () => {
+    const response = await fetch(`${BASE_URL}/api/auth/login`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        email: "test@feup.pt", // email registered in the registration test
+        password: "securepassword123",
+      }),
+    });
+
+    const data = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(data.message).toBe("Login successful.");
+    expect(data.user.email).toBe("test@feup.pt");
+  });
+
+  it("should fail with incorrect password", async () => {
+    const response = await fetch(`${BASE_URL}/api/auth/login`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        email: "test@feup.pt",
+        password: "wrongpassword",
+      }),
+    });
+
+    const data = await response.json();
+
+    expect(response.status).toBe(401);
+    expect(data.error).toBe("Invalid credentials.");
+  });
+
+  it("should fail if email does not exist", async () => {
+    const response = await fetch(`${BASE_URL}/api/auth/login`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        email: "nonexistent@feup.pt",
+        password: "securepassword123",
+      }),
+    });
+
+    const data = await response.json();
+
+    expect(response.status).toBe(401);
+    expect(data.error).toBe("Invalid credentials.");
   });
 
 });

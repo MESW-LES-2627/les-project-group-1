@@ -5,7 +5,6 @@ import { LatestBids } from '../components/LatestBids';
 import { PlayerDetails } from '../components/PlayerDetails';
 import { ITEM } from './data';
 import type { AuctionState, Bid, WinnerData } from './types';
-import { shortId } from './utils';
 
 /**
  * Props for the AuctionPage component.
@@ -61,7 +60,7 @@ export function AuctionPage({
       <section>
         <div className="mb-[14px] inline-flex items-center gap-2 rounded-full bg-card px-[14px] py-1.5 text-[0.95rem] font-semibold shadow-[0_2px_8px_rgba(0,0,0,0.06)]">
           <span className="size-[9px] rounded-full bg-[#2e9d57]" />
-          You are bidder <strong>{shortId(myId)}</strong>
+          You are bidder <strong>{myId}</strong>
           <button type="button" className="ml-2 cursor-pointer border-0 bg-transparent text-inherit underline" onClick={onChangeEmail}>
             change email
           </button>
@@ -100,6 +99,7 @@ export function AuctionPage({
           onBid={onBid}
           error={error}
           socketId={socketId}
+          myId={myId}
           now={now}
         />
 

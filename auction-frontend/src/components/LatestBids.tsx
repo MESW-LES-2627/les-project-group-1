@@ -1,6 +1,6 @@
 import { LATEST_BIDS_SHOWN } from '../auction/data';
 import type { Bid } from '../auction/types';
-import { flagEmoji, formatDate, formatEuroSuffix, shortId } from '../auction/utils';
+import { flagEmoji, formatDate, formatEuroSuffix} from '../auction/utils';
 
 /**
  * LastestBids Component
@@ -40,7 +40,7 @@ export function LatestBids({ bids, myId }: LatestBidsProps) {
               <tr key={`${bid.timestamp}-${index}`}>
                 <td className="border-t-2 border-[#e8e8e8] px-5 py-[14px] text-center text-[15px] font-extrabold first:text-left">
                   <span className="mr-[18px] text-2xl">{flagEmoji(bid.country)}</span>
-                  {shortId(bid.bidder)}
+                  {bid.bidder}
                   {bid.bidder === myId && (
                     <span className="ml-2.5 rounded-full bg-purple px-2 py-0.5 text-xs font-extrabold text-white uppercase">
                       you

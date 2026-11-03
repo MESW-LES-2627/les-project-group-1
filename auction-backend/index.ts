@@ -6,6 +6,8 @@ import { createPaymentLink, stripeWebhook } from './src/payments';
 import { sendEmail } from './src/email';
 import { saveWinner } from './src/winners';
 import { registerUser } from './src/auth';
+import { loginUser } from './src/auth';
+import { sql } from './src/db';
 
 /**
  * Main auction server
@@ -32,7 +34,7 @@ const io = new Server(httpServer, {
 });
 
 app.post("/api/auth/register", registerUser);
-
+app.post("/api/auth/login", loginUser);
 
 
 
@@ -48,6 +50,8 @@ let auction = {
     highestBidder: null as string | null,
     endTime: Date.now() + AUCTION_DURATION,
     isActive: true,
+    bidCount: 0,
+    bids: [] as Array<{ bidder: string; amount: number; timestamp: number }>,
 };
 let highestBidderEmail: string | null = null;
 
@@ -59,6 +63,8 @@ app.post("/api/auction/reset", (_req, res) => {
         highestBidder: null,
         endTime: Date.now() + AUCTION_DURATION,
         isActive: true,
+        bidCount: 0,
+        bids: [],
     };
     highestBidderEmail = null;
 
@@ -69,11 +75,25 @@ app.post("/api/auction/reset", (_req, res) => {
 
 
 
-io.on("connection", (socket) => {
+io.on("connection", async (socket) => {
     console.log(`New user connected: ${socket.id}`);
+    
     const email = socket.handshake.auth.email;
-    socket.data.email =
-        typeof email === "string" && email.includes("@") ? email.trim() : "";
+    const clientUsername = socket.handshake.auth.username; // usarnamw provided by the fronted
+    socket.data.email = typeof email === "string" && email.includes("@") ? email.trim() : ""; // Validate email format
+
+    // If the username is not provided, try to fetch it from the database using the email
+    socket.data.username = typeof clientUsername === "string" ? clientUsername.trim() : "";
+    if (!socket.data.username && socket.data.email) {
+        try {
+            const userRecord = await sql`select username from users where lower(email) = lower(${socket.data.email})`;
+            if (userRecord.length > 0) {
+                socket.data.username = userRecord[0].username;
+            }
+        } catch (err) {
+            console.error("Could not fetch username for socket:", err);
+        }
+    }
 
     // Send current state to the newly connected user
     socket.emit("auction_state", auction);
@@ -97,9 +117,18 @@ io.on("connection", (socket) => {
 
         // Only accept higher bids
         if (bidAmount > auction.currentBid) {
+            const bidderName = socket.data.username || socket.id;
             auction.currentBid = bidAmount;
-            auction.highestBidder = socket.id;
+            auction.highestBidder = bidderName;
             highestBidderEmail = socket.data.email;
+
+            auction.bidCount = (auction.bidCount || 0) + 1;
+            if (!auction.bids) auction.bids = [];
+            auction.bids.unshift({
+                bidder: bidderName,
+                amount: bidAmount,
+                timestamp: Date.now(),
+            });
 
             // Broadcast the updated state to all connected clients
             io.emit("auction_state", auction);

@@ -14,6 +14,7 @@ interface BidPanelProps {
   onBid: FormEventHandler<HTMLFormElement>;
   error: string;
   socketId?: string;
+  myId: string;
   now: number;
 }
 
@@ -28,6 +29,7 @@ export function BidPanel({
   onBid,
   error,
   socketId,
+  myId,
   now,
 }: BidPanelProps) {
   if (winnerData) {
@@ -37,7 +39,7 @@ export function BidPanel({
         <p className="my-1 text-[1.4rem]">
           Winner:{' '}
           <strong>
-            {winnerData.winner === socketId ? 'You!' : winnerData.winner ? shortId(winnerData.winner) : 'No one'}
+            {winnerData.winner === myId ? 'You!' : winnerData.winner ? winnerData.winner : 'No one'}
           </strong>
         </p>
         <p className="my-1 text-[1.4rem]">
@@ -98,10 +100,10 @@ export function BidPanel({
         <span className={urgent ? 'text-[#d32f2f]' : 'text-red'}>{formatTimeLeft(msLeft)}</span>
       </div>
       <p className="mt-2 mr-[14px] ml-[14px] font-bold text-[#555]">
-        {auction.highestBidder === socketId
+        {auction.highestBidder === myId
           ? "You're the highest bidder!"
           : auction.highestBidder
-            ? `Highest bidder: ${shortId(auction.highestBidder)}`
+            ? `Highest bidder: ${auction.highestBidder}`
             : 'No bids yet — be the first!'}
       </p>
     </>
