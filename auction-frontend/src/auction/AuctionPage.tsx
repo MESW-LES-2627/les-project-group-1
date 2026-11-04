@@ -34,12 +34,15 @@ interface AuctionPageProps {
   winnerData: WinnerData | null;
   paymentUrl: string;
   myId: string;
-  socketId?: string;
   activeImage: number;
   onImageChange: (index: number) => void;
   now: number;
   onChangeEmail: () => void;
   onReset: () => void;
+  onSignUpClick?: () => void;
+  onLoginClick?: () => void;
+  onLogout?: () => void;
+  isLoggedIn?: boolean;
   isResetting: boolean;
   resetError: string;
 }
@@ -55,7 +58,6 @@ export function AuctionPage({
   winnerData,
   paymentUrl,
   myId,
-  socketId,
   activeImage,
   onImageChange,
   now,
@@ -63,10 +65,14 @@ export function AuctionPage({
   onReset,
   isResetting,
   resetError,
+  onSignUpClick,
+  onLoginClick,
+  onLogout,
+  isLoggedIn
 }: AuctionPageProps) {
   return (
     <>
-      <Navbar />
+      <Navbar onSignUpClick={onSignUpClick} onLoginClick={onLoginClick} onLogout={onLogout} isLoggedIn={isLoggedIn} />
 
       <main id="top" className={styles.main}>
         <section className={styles.info}>
@@ -81,7 +87,7 @@ export function AuctionPage({
             onBidAmountChange={onBidAmountChange}
             onBid={onBid}
             error={error}
-            socketId={socketId}
+            myId={myId}
             now={now}
           />
 

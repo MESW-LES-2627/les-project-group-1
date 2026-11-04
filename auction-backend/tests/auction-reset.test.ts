@@ -3,9 +3,7 @@ import { afterAll, beforeAll, describe, expect, test } from 'bun:test';
 import type { AddressInfo } from 'node:net';
 import { io, type Socket } from 'socket.io-client';
 
-// First, it mocks the env variables
-
-process.env.DATABASE_URL = 'postgres://auction:auction@127.0.0.1:1/auction_test';
+// Configure external integrations before importing the server.
 process.env.STRIPE_SECRET_KEY = 'sk_test_auction_reset';
 process.env.RESEND_API_KEY = 're_test_auction_reset';
 process.env.FRONTEND_URL = 'http://localhost:5173';

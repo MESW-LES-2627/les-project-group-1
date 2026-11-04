@@ -1,7 +1,7 @@
 import type { FormEventHandler } from 'react';
 import type { AuctionState, WinnerData } from '../auction/types';
 import { MIN_INCREMENT } from '../auction/data';
-import { formatEuro, formatTimeLeft, shortId } from '../auction/utils';
+import { formatEuro, formatTimeLeft } from '../auction/utils';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -33,7 +33,7 @@ interface BidPanelProps {
   onBidAmountChange: (value: string) => void;
   onBid: FormEventHandler<HTMLFormElement>;
   error: string;
-  socketId?: string;
+  myId: string;
   now: number;
 }
 
@@ -47,7 +47,7 @@ export function BidPanel({
   onBidAmountChange,
   onBid,
   error,
-  socketId,
+  myId,
   now,
 }: BidPanelProps) {
   // Keep the completed-auction result in the same card-based visual language.
@@ -58,7 +58,7 @@ export function BidPanel({
         <p className={styles.winnerText}>
           Winner:{' '}
           <strong>
-            {winnerData.winner === socketId ? 'You!' : winnerData.winner ? shortId(winnerData.winner) : 'No one'}
+            {winnerData.winner === myId ? 'You!' : winnerData.winner ? winnerData.winner : 'No one'}
           </strong>
         </p>
         <p className={styles.winnerText}>
@@ -115,6 +115,13 @@ export function BidPanel({
         </span>
         <span className={urgent ? 'text-danger-strong' : 'text-danger-deep'}>{formatTimeLeft(msLeft)}</span>
       </div>
+      <p className="mt-2 mr-[14px] ml-[14px] font-bold text-[#555]">
+        {auction.highestBidder === myId
+          ? "You're the highest bidder!"
+          : auction.highestBidder
+            ? `Highest bidder: ${auction.highestBidder}`
+            : 'No bids yet — be the first!'}
+      </p>
     </>
   );
 }

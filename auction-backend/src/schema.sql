@@ -1,3 +1,14 @@
+create table if not exists users(
+  id serial primary key,
+  username text unique not null,
+  email text unique not null,
+  password_hash text not null,
+  country text not null,
+  reset_token text,
+  reset_token_expires timestamptz,
+  created_at timestamptz not null default now()
+);
+
 create table if not exists winners (
   id serial primary key,
   item_name text not null,

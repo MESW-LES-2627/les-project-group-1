@@ -5,6 +5,8 @@ import cors from 'cors';
 import { createPaymentLink, stripeWebhook } from './src/payments';
 import { sendEmail } from './src/email';
 import { saveWinner } from './src/winners';
+import * as auth from './src/auth';
+import { sql } from './src/db';
 
 /**
  * Main auction server
@@ -14,6 +16,7 @@ import { saveWinner } from './src/winners';
 
 const app = express();
 app.use(cors());
+app.use(express.json())
 
 app.post(
   '/api/stripe/webhook',
@@ -29,6 +32,13 @@ const io = new Server(httpServer, {
     }
 });
 
+app.post("/api/auth/register", auth.registerUser);
+app.post("/api/auth/login", auth.loginUser);
+app.post('/api/auth/logout', (req, res) => {
+  return res.status(200).json({ message: 'Logged out successfully.' });
+}); // Simple logout endpoint; 
+app.post("/api/auth/forgot-password", auth.forgotPassword);
+app.post("/api/auth/reset-password", auth.resetPassword);
 
 
 
@@ -44,6 +54,8 @@ let auction = {
     highestBidder: null as string | null,
     endTime: Date.now() + AUCTION_DURATION,
     isActive: true,
+    bidCount: 0,
+    bids: [] as Array<{ bidder: string; country?: string; amount: number; timestamp: number }>,
 };
 let highestBidderEmail: string | null = null;
 
@@ -55,6 +67,8 @@ app.post("/api/auction/reset", (_req, res) => {
         highestBidder: null,
         endTime: Date.now() + AUCTION_DURATION,
         isActive: true,
+        bidCount: 0,
+        bids: [],
     };
     highestBidderEmail = null;
 
@@ -65,11 +79,31 @@ app.post("/api/auction/reset", (_req, res) => {
 
 
 
-io.on("connection", (socket) => {
+io.on("connection", async (socket) => {
     console.log(`New user connected: ${socket.id}`);
+    
     const email = socket.handshake.auth.email;
-    socket.data.email =
-        typeof email === "string" && email.includes("@") ? email.trim() : "";
+    const clientUsername = socket.handshake.auth.username; 
+    socket.data.email = typeof email === "string" && email.includes("@") ? email.trim() : ""; 
+    socket.data.username = typeof clientUsername === "string" ? clientUsername.trim() : "";
+    socket.data.country = "";
+
+    // If the user is logged in (email is provided), fetch their username and country from the database
+    if (socket.data.email) {
+        try {
+            const userRecord = await sql`select username, country from users where lower(email) = lower(${socket.data.email})`;
+            if (userRecord.length > 0) {
+                // If the username is not provided by the client, use the one from the database
+                if (!socket.data.username) {
+                    socket.data.username = userRecord[0].username;
+                }
+                // If the country is not provided by the client, use the one from the database
+                socket.data.country = userRecord[0].country || "";
+            }
+        } catch (err) {
+            console.error("Could not fetch user info for socket:", err);
+        }
+    }
 
     // Send current state to the newly connected user
     socket.emit("auction_state", auction);
@@ -93,9 +127,20 @@ io.on("connection", (socket) => {
 
         // Only accept higher bids
         if (bidAmount > auction.currentBid) {
+            const bidderName = socket.data.username || socket.id;
+            const bidderCountry = socket.data.country;
             auction.currentBid = bidAmount;
-            auction.highestBidder = socket.id;
+            auction.highestBidder = bidderName;
             highestBidderEmail = socket.data.email;
+
+            auction.bidCount = (auction.bidCount || 0) + 1;
+            if (!auction.bids) auction.bids = [];
+            auction.bids.unshift({
+                bidder: bidderName,
+                country: bidderCountry,
+                amount: bidAmount,
+                timestamp: Date.now(),
+            });
 
             // Broadcast the updated state to all connected clients
             io.emit("auction_state", auction);
