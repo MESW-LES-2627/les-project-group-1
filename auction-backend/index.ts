@@ -51,7 +51,7 @@ let auction = {
     endTime: Date.now() + AUCTION_DURATION,
     isActive: true,
     bidCount: 0,
-    bids: [] as Array<{ bidder: string; amount: number; timestamp: number }>,
+    bids: [] as Array<{ bidder: string; country?: string; amount: number; timestamp: number }>,
 };
 let highestBidderEmail: string | null = null;
 
@@ -79,19 +79,25 @@ io.on("connection", async (socket) => {
     console.log(`New user connected: ${socket.id}`);
     
     const email = socket.handshake.auth.email;
-    const clientUsername = socket.handshake.auth.username; // usarnamw provided by the fronted
-    socket.data.email = typeof email === "string" && email.includes("@") ? email.trim() : ""; // Validate email format
-
-    // If the username is not provided, try to fetch it from the database using the email
+    const clientUsername = socket.handshake.auth.username; 
+    socket.data.email = typeof email === "string" && email.includes("@") ? email.trim() : ""; 
     socket.data.username = typeof clientUsername === "string" ? clientUsername.trim() : "";
-    if (!socket.data.username && socket.data.email) {
+    socket.data.country = "";
+
+    // If the user is logged in (email is provided), fetch their username and country from the database
+    if (socket.data.email) {
         try {
-            const userRecord = await sql`select username from users where lower(email) = lower(${socket.data.email})`;
+            const userRecord = await sql`select username, country from users where lower(email) = lower(${socket.data.email})`;
             if (userRecord.length > 0) {
-                socket.data.username = userRecord[0].username;
+                // If the username is not provided by the client, use the one from the database
+                if (!socket.data.username) {
+                    socket.data.username = userRecord[0].username;
+                }
+                // If the country is not provided by the client, use the one from the database
+                socket.data.country = userRecord[0].country || "";
             }
         } catch (err) {
-            console.error("Could not fetch username for socket:", err);
+            console.error("Could not fetch user info for socket:", err);
         }
     }
 
@@ -118,6 +124,7 @@ io.on("connection", async (socket) => {
         // Only accept higher bids
         if (bidAmount > auction.currentBid) {
             const bidderName = socket.data.username || socket.id;
+            const bidderCountry = socket.data.country;
             auction.currentBid = bidAmount;
             auction.highestBidder = bidderName;
             highestBidderEmail = socket.data.email;
@@ -126,6 +133,7 @@ io.on("connection", async (socket) => {
             if (!auction.bids) auction.bids = [];
             auction.bids.unshift({
                 bidder: bidderName,
+                country: bidderCountry,
                 amount: bidAmount,
                 timestamp: Date.now(),
             });

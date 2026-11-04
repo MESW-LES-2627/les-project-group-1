@@ -1,4 +1,6 @@
 import React from 'react';
+import {flagEmoji} from '../auction/utils';
+import {COUNTRIES} from '../auction/countries';
 
 interface RegisterFormProps {
     username: string;
@@ -72,22 +74,32 @@ export function RegisterForm({
             onChange={(e) => onEmailChange(e.target.value)}
             required
             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            placeholder="teu.email@feup.pt"
+            placeholder="Your email"
           />
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Country
-          </label>
-          <input
-            type="text"
+          <div className="flex items-center justify-between mb-1">
+            <label className="block text-sm font-medium text-gray-700">
+              Country
+            </label>
+            <span className="text-xl" title={country}>
+              {flagEmoji(country)}
+            </span>
+          </div>
+          <select
             value={country}
             onChange={(e) => onCountryChange(e.target.value)}
             required
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            placeholder="Portugal"
-          />
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+          >
+            <option value="">Select your country...</option>
+            {COUNTRIES.map((c) => (
+              <option key={c.code} value={c.code}>
+                {flagEmoji(c.code)} {c.name}
+              </option>
+            ))}
+          </select>
         </div>
 
         <div>

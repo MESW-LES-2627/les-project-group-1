@@ -171,6 +171,7 @@ function AuctionApp() {
       setTimeout(() => {
         localStorage.setItem('bidderUsername', valueUsername);
         localStorage.setItem('bidderEmail', value);
+        localStorage.setItem('bidderCountry', registerCountry);
         setUsername(valueUsername);
         setEmail(value);
         setShowRegisterForm(false);
@@ -202,7 +203,7 @@ function AuctionApp() {
         body: JSON.stringify({ email: valueEmail, password: loginPassword }),
       });
 
-      const data = (await response.json()) as { error?: string; user?: { username: string; email: string } };
+      const data = (await response.json()) as { error?: string; user?: { username: string; email: string, country?: string } };
       if (!response.ok) throw new Error(data.error || 'Error logging in. Please try again.');
       
 
@@ -211,6 +212,11 @@ function AuctionApp() {
       if (loggedUsername) {
         localStorage.setItem('bidderUsername', loggedUsername);
         setUsername(loggedUsername);
+      }
+      
+      const loggedCountry = data.user?.country || '';
+      if (loggedCountry) {
+        localStorage.setItem('bidderCountry', loggedCountry);
       }
       
       setEmail(data.user?.email || valueEmail);
