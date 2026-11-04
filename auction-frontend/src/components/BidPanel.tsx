@@ -1,7 +1,7 @@
 import type { FormEventHandler } from 'react';
 import type { AuctionState, WinnerData } from '../auction/types';
 import { MIN_INCREMENT } from '../auction/data';
-import { formatEuro, formatTimeLeft, shortId } from '../auction/utils';
+import { formatEuro, formatTimeLeft } from '../auction/utils';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -33,7 +33,6 @@ interface BidPanelProps {
   onBidAmountChange: (value: string) => void;
   onBid: FormEventHandler<HTMLFormElement>;
   error: string;
-  socketId?: string;
   myId: string;
   now: number;
 }
@@ -48,7 +47,6 @@ export function BidPanel({
   onBidAmountChange,
   onBid,
   error,
-  socketId,
   myId,
   now,
 }: BidPanelProps) {

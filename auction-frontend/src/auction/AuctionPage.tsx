@@ -34,7 +34,6 @@ interface AuctionPageProps {
   winnerData: WinnerData | null;
   paymentUrl: string;
   myId: string;
-  socketId?: string;
   activeImage: number;
   onImageChange: (index: number) => void;
   now: number;
@@ -58,7 +57,6 @@ export function AuctionPage({
   winnerData,
   paymentUrl,
   myId,
-  socketId,
   activeImage,
   onImageChange,
   now,
@@ -87,7 +85,6 @@ export function AuctionPage({
             onBidAmountChange={onBidAmountChange}
             onBid={onBid}
             error={error}
-            socketId={socketId}
             myId={myId}
             now={now}
           />

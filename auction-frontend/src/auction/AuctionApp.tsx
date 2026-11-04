@@ -26,7 +26,6 @@ function AuctionApp() {
   const [error, setError] = useState('');
   const [resetError, setResetError] = useState('');
   const [isResetting, setIsResetting] = useState(false);
-  const [myId, setMyId] = useState(socket.id ?? '');
   const lastBidRef = useRef<number | null>(null);
   const [paymentUrl, setPaymentUrl] = useState('');
   //const [] = useState('');
@@ -86,7 +85,6 @@ function AuctionApp() {
 
     const requestState = () => socket.emit('get_auction_state');
     const onConnect = () => {
-      setMyId(socket.id ?? '');
       requestState();
     };
     const onError = (socketError: Error) => console.error('Socket connection error:', socketError.message);
@@ -371,7 +369,6 @@ function AuctionApp() {
       winnerData={winnerData}
       paymentUrl={paymentUrl}
       myId={email ? username : ''}
-      socketId={socket.id}
       activeImage={activeImage}
       onImageChange={setActiveImage}
       now={now}
