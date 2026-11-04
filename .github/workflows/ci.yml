@@ -75,13 +75,13 @@ jobs:
         working-directory: auction-backend
         run: bun build index.ts --target=bun --outdir=/tmp/assist-club-backend-build
 
-      - name: Run tests
-        working-directory: auction-backend
-        run: bun run test
-
       - name: Apply database schema
         working-directory: auction-backend
         run: bun run src/migrate.ts
+
+      - name: Run tests
+        working-directory: auction-backend
+        run: bun run test
 
   deploy:
     name: Deploy
