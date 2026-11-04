@@ -10,6 +10,7 @@ interface LoginFormProps {
     error: string|null;
     onSwitchToRegister: () => void;
     onBackToAuction: () => void;
+    onSwitchToForgotPassword: () => void;
 }
 
 export function LoginForm({
@@ -22,6 +23,7 @@ export function LoginForm({
     error,
     onSwitchToRegister,
     onBackToAuction,
+    onSwitchToForgotPassword,
 }: LoginFormProps){
   return (
     <div className="max-w-md mx-auto mt-10 p-6 bg-white rounded-lg shadow-md border border-gray-200">
@@ -51,9 +53,18 @@ export function LoginForm({
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Password
-          </label>
+          <div className="flex justify-between items-center mb-1">
+            <label className="block text-sm font-medium text-gray-700">
+              Password
+            </label>
+            <button
+              type="button"
+              onClick={onSwitchToForgotPassword}
+              className="text-xs text-blue-600 hover:underline font-medium cursor-pointer"
+            >
+              Forgot password?
+            </button>
+          </div>
           <input
             type="password"
             value={password}

@@ -5,8 +5,7 @@ import cors from 'cors';
 import { createPaymentLink, stripeWebhook } from './src/payments';
 import { sendEmail } from './src/email';
 import { saveWinner } from './src/winners';
-import { registerUser } from './src/auth';
-import { loginUser } from './src/auth';
+import * as auth from './src/auth';
 import { sql } from './src/db';
 
 /**
@@ -33,11 +32,13 @@ const io = new Server(httpServer, {
     }
 });
 
-app.post("/api/auth/register", registerUser);
-app.post("/api/auth/login", loginUser);
+app.post("/api/auth/register", auth.registerUser);
+app.post("/api/auth/login", auth.loginUser);
 app.post('/api/auth/logout', (req, res) => {
   return res.status(200).json({ message: 'Logged out successfully.' });
 }); // Simple logout endpoint; 
+app.post("/api/auth/forgot-password", auth.forgotPassword);
+app.post("/api/auth/reset-password", auth.resetPassword);
 
 
 

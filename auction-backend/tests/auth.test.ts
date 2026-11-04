@@ -171,7 +171,7 @@ describe("POST /api/auth/logout", () => {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        email: "test@feup.pt", 
+        email: "test@feup.pt", // email aldeady registered in the first test
         password: "securepassword123",
       }),
     });
@@ -186,4 +186,54 @@ describe("POST /api/auth/logout", () => {
     expect(response.status).toBe(200);
     expect(data.message).toBe("Logged out successfully.");
   });
+});
+
+/*****************
+- PASSWORD RESET: *
+ *****************/
+
+describe("POST /api/auth/forgot-password & /api/auth/reset-password", () => {
+  
+  it("should request password reset successfully for existing email", async () => {
+    const response = await fetch(`${BASE_URL}/api/auth/forgot-password`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email: "test@feup.pt" }),
+    });
+
+    const data = await response.json();
+    expect(response.status).toBe(200);
+    expect(data.message).toBe("If the email exists, a reset link has been sent.");
+  });
+
+  it("should fail to reset password if token is invalid or expired", async () => {
+    const response = await fetch(`${BASE_URL}/api/auth/reset-password`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ 
+        token: "fake-invalid-token-12345", 
+        newPassword: "newsecurepassword123" 
+      }),
+    });
+
+    const data = await response.json();
+    expect(response.status).toBe(400);
+    expect(data.error).toBe("Invalid or expired reset token.");
+  });
+
+  it("should fail to reset password if new password is less than 8 characters", async () => {
+    const response = await fetch(`${BASE_URL}/api/auth/reset-password`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ 
+        token: "some-token", 
+        newPassword: "short" 
+      }),
+    });
+
+    const data = await response.json();
+    expect(response.status).toBe(400);
+    expect(data.error).toBe("Password must be at least 8 characters long.");
+  });
+
 });

@@ -8,6 +8,9 @@ import type { AuctionState, Bid, WinnerData } from './types';
 import { formatEuro } from './utils';
 import { RegisterForm } from '../components/RegisterForm';
 import { LoginForm } from '../components/LoginForm';
+import { ForgotPassword } from '../components/ForgotPassword';   
+import { ResetPassword } from '../components/ResetPassword';
+
 
 // Register event listeners before connecting so the initial state is not missed.
 const socketUrl =
@@ -52,6 +55,12 @@ function AuctionApp() {
   //Login vs Register
   const [showAuthChoice, setShowAuthChoice] = useState(false);
   const [authView, setAuthView] = useState<'register' | 'login' | null>(null);
+
+  //Forgot password
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
+  const queryParams = new URLSearchParams(window.location.search);
+  const resetTokenParam = queryParams.get('token');
+  const [showResetPassword, setShowResetPassword] = useState(Boolean(resetTokenParam));
 
   useEffect(() => {
 
@@ -368,6 +377,43 @@ function AuctionApp() {
             onBackToAuction={() => {
               setShowLoginForm(false);
               setAuthView(null);
+            }}
+            onSwitchToForgotPassword={() => {
+              setShowLoginForm(false);
+              setShowForgotPassword(true);
+            }}
+          />
+        </div>
+      </div>
+    );
+  }
+
+  //Forgot Password 
+  if (showForgotPassword) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center py-12 px-4">
+        <div className="w-full max-w-md">
+          <ForgotPassword
+            onBackToLogin={() => {
+              setShowForgotPassword(false);
+              setShowLoginForm(true);
+            }}
+          />
+        </div>
+      </div>
+    );
+  }
+
+  //Reset Passowrd
+  if (showResetPassword) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center py-12 px-4">
+        <div className="w-full max-w-md">
+          <ResetPassword
+            onSuccessfulReset={() => {
+              window.history.replaceState({}, document.title, window.location.pathname);
+              setShowResetPassword(false);
+              setShowLoginForm(true);
             }}
           />
         </div>
