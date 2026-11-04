@@ -40,6 +40,9 @@ interface AuctionPageProps {
   now: number;
   onChangeEmail: () => void;
   onReset: () => void;
+  onSignUpClick?: () => void;
+  onLoginClick?: () => void;
+  isLoggedIn?: boolean;
   isResetting: boolean;
   resetError: string;
 }
@@ -63,10 +66,13 @@ export function AuctionPage({
   onReset,
   isResetting,
   resetError,
+  onSignUpClick,
+  onLoginClick,
+  isLoggedIn
 }: AuctionPageProps) {
   return (
     <>
-      <Navbar />
+      <Navbar onSignUpClick={onSignUpClick} onLoginClick={onLoginClick} isLoggedIn={isLoggedIn} />
 
       <main id="top" className={styles.main}>
         <section className={styles.info}>

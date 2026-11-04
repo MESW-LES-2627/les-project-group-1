@@ -35,6 +35,7 @@ function AuctionApp() {
 
   //Register
   const [showRegisterForm, setShowRegisterForm] = useState(false);
+  const [registerEmail, setRegisterEmail] = useState('');
   const [registerUsername, setRegisterUsername] = useState('');
   const [registerPassword, setRegisterPassword] = useState('');
   const [registerCountry, setRegisterCountry] = useState('');
@@ -51,6 +52,7 @@ function AuctionApp() {
 
   //Login vs Register
   const [showAuthChoice, setShowAuthChoice] = useState(false);
+  const [authView, setAuthView] = useState<'register' | 'login' | null>(null);
 
   useEffect(() => {
 
@@ -145,7 +147,7 @@ function AuctionApp() {
   const handleRegisterSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const valueUsername = registerUsername.trim();
-    const value = email.trim();
+    const value = registerEmail.trim();
     if (!valueUsername ||!value || !registerPassword) return;
 
     setRegisterLoading(true);
@@ -175,8 +177,10 @@ function AuctionApp() {
         setUsername(valueUsername);
         setEmail(value);
         setShowRegisterForm(false);
+        setAuthView(null);
         setRegisterSuccessMessage(null);
         setRegisterPassword('');
+        setRegisterEmail('');
       }, 1200);
 
     } catch (err: any) {
@@ -221,6 +225,7 @@ function AuctionApp() {
       
       setEmail(data.user?.email || valueEmail);
       setShowLoginForm(false);
+      setAuthView(null);
       setLoginPassword('');
     } catch (err: any) {
       setLoginError(err.message);
@@ -290,17 +295,17 @@ function AuctionApp() {
   }
 
   //Register form
-  if (showRegisterForm) {
+  if (showRegisterForm || authView === 'register') {
     return (
       <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center py-12 px-4">
         <div className="w-full max-w-md">
           <RegisterForm
             username={registerUsername}
-            email={email}
+            email={registerEmail}
             password={registerPassword}
             country={registerCountry}
             onUsernameChange={setRegisterUsername}
-            onEmailChange={setEmail}
+            onEmailChange={setRegisterEmail}
             onPasswordChange={setRegisterPassword}
             onCountryChange={setRegisterCountry}
             onSubmit={handleRegisterSubmit}
@@ -312,7 +317,10 @@ function AuctionApp() {
           <div className="text-center mt-4">
             <button
               type="button"
-              onClick={() => setShowRegisterForm(false)}
+              onClick={() => {
+                setShowRegisterForm(false);
+                setAuthView(null);
+              }}
               className="text-sm text-gray-600 hover:underline font-medium cursor-pointer"
             >
               ← Back to auction
@@ -324,7 +332,7 @@ function AuctionApp() {
   }
 
   //Login form
-  if (showLoginForm) {
+  if (showLoginForm || authView === 'login') {
     return (
       <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center py-12 px-4">
         <div className="w-full max-w-md">
@@ -340,7 +348,10 @@ function AuctionApp() {
               setShowLoginForm(false);
               setShowRegisterForm(true);
             }}
-            onBackToAuction={() => setShowLoginForm(false)}
+            onBackToAuction={() => {
+              setShowLoginForm(false);
+              setAuthView(null);
+            }}
           />
         </div>
       </div>
@@ -368,6 +379,22 @@ function AuctionApp() {
       onReset={handleReset}
       isResetting={isResetting}
       resetError={resetError}
+      onSignUpClick={() => {
+        setRegisterUsername('');
+        setRegisterEmail('');
+        setRegisterPassword('');
+        setRegisterCountry('');
+        setRegisterError(null);
+        setRegisterSuccessMessage(null);
+        setAuthView('register');
+      }}
+      onLoginClick={() => {
+        setLoginEmail('');
+        setLoginPassword('');
+        setLoginError(null);
+        setAuthView('login');
+      }}
+      isLoggedIn={Boolean(email)}
     />
   );
 }

@@ -38,8 +38,14 @@ const styles = {
     'inline-flex w-fit rounded-[22px] border-2 border-ink-strong bg-ink-strong px-5 py-2 text-[clamp(0.9rem,1.05vw,1.3rem)] font-bold text-white no-underline',
 };
 
+interface NavbarProps {
+  onSignUpClick?: () => void;
+  onLoginClick?: () => void;
+  isLoggedIn?: boolean;
+}
+
 // Slim responsive site navigation, using the public brand mark and shadcn inputs/buttons.
-export function Navbar() {
+export function Navbar({ onSignUpClick, onLoginClick, isLoggedIn }: NavbarProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   const closeMenu = () => setIsMenuOpen(false);
@@ -67,12 +73,26 @@ export function Navbar() {
       </nav>
 
       <div className={styles.account}>
-        <Button asChild variant="navbarPrimary" size="navbar">
-          <a href="#signup">SIGN UP</a>
-        </Button>
-        <Button asChild variant="navbarOutline" size="navbar">
-          <a href="#login">LOGIN</a>
-        </Button>
+        {!isLoggedIn && (
+          <>
+            <Button variant="navbarPrimary" size="navbar" onClick={onSignUpClick}>
+              <a href="#signup">SIGN UP</a>
+            </Button>
+            <Button variant="navbarOutline" size="navbar" onClick={onLoginClick}>
+              <a href="#login">LOGIN</a>
+            </Button>
+          </>
+        )}
+        {isLoggedIn && (
+          <>
+            <Button variant="navbarPrimary" size="navbar">
+              <a href="#profile">PROFILE</a>
+            </Button>
+            <Button variant="navbarOutline" size="navbar">
+              <a href="#logout">LOGOUT</a>
+            </Button>
+          </>
+        )}
         <button
           type="button"
           className={styles.menuButton}
