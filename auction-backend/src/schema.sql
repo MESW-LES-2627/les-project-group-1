@@ -5,7 +5,7 @@ create table if not exists users(
   password_hash text not null,
   country text not null,
   reset_token text,
-  resert_token_expiry timestamptz,
+  reset_token_expires timestamptz,
   created_at timestamptz not null default now()
 );
 
