@@ -28,8 +28,7 @@ function AuctionApp() {
   const [myId, setMyId] = useState(socket.id ?? '');
   const lastBidRef = useRef<number | null>(null);
   const [paymentUrl, setPaymentUrl] = useState('');
-  const [email, setEmail] = useState('');
-  const [emailInput, setEmailInput] = useState(() => localStorage.getItem('bidderEmail') ?? '');
+  const [email, setEmail] = useState(() => localStorage.getItem('bidderEmail') ?? '');
 
   //Register
   const [showRegisterForm, setShowRegisterForm] = useState(false);
@@ -132,7 +131,7 @@ function AuctionApp() {
   const handleRegisterSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const valueUsername = registerUsername.trim();
-    const value = emailInput.trim();
+    const value = email.trim();
     if (!valueUsername ||!value || !registerPassword) return;
 
     setRegisterLoading(true);
@@ -191,11 +190,11 @@ function AuctionApp() {
         <div className="w-full max-w-md">
           <RegisterForm
             username={registerUsername}
-            email={emailInput}
+            email={email}
             password={registerPassword}
             country={registerCountry}
             onUsernameChange={setRegisterUsername}
-            onEmailChange={setEmailInput}
+            onEmailChange={setEmail}
             onPasswordChange={setRegisterPassword}
             onCountryChange={setRegisterCountry}
             onSubmit={handleRegisterSubmit}

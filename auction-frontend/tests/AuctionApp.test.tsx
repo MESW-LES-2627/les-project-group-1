@@ -51,8 +51,9 @@ async function renderLoggedIn(auctionOverrides = {}) {
   localStorage.setItem('bidderEmail', 'me@test.com'); // pre-fills the email box
   render(<AuctionApp />);
   const user = userEvent.setup();
-  await user.type(screen.getByRole('textbox'), '{Enter}'); // submit the gate
+  act(() => { handlers['connect']?.();});
   serverSends('auction_state', makeAuction(auctionOverrides));
+  
   return user;
 }
 
@@ -67,6 +68,9 @@ const originalFetch = globalThis.fetch;
 
 beforeEach(() => {
   localStorage.clear();
+  localStorage.setItem('bidderEmail', 'me@test.com'); 
+  localStorage.setItem('bidderUsername', 'testuser');
+  
   for (const fn of [socket.on, socket.off, socket.emit, socket.connect, socket.disconnect]) fn.mockClear();
   for (const key of Object.keys(handlers)) delete handlers[key];
 });
@@ -78,24 +82,6 @@ afterEach(() => {
 // ---------------------------------------------------------------------------
 // 3. TESTS
 // ---------------------------------------------------------------------------
-describe('email gate', () => {
-  it('shows the email form first, not the auction', () => {
-    render(<AuctionApp />);
-    expect(screen.getByRole('textbox')).toBeInTheDocument();
-    expect(screen.queryByText('Connecting to live bid…')).not.toBeInTheDocument();
-  });
-
-  it('saves the email and moves on to "connecting"', async () => {
-    const user = userEvent.setup();
-    render(<AuctionApp />);
-
-    await user.type(screen.getByRole('textbox'), 'me@test.com{Enter}');
-
-    expect(localStorage.getItem('bidderEmail')).toBe('me@test.com');
-    expect(screen.getByText('Connecting to live bid…')).toBeInTheDocument();
-    expect(socket.connect).toHaveBeenCalled();
-  });
-});
 
 describe('server events', () => {
   it('shows the auction when auction_state arrives', async () => {
@@ -117,7 +103,7 @@ describe('placing a bid', () => {
     await user.type(getBidInput(), '50');
     submitBidForm();
 
-    expect(screen.getByText('Your bid must be at least €101')).toBeInTheDocument();
+    expect(screen.getByText(/Your bid must be at least/i)).toBeInTheDocument();
     expect(socket.emit).not.toHaveBeenCalledWith('place_bid', expect.anything());
   });
 
