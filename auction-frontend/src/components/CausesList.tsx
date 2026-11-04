@@ -1,23 +1,33 @@
 import { ITEM } from '../auction/data';
 
+const styles = {
+  section: 'mt-8 max-mobile:mt-7',
+  title: 'mb-[22px] text-[clamp(1.9rem,2.35vw,2.8rem)] font-extrabold tracking-[-0.04em]',
+  list: 'm-0 flex list-none flex-col gap-7 p-0 max-mobile:gap-5',
+  row: 'flex items-center gap-6 max-mobile:items-start max-mobile:gap-[14px]',
+  logo: 'flex size-[clamp(82px,8vw,112px)] shrink-0 items-center justify-center max-mobile:size-[72px]',
+  causeName: 'mb-[3px] text-[clamp(1.2rem,1.7vw,2rem)] font-bold tracking-[-0.03em] max-mobile:text-[1.1rem]',
+  description: 'm-0 max-w-[760px] text-[clamp(1rem,1.45vw,1.65rem)] leading-[1.2] font-normal max-mobile:text-[0.9rem]',
+};
+
 //Displays the list of chariable causes supported by this auction
 export function CausesList() {
   return (
-    <>
-      <h2 className="mt-7 mb-[14px] text-2xl font-extrabold text-[#0a0a0a]">Supported cause</h2>
-      <ul className="m-0 flex list-none flex-col gap-6 p-0">
+    <section className={styles.section}>
+      <h2 className={styles.title}>Supported cause</h2>
+      <ul className={styles.list}>
         {ITEM.causes.map((cause) => (
-          <li key={cause.name} className="flex items-center gap-6 max-[960px]:gap-[14px]">
-            <div className="size-28 shrink-0 rounded-[14px] bg-card p-[10px] max-[960px]:size-24">
-              <img className="h-full w-full object-contain" src={cause.logo} alt="" />
+          <li key={cause.name} className={styles.row}>
+            <div className={styles.logo}>
+              <img src={cause.logo} alt="" />
             </div>
             <div>
-              <h3 className="mb-1.5 text-[1.4rem] font-extrabold">{cause.name}</h3>
-              <p className="max-w-[460px] text-[1.05rem] leading-[1.25] font-normal max-[960px]:text-[1.1rem]">{cause.description}</p>
+              <h3 className={styles.causeName}>{cause.name}</h3>
+              <p className={styles.description}>{cause.description}</p>
             </div>
           </li>
         ))}
       </ul>
-    </>
+    </section>
   );
 }

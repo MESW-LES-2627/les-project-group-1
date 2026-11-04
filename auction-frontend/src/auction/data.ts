@@ -1,12 +1,12 @@
 // Static data for the auctioned item, player info, and supported charities.
 export const ITEM = {
   subtitle: 'The Urban Flare - The Ocean Surge',
-  tags: ['worn', 'signed'],
+  tags: ['Worn', 'Signed'],
   images: ['/jersey-front.png', '/jersey-back.png'],
 
   //Athele profile and jersey specidications.
   player: { 
-    name: 'VELOCITY',
+    name: 'Velocity',
     nickname: 'The Urban Flare',
     age: 30,
     position: 'Midfielder',
@@ -21,7 +21,7 @@ export const ITEM = {
   causes: [
     {
       name: 'Fundação Semear Futuro',
-      description: '100% of proceeds support sports access for underpriveleged children.',
+      description: '100% of proceeds support sports access for underprivileged children.',
       logo: '/cause-semear-futuro.png',
     },
     {

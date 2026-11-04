@@ -1,11 +1,32 @@
 import { LATEST_BIDS_SHOWN } from '../auction/data';
 import type { Bid } from '../auction/types';
-import { flagEmoji, formatDate, formatEuroSuffix} from '../auction/utils';
+import { flagEmoji, formatDate, formatEuroSuffix, shortId } from '../auction/utils';
+import { cn } from '@/lib/utils';
+import { Button } from '@/components/ui/button';
+import { Card, CardHeader, CardTitle } from '@/components/ui/card';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+
+const cell = 'border-t-2 border-line px-[14px] py-[10px] text-center max-mobile:px-1 max-mobile:py-[9px] max-mobile:text-[0.72rem]';
+
+const styles = {
+  card: 'gap-0 overflow-hidden rounded-xl bg-chalk p-0 shadow-[4px_6px_8px_rgba(0,0,0,0.23)] ring-0',
+  header: 'flex items-center justify-between gap-0 rounded-none bg-panel-strong px-[18px] py-2 max-mobile:px-3 max-mobile:py-[9px]',
+  title: 'text-[clamp(1.8rem,2.35vw,2.8rem)] font-extrabold tracking-[-0.04em] max-mobile:text-2xl',
+  viewAll: 'h-auto p-0 text-[clamp(1rem,1.2vw,1.4rem)] font-bold text-info underline decoration-1 underline-offset-[3px] max-mobile:text-[0.9rem]',
+  tableHeading: 'px-[10px] pt-3 pb-2 text-center text-[clamp(0.8rem,1vw,1.15rem)] font-bold text-slate capitalize max-mobile:px-1 max-mobile:text-[0.7rem]',
+  row: 'hover:bg-transparent',
+  emptyCell: 'border-t-2 border-line px-4 py-4 text-center font-bold text-grey-strong',
+  bidderCell: `${cell} text-[clamp(0.9rem,1.1vw,1.25rem)] font-extrabold`,
+  bidCell: `${cell} text-[clamp(0.9rem,1.1vw,1.25rem)] font-bold`,
+  flag: 'mr-4 text-[1.25em] align-[-2px] max-mobile:mr-1',
+  youBadge: 'ml-2.5 rounded-full bg-purple px-2 py-0.5 text-xs font-extrabold text-white uppercase',
+};
 
 /**
- * LastestBids Component
+ * LatestBids component
  * 
- * Displays a table of recent bids for the auction item.
+ * Displays recent bids in shadcn Card/Table primitives, restyled to the auction reference.
+ * Bidder IDs are extra-bold; the date and amount columns are bold.
  */
 
 interface LatestBidsProps {
@@ -15,45 +36,47 @@ interface LatestBidsProps {
 
 export function LatestBids({ bids, myId }: LatestBidsProps) {
   return (
-    <div className="max-w-[640px] overflow-hidden rounded-[14px] bg-card shadow-[0_6px_24px_rgba(0,0,0,0.08)]">
-      <div className="flex items-center justify-between bg-[#dcdcdc] px-7 py-4">
-        <h3 className="m-0 text-[1.4rem] font-extrabold">LATEST BIDS</h3>
-        <a className="text-[1.2rem] font-extrabold text-link" href="#all-bids">VIEW ALL</a>
-      </div>
-      <table className="w-full border-collapse">
-        <thead>
-          <tr>
-            <th className="px-5 pt-[14px] pb-2 text-center text-[15px] font-bold text-[#555]">BIDDER</th>
-            <th className="px-5 pt-[14px] pb-2 text-center text-[15px] font-bold text-[#555]">DATE</th>
-            <th className="px-5 pt-[14px] pb-2 text-center text-[15px] font-bold text-[#555]">BID</th>
-          </tr>
-        </thead>
-        <tbody>
+    <Card className={styles.card}>
+      <CardHeader className={styles.header}>
+        <CardTitle className={styles.title}>Latest bids</CardTitle>
+        <Button asChild variant="link" className={styles.viewAll}>
+          <a href="#all-bids">View all</a>
+        </Button>
+      </CardHeader>
+      <Table>
+        <TableHeader>
+          <TableRow className={cn('border-b-0', styles.row)}>
+            <TableHead className={styles.tableHeading}>Bidder</TableHead>
+            <TableHead className={styles.tableHeading}>Date</TableHead>
+            <TableHead className={styles.tableHeading}>Bid</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
           {bids.length === 0 ? (
-            <tr>
-              <td colSpan={3} className="border-t-2 border-[#e8e8e8] px-5 py-[14px] text-center text-[15px] font-extrabold text-muted">
+            <TableRow className={styles.row}>
+              <TableCell colSpan={3} className={styles.emptyCell}>
                 No bids yet
-              </td>
-            </tr>
+              </TableCell>
+            </TableRow>
           ) : (
             bids.slice(0, LATEST_BIDS_SHOWN).map((bid, index) => (
-              <tr key={`${bid.timestamp}-${index}`}>
-                <td className="border-t-2 border-[#e8e8e8] px-5 py-[14px] text-center text-[15px] font-extrabold first:text-left">
-                  <span className="mr-[18px] text-2xl">{flagEmoji(bid.country)}</span>
-                  {bid.bidder}
+              <TableRow key={`${bid.timestamp}-${index}`} className={styles.row}>
+                <TableCell className={styles.bidderCell}>
+                  <span className={styles.flag}>{flagEmoji(bid.country)}</span>
+                  {shortId(bid.bidder)}
                   {bid.bidder === myId && (
-                    <span className="ml-2.5 rounded-full bg-purple px-2 py-0.5 text-xs font-extrabold text-white uppercase">
+                    <span className={styles.youBadge}>
                       you
                     </span>
                   )}
-                </td>
-                <td className="border-t-2 border-[#e8e8e8] px-5 py-[14px] text-center text-[15px] font-extrabold">{formatDate(bid.timestamp)}</td>
-                <td className="border-t-2 border-[#e8e8e8] px-5 py-[14px] text-center text-[15px] font-extrabold">{formatEuroSuffix(bid.amount)}</td>
-              </tr>
+                </TableCell>
+                <TableCell className={styles.bidCell}>{formatDate(bid.timestamp)}</TableCell>
+                <TableCell className={styles.bidCell}>{formatEuroSuffix(bid.amount)}</TableCell>
+              </TableRow>
             ))
           )}
-        </tbody>
-      </table>
-    </div>
+        </TableBody>
+      </Table>
+    </Card>
   );
 }

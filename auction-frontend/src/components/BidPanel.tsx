@@ -2,8 +2,28 @@ import type { FormEventHandler } from 'react';
 import type { AuctionState, WinnerData } from '../auction/types';
 import { MIN_INCREMENT } from '../auction/data';
 import { formatEuro, formatTimeLeft, shortId } from '../auction/utils';
+import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
 
-//Props for the BidPanel component
+const styles = {
+  winnerCard: 'gap-0 rounded-lg border border-success-border bg-success-bg px-7 py-6 text-success-text ring-0',
+  winnerTitle: 'mb-2 text-[1.8rem] font-bold text-black',
+  winnerText: 'my-1 text-[1.4rem] font-bold',
+  panel:
+    'min-h-[148px] flex-row items-center justify-between gap-6 rounded-xl bg-panel-strong px-[30px] py-5 ring-0 max-mobile:min-h-0 max-mobile:flex-col max-mobile:items-stretch max-mobile:gap-5 max-mobile:p-5',
+  currentBid: 'text-[clamp(1.7rem,2.3vw,2.8rem)] leading-[1.1] font-bold text-ink-mid',
+  price: 'mt-[15px] text-[clamp(2.6rem,3.3vw,4rem)] leading-none font-extrabold max-mobile:mt-[7px]',
+  form: 'flex w-[min(31%,260px)] shrink-0 flex-col gap-3 max-mobile:w-full',
+  input:
+    'h-auto w-full rounded-[20px] border-[1.5px] border-grey bg-white px-[18px] py-[13px] text-center text-[1.4rem] font-bold text-ink shadow-none outline-none placeholder:text-grey-mid focus-visible:border-ink focus-visible:ring-0 disabled:cursor-not-allowed disabled:bg-surface-muted',
+  submit:
+    'h-auto cursor-pointer rounded-[20px] border-0 bg-ink-strong px-3 py-[14px] text-[clamp(1rem,1.25vw,1.45rem)] font-bold text-white transition-[opacity,transform] duration-150 hover:bg-ink-strong hover:opacity-[0.88] active:scale-[0.98] disabled:transform-none disabled:cursor-not-allowed disabled:opacity-40',
+  error: 'mt-[10px] font-bold text-danger',
+  meta: 'flex justify-between px-[18px] pt-2 text-[clamp(1.15rem,1.5vw,1.7rem)] font-semibold max-mobile:px-2 max-mobile:text-[1.05rem]',
+};
+
+// Props for the active and completed auction states.
 interface BidPanelProps {
   auction: AuctionState;
   bidCount: number;
@@ -18,7 +38,7 @@ interface BidPanelProps {
   now: number;
 }
 
-//BidPanel component display for duration of the auction and adter the auction has ended
+// Renders the shadcn bid card, with the current amount, bid form, and countdown.
 export function BidPanel({
   auction,
   bidCount,
@@ -32,29 +52,30 @@ export function BidPanel({
   myId,
   now,
 }: BidPanelProps) {
+  // Keep the completed-auction result in the same card-based visual language.
   if (winnerData) {
     return (
-      <div className="rounded-lg border border-[#c3e6cb] bg-[#d4edda] px-7 py-6 text-[#155724]">
-        <h2 className="mb-2 text-[1.8rem] text-black">Auction ended!</h2>
-        <p className="my-1 text-[1.4rem]">
+      <Card className={styles.winnerCard}>
+        <h2 className={styles.winnerTitle}>Auction ended!</h2>
+        <p className={styles.winnerText}>
           Winner:{' '}
           <strong>
             {winnerData.winner === myId ? 'You!' : winnerData.winner ? winnerData.winner : 'No one'}
           </strong>
         </p>
-        <p className="my-1 text-[1.4rem]">
+        <p className={styles.winnerText}>
           Winning bid: <strong>{formatEuro(winnerData.winningBid)}</strong>
         </p>
         {paymentUrl && (
-          <p className="my-1 text-[1.4rem]">
+          <p className={styles.winnerText}>
             <a href={paymentUrl}>Pay now</a>
           </p>
         )}
-      </div>
+      </Card>
     );
   }
 
-  //Calculate the minimum bid, time left, and whether teh auction has ended or is urgent
+  // Derive the next allowed bid and urgency state from the live auction clock.
   const minBid = auction.currentBid + MIN_INCREMENT;
   const msLeft = auction.endTime - now;
   const ended = !auction.isActive || msLeft <= 0;
@@ -62,14 +83,14 @@ export function BidPanel({
 
   return (
     <>
-      <div className="flex items-start justify-between gap-6 rounded-lg bg-panel px-7 py-[22px] max-[960px]:flex-col">
+      <Card className={styles.panel}>
         <div>
-          <div className="text-2xl font-extrabold max-[960px]:text-[1.6rem]">Current bid:</div>
-          <div className="mt-2.5 text-[2.8rem] leading-none font-black max-[960px]:text-5xl">{formatEuro(auction.currentBid)}</div>
+          <div className={styles.currentBid}>Current bid</div>
+          <div className={styles.price}>{formatEuro(auction.currentBid)}</div>
         </div>
-        <form className="flex w-[230px] flex-col gap-3 max-[960px]:w-full" onSubmit={onBid}>
-          <input
-            className="w-full appearance-none rounded-[14px] border-2 border-[#c4c4c4] bg-white px-5 py-3 text-center text-[1.3rem] font-bold text-ink outline-none placeholder:text-[#aaa] focus:border-ink disabled:cursor-not-allowed disabled:bg-[#ececec]"
+        <form className={styles.form} onSubmit={onBid}>
+          <Input
+            className={styles.input}
             type="number"
             inputMode="numeric"
             min={minBid}
@@ -79,25 +100,22 @@ export function BidPanel({
             placeholder={`${new Intl.NumberFormat('de-DE').format(minBid)}€`}
             required
           />
-          <button
+          <Button
             type="submit"
-            className="flex cursor-pointer items-center justify-center gap-3 rounded-2xl border-0 bg-ink p-3 text-[1.2rem] font-extrabold text-white transition-[transform,opacity] duration-150 hover:opacity-[0.88] active:scale-[0.98] disabled:transform-none disabled:cursor-not-allowed disabled:opacity-40"
+            className={styles.submit}
             disabled={ended}
           >
-            <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true">
-              <path d="M3 11.5 21 3l-8.5 18-2.2-7.3L3 11.5z" fill="currentColor" />
-            </svg>
             {ended ? 'BIDDING CLOSED' : 'PLACE BID'}
-          </button>
+          </Button>
         </form>
-      </div>
-      {error && <p className="mt-[10px] font-bold text-[#b3261e]">{error}</p>}
+      </Card>
+      {error && <p className={styles.error}>{error}</p>}
 
-      <div className="flex justify-between px-[14px] pt-[10px] text-xl font-extrabold text-[#8a8a8a] max-[960px]:text-[1.3rem]">
+      <div className={styles.meta}>
         <span>
           {bidCount} bid{bidCount === 1 ? '' : 's'}
         </span>
-        <span className={urgent ? 'text-[#d32f2f]' : 'text-red'}>{formatTimeLeft(msLeft)}</span>
+        <span className={urgent ? 'text-danger-strong' : 'text-danger-deep'}>{formatTimeLeft(msLeft)}</span>
       </div>
       <p className="mt-2 mr-[14px] ml-[14px] font-bold text-[#555]">
         {auction.highestBidder === myId
