@@ -246,6 +246,25 @@ function AuctionApp() {
     }
   };
 
+  // Logout handler
+  const handleLogout =  async () => {
+    try {
+      const backendUrl = socketUrl.replace(/\/+$/, '');
+      const response = await fetch(`${backendUrl}/api/auth/logout`, { method: 'POST' }); // Call the logout endpoint
+      if (!response.ok) throw new Error(`Logout failed with status ${response.status}`);
+    } catch (err: any) {
+      console.error('Error logging out:', err.message);
+    } finally {
+      // Clear user data and local storage on logout
+      setEmail('');
+      setUsername('');
+      localStorage.removeItem('bidderEmail');
+      localStorage.removeItem('bidderUsername');
+      localStorage.removeItem('bidderCountry');
+      setShowAuthChoice(true);
+    }
+  };
+
   //Login vs Register choice 
   if (showAuthChoice) {
     return (
@@ -392,6 +411,7 @@ function AuctionApp() {
         setAuthView('login');
       }}
       isLoggedIn={Boolean(email)}
+      onLogout={handleLogout}
     />
   );
 }

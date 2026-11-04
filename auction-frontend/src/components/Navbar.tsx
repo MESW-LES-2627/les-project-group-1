@@ -42,10 +42,11 @@ interface NavbarProps {
   onSignUpClick?: () => void;
   onLoginClick?: () => void;
   isLoggedIn?: boolean;
+  onLogout?: () => void;
 }
 
 // Slim responsive site navigation, using the public brand mark and shadcn inputs/buttons.
-export function Navbar({ onSignUpClick, onLoginClick, isLoggedIn }: NavbarProps) {
+export function Navbar({ onSignUpClick, onLoginClick, isLoggedIn, onLogout }: NavbarProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   const closeMenu = () => setIsMenuOpen(false);
@@ -88,7 +89,7 @@ export function Navbar({ onSignUpClick, onLoginClick, isLoggedIn }: NavbarProps)
             <Button variant="navbarPrimary" size="navbar">
               <a href="#profile">PROFILE</a>
             </Button>
-            <Button variant="navbarOutline" size="navbar">
+            <Button variant="navbarOutline" size="navbar" onClick={onLogout}>
               <a href="#logout">LOGOUT</a>
             </Button>
           </>

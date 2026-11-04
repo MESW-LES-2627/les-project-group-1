@@ -159,3 +159,31 @@ describe("POST /api/auth/login", () => {
   });
 
 });
+
+/*****************
+*    LOGOUT:    *
+*****************/
+
+describe("POST /api/auth/logout", () => {
+  
+  it("should successfully log out and terminate session", async () => {
+    const loginResponse = await fetch(`${BASE_URL}/api/auth/login`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        email: "test@feup.pt", 
+        password: "securepassword123",
+      }),
+    });
+    expect(loginResponse.status).toBe(200);
+
+    const response = await fetch(`${BASE_URL}/api/auth/logout`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+    });
+
+    const data = await response.json();
+    expect(response.status).toBe(200);
+    expect(data.message).toBe("Logged out successfully.");
+  });
+});

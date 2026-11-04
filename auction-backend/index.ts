@@ -35,6 +35,9 @@ const io = new Server(httpServer, {
 
 app.post("/api/auth/register", registerUser);
 app.post("/api/auth/login", loginUser);
+app.post('/api/auth/logout', (req, res) => {
+  return res.status(200).json({ message: 'Logged out successfully.' });
+}); // Simple logout endpoint; 
 
 
 
