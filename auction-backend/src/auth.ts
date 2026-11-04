@@ -25,14 +25,15 @@ export async function registerUser(req: Request, res: Response){
         const info = await sql`
             insert into users (username,email, password_hash, country)
             values (${username}, ${email}, ${hashedPassword}, ${country})
-            returning username, email, created_at`;
+            returning username, email, created_at, country`;
         const newUser = info[0];
 
         return res.status(201).json({message: "User registered successfully.", 
             user: { 
                 username: newUser.username,
                 email: newUser.email,
-                created_at: newUser.created_at
+                created_at: newUser.created_at,
+                country: newUser.country,
             },
         });
     } catch (error){
@@ -50,7 +51,7 @@ export async function loginUser(req: Request, res: Response){
         const {email, password} = req.body;
         if(!email || !password) return res.status(400).json({error: "Email and password are required."});
 
-        const userData = await sql`select id, username, email, password_hash from users where email = ${email}`;
+        const userData = await sql`select id, username, email, password_hash, country from users where email = ${email}`;
         if(userData.length === 0) return res.status(401).json({error: "Invalid credentials."});
         const user = userData[0];
 
