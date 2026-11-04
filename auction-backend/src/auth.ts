@@ -6,6 +6,9 @@ import {sql} from "./db";
 * Provides functions to handle user registration and credemtial management.
 */
 
+/*****************
+ * REGISTRATION: *
+ *****************/
 // Register a new user with email and a hashed password.
 export async function registerUser(req: Request, res: Response){
     try{
@@ -22,14 +25,15 @@ export async function registerUser(req: Request, res: Response){
         const info = await sql`
             insert into users (username,email, password_hash, country)
             values (${username}, ${email}, ${hashedPassword}, ${country})
-            returning username, email, created_at`;
+            returning username, email, created_at, country`;
         const newUser = info[0];
 
         return res.status(201).json({message: "User registered successfully.", 
             user: { 
                 username: newUser.username,
                 email: newUser.email,
-                created_at: newUser.created_at
+                created_at: newUser.created_at,
+                country: newUser.country,
             },
         });
     } catch (error){

@@ -18,6 +18,10 @@ afterAll(async () => {
   httpServer.close();
 });
 
+/*****************
+ * REGISTRATION: *
+ *****************/
+
 describe("POST /api/auth/register", () => {
   
   it("should successfully register a new user with valid data", async () => {
@@ -28,6 +32,7 @@ describe("POST /api/auth/register", () => {
         username: "testuser",
         email: "test@feup.pt",
         password: "securepassword123",
+        country: "PT",
       }),
     });
 
@@ -37,6 +42,7 @@ describe("POST /api/auth/register", () => {
     expect(data.message).toBe("User registered successfully.");
     expect(data.user.email).toBe("test@feup.pt");
     expect(data.user.username).toBe("testuser");
+    expect(data.user.country).toBe("PT");
     expect(data.user.password_hash).toBeUndefined(); 
   });
 
@@ -54,7 +60,7 @@ describe("POST /api/auth/register", () => {
     const data = await response.json();
 
     expect(response.status).toBe(400);
-    expect(data.error).toBe("Username, email and password are required.");
+    expect(data.error).toBe("Username, email, password and country are required.");
   });
 
   it("should fail if password is less than 8 characters", async () => {
@@ -64,7 +70,8 @@ describe("POST /api/auth/register", () => {
       body: JSON.stringify({
         username: "shortpassuser",
         email: "short@feup.pt",
-        password: "123", // <8 
+        password: "123", // <8
+        country: "PT",
       }),
     });
 
@@ -83,6 +90,7 @@ describe("POST /api/auth/register", () => {
         username: "anotheruser",
         email: "test@feup.pt", // email aldeady registered in the first test
         password: "securepassword123",
+        country: "PT",
       }),
     });
 
