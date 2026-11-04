@@ -39,6 +39,8 @@ app.post('/api/auth/logout', (req, res) => {
 }); // Simple logout endpoint; 
 app.post("/api/auth/forgot-password", auth.forgotPassword);
 app.post("/api/auth/reset-password", auth.resetPassword);
+app.post("/api/auth/profile", auth.getProfile);
+app.put("/api/auth/profile", auth.updateProfile);
 
 
 

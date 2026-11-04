@@ -5,7 +5,7 @@ import {sendEmail} from "./email";
 
 /*
 * Authentication Service
-* Provides functions to handle user registration, login, logout and password recovery.
+* Provides functions to handle user registration, login, logout, password recovery and user profile.
 */
 
 /*****************
@@ -148,6 +148,71 @@ export async function resetPassword(req: Request, res: Response){
         return res.status(200).json({ message: "Password has been successfully reset." });
     } catch (error) {
         console.error("Reset password error:", (error as Error).message);
+        return res.status(500).json({ error: "Internal server error." });
+    }
+}
+
+/*********************
+ *   USER PROFILE:   *
+ *********************/
+
+//Get the data for the user profile
+export async function getProfile(req: Request, res: Response) {
+    try {
+        const { email } = req.body; 
+        if (!email || typeof email !== 'string') return res.status(400).json({ error: "Email is required." });
+
+        const users = await sql`
+            SELECT username, email, country, created_at 
+            FROM users 
+            WHERE lower(email) = lower(${email})
+        `;
+
+        if (users.length === 0) return res.status(404).json({ error: "User not found." });
+
+        return res.status(200).json({ user: users[0] });
+    } catch (error) {
+        console.error("Get profile error:", (error as Error).message);
+        return res.status(500).json({ error: "Internal server error." });
+    }
+}
+
+//Update user profile information securely
+export async function updateProfile(req: Request, res: Response) {
+    try {
+        const { currentEmail, username, email, country } = req.body;
+
+        if (!currentEmail || !username || !email || !country) return res.status(400).json({ error: "All profile fields are required." });
+        
+
+        //Valides if user exists
+        const userExists = await sql`SELECT id FROM users WHERE lower(email) = lower(${currentEmail})`;
+        if (userExists.length === 0) {
+            return res.status(404).json({ error: "User not found." });
+        }
+
+        //Valides if a new email has been updated
+        if (currentEmail.toLowerCase() !== email.toLowerCase()) {
+            const emailTaken = await sql`SELECT id FROM users WHERE lower(email) = lower(${email})`;
+            if (emailTaken.length > 0) {
+                return res.status(400).json({ error: "Email is already taken by another user." });
+            }
+        }
+
+        //Updated the new data
+        const updated = await sql`
+            UPDATE users 
+            SET username = ${username}, email = ${email}, country = ${country}
+            WHERE lower(email) = lower(${currentEmail})
+            RETURNING username, email, country, created_at
+        `;
+
+        return res.status(200).json({
+            message: "Profile updated successfully.",
+            user: updated[0]
+        });
+    } catch (error) {
+        console.error("Update profile error:", (error as Error).message);
         return res.status(500).json({ error: "Internal server error." });
     }
 }

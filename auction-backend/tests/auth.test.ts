@@ -198,7 +198,7 @@ describe("POST /api/auth/forgot-password & /api/auth/reset-password", () => {
     const response = await fetch(`${BASE_URL}/api/auth/forgot-password`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email: "test@feup.pt" }),
+      body: JSON.stringify({ email: "test@feup.pt" }), // email aldeady registered in the first test
     });
 
     const data = await response.json();
@@ -234,6 +234,46 @@ describe("POST /api/auth/forgot-password & /api/auth/reset-password", () => {
     const data = await response.json();
     expect(response.status).toBe(400);
     expect(data.error).toBe("Password must be at least 8 characters long.");
+  });
+
+});
+
+/*****************
+* USER PROFILE:  *
+******************/
+
+describe("GET & PUT /api/auth/profile", () => {
+  
+  it("should successfully retrieve user profile details", async () => {
+    const response = await fetch(`${BASE_URL}/api/auth/profile`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email: "test@feup.pt" }), // email aldeady registered in the first test
+    });
+
+    const data = await response.json();
+    expect(response.status).toBe(200);
+    expect(data.user.email).toBe("test@feup.pt");
+    expect(data.user.password_hash).toBeUndefined(); //No sensite data is shown
+  });
+
+  it("should successfully update user profile information", async () => {
+    const response = await fetch(`${BASE_URL}/api/auth/profile`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        currentEmail: "test@feup.pt",
+        username: "updatedtestuser",
+        email: "test@feup.pt",
+        country: "ES",
+      }),
+    });
+
+    const data = await response.json();
+    expect(response.status).toBe(200);
+    expect(data.message).toBe("Profile updated successfully.");
+    expect(data.user.username).toBe("updatedtestuser");
+    expect(data.user.country).toBe("ES");
   });
 
 });
