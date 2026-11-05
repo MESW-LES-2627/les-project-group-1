@@ -44,3 +44,25 @@ userRouter.put("/me", requireAuth, async (req: Request, res: Response) => {
         return res.status(500).json({ error: "Internal server error." });
     }
 });
+
+userRouter.get("/me/purchases", requireAuth, async (_req: Request, res: Response) => {
+    try {
+        const rows = await sql`
+            SELECT w.id, w.item_name, w.winning_bid, w.paid_at
+            FROM winners w
+            JOIN users u ON lower(u.email) = lower(w.email)
+            WHERE u.id = ${res.locals.userId} AND w.status = 'paid'
+            ORDER BY w.paid_at DESC
+        `;
+        const purchases = rows.map((row: any) => ({
+            id: row.id,
+            itemName: row.item_name,
+            amount: Number(row.winning_bid),
+            paidAt: row.paid_at,
+        }));
+        return res.status(200).json({ purchases });
+    } catch (error) {
+        console.error("Get purchases error:", error);
+        return res.status(500).json({ error: "Internal server error." });
+    }
+});

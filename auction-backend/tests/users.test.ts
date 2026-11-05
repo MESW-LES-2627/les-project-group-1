@@ -30,12 +30,14 @@ beforeAll(async () => {
   const port = typeof address === "object" && address ? address.port : 3000;
   baseUrl = `http://localhost:${port}`;
 
+  await sql`DELETE FROM winners WHERE email IN ('profile1@test.pt', 'profile2@test.pt')`;
   await sql`DELETE FROM users WHERE email IN ('profile1@test.pt', 'profile2@test.pt')`;
   firstToken = await register("profileone", "profile1@test.pt");
   secondToken = await register("profiletwo", "profile2@test.pt");
 });
 
 afterAll(async () => {
+  await sql`DELETE FROM winners WHERE email IN ('profile1@test.pt', 'profile2@test.pt')`;
   await sql`DELETE FROM users WHERE email IN ('profile1@test.pt', 'profile2@test.pt')`;
   httpServer.close();
 });
@@ -144,5 +146,42 @@ describe("own profile management", () => {
 
     const response = await fetch(`${baseUrl}/api/users/me`, authed(secondToken, "GET"));
     expect(response.status).toBe(401);
+  });
+});
+
+describe("purchased jerseys", () => {
+  it("requires authentication", async () => {
+    const response = await fetch(`${baseUrl}/api/users/me/purchases`);
+    expect(response.status).toBe(401);
+  });
+
+  it("starts with no purchases", async () => {
+    const response = await fetch(`${baseUrl}/api/users/me/purchases`, authed(firstToken, "GET"));
+    const data = await response.json();
+    expect(response.status).toBe(200);
+    expect(data.purchases).toEqual([]);
+  });
+
+  it("lists only the paid purchases of the user", async () => {
+    await sql`
+      INSERT INTO winners (item_name, socket_id, email, winning_bid, status, paid_at)
+      VALUES ('Velocity', 's1', 'profile1@test.pt', 56, 'paid', now())
+    `;
+    await sql`
+      INSERT INTO winners (item_name, socket_id, email, winning_bid, status, paid_at)
+      VALUES ('Pending Shirt', 's2', 'profile1@test.pt', 70, 'pending_payment', NULL)
+    `;
+    await sql`
+      INSERT INTO winners (item_name, socket_id, email, winning_bid, status, paid_at)
+      VALUES ('Other Shirt', 's3', 'profile2@test.pt', 80, 'paid', now())
+    `;
+
+    const response = await fetch(`${baseUrl}/api/users/me/purchases`, authed(firstToken, "GET"));
+    const data = await response.json();
+    expect(response.status).toBe(200);
+    expect(data.purchases.length).toBe(1);
+    expect(data.purchases[0].itemName).toBe("Velocity");
+    expect(data.purchases[0].amount).toBe(56);
+    expect(data.purchases[0].paidAt).toBeTruthy();
   });
 });

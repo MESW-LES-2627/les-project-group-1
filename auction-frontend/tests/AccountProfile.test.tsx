@@ -7,10 +7,15 @@ import type { ProfileUser } from '../src/profile/api';
 const originalFetch = globalThis.fetch;
 
 let calls: { url: string; init?: RequestInit }[] = [];
+let profileResponse: { status: number; body: unknown } = { status: 200, body: {} };
 
-function mockFetch(status: number, body: unknown) {
+function installFetch() {
   globalThis.fetch = (async (input: RequestInfo | URL, init?: RequestInit) => {
-    calls.push({ url: String(input), init });
+    const url = String(input);
+    calls.push({ url, init });
+    const { status, body } = url.endsWith('/purchases')
+      ? { status: 200, body: { purchases: [] } }
+      : profileResponse;
     return new Response(JSON.stringify(body), {
       status,
       headers: { 'Content-Type': 'application/json' },
@@ -20,6 +25,8 @@ function mockFetch(status: number, body: unknown) {
 
 beforeEach(() => {
   calls = [];
+  profileResponse = { status: 200, body: {} };
+  installFetch();
 });
 
 afterEach(() => {
@@ -40,10 +47,17 @@ function renderProfile(token = 'abc', onSaved: (user: ProfileUser) => void = () 
 }
 
 describe('AccountProfile', () => {
-  it('shows the account details', () => {
+  it('shows the page title and the account summary', () => {
     renderProfile();
 
+    expect(screen.getByRole('heading', { name: 'My account' })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'afonso' })).toBeInTheDocument();
+    expect(screen.getAllByText('afonso@feup.pt').length).toBeGreaterThan(0);
+  });
+
+  it('shows the editable fields filled in', () => {
+    renderProfile();
+
     expect((screen.getByLabelText('Username') as HTMLInputElement).value).toBe('afonso');
     expect((screen.getByLabelText('Email') as HTMLInputElement).value).toBe('afonso@feup.pt');
     expect((screen.getByLabelText('Country') as HTMLInputElement).value).toBe('PT');
@@ -55,6 +69,12 @@ describe('AccountProfile', () => {
     expect(screen.getByLabelText('Email')).toBeDisabled();
   });
 
+  it('shows the jerseys section', async () => {
+    renderProfile();
+
+    expect(await screen.findByRole('heading', { name: 'My jerseys' })).toBeInTheDocument();
+  });
+
   it('disables saving until something changes', async () => {
     const user = userEvent.setup();
     renderProfile();
@@ -62,12 +82,15 @@ describe('AccountProfile', () => {
     const save = screen.getByRole('button', { name: 'SAVE CHANGES' });
     expect(save).toBeDisabled();
 
-    await user.type(screen.getByLabelText('Country'), 'X');
+    await user.selectOptions(screen.getByLabelText('Country'), 'ES');
     expect(save).toBeEnabled();
   });
 
   it('saves the changes sending the bearer token', async () => {
-    mockFetch(200, { user: { username: 'novo', email: 'afonso@feup.pt', country: 'ES' } });
+    profileResponse = {
+      status: 200,
+      body: { user: { username: 'novo', email: 'afonso@feup.pt', country: 'ES' } },
+    };
     const user = userEvent.setup();
     let saved: ProfileUser | null = null;
     renderProfile('abc', (value) => {
@@ -76,19 +99,19 @@ describe('AccountProfile', () => {
 
     await user.clear(screen.getByLabelText('Username'));
     await user.type(screen.getByLabelText('Username'), 'novo');
-    await user.clear(screen.getByLabelText('Country'));
-    await user.type(screen.getByLabelText('Country'), 'ES');
+    await user.selectOptions(screen.getByLabelText('Country'), 'ES');
     await user.click(screen.getByRole('button', { name: 'SAVE CHANGES' }));
 
     expect(await screen.findByText('Profile saved.')).toBeInTheDocument();
-    expect(calls[0].init?.method).toBe('PUT');
-    expect((calls[0].init?.headers as Record<string, string>).Authorization).toBe('Bearer abc');
-    expect(JSON.parse(calls[0].init?.body as string)).toEqual({ username: 'novo', country: 'ES' });
+    const put = calls.find((call) => call.init?.method === 'PUT');
+    expect(put).toBeDefined();
+    expect((put!.init!.headers as Record<string, string>).Authorization).toBe('Bearer abc');
+    expect(JSON.parse(put!.init!.body as string)).toEqual({ username: 'novo', country: 'ES' });
     expect(saved).toEqual({ username: 'novo', email: 'afonso@feup.pt', country: 'ES' });
   });
 
   it('shows a friendly message when the username is taken', async () => {
-    mockFetch(409, { error: 'username_taken' });
+    profileResponse = { status: 409, body: { error: 'username_taken' } };
     const user = userEvent.setup();
     renderProfile();
 
@@ -99,7 +122,7 @@ describe('AccountProfile', () => {
   });
 
   it('asks to log in again when the session has expired', async () => {
-    mockFetch(401, { error: 'Invalid or expired session.' });
+    profileResponse = { status: 401, body: { error: 'Invalid or expired session.' } };
     const user = userEvent.setup();
     renderProfile();
 

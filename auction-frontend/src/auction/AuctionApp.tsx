@@ -132,7 +132,7 @@ function AuctionApp() {
       socket.off('payment_link');
       socket.disconnect();
     };
-  }, [email, username]);
+  }, [email, username, country]);
 
   useEffect(() => {
     if (!auction?.isActive) return;
