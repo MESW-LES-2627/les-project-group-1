@@ -24,11 +24,15 @@ model User {
   country           String
   resetToken        String?   @map("reset_token")
   resetTokenExpires DateTime? @map("reset_token_expires") @db.Timestamptz(6)
+  avatar            String?
   createdAt         DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
-  role Role @default(BUYER)
+  role              Role @default(BUYER)
 
   @@map("users")
 }
+
+
+
 
 model Winner {
   id              Int       @id @default(autoincrement())

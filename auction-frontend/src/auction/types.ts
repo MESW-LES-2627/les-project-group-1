@@ -1,3 +1,5 @@
+import type { ProfileUser } from '../profile/api';
+
 //Represents a bid made by a user in the auction.
 export interface Bid {
   bidder: string;
@@ -52,9 +54,14 @@ export interface AuctionItem {
   causes: Cause[];
 }
 
-//Account actions shown in the navigation bar (login, sign up and logout).
+//Account actions and data shown in the navigation bar and on the profile page.
 export interface AccountNav {
   isLoggedIn: boolean;
+  email: string;
+  username: string;
+  country: string;
+  token: string;
+  onProfileSaved: (user: ProfileUser) => void;
   onSignUpClick: () => void;
   onLoginClick: () => void;
   onLogout: () => void;

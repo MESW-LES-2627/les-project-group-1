@@ -20,15 +20,16 @@ export async function registerUser(req: Request, res: Response) {
 
     const hashedPassword = await Bun.password.hash(password, { algorithm: "argon2id" });
     const newUser = await User.createUser(username, email, hashedPassword, country);
+    const token = signToken(newUser.id);
 
     return res.status(201).json({
       message: "User registered successfully.",
+      token,
       user: {
         username: newUser.username,
         email: newUser.email,
         created_at: newUser.createdAt,
         country: newUser.country,
-        role: newUser.role,
       },
     });
   } catch (error) {
@@ -50,8 +51,8 @@ export async function loginUser(req: Request, res: Response) {
 
     return res.status(200).json({
       message: "Login successful.",
-      user: { id: user.id, username: user.username, email: user.email, country: user.country, role: user.role, },
-      token: signToken(user.id)
+      user: { id: user.id, username: user.username, email: user.email, country: user.country, role: user.role },
+      token: signToken(user.id),
     });
   } catch (error) {
     console.error("Login error:", (error as Error).message);

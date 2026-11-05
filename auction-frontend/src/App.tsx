@@ -3,6 +3,7 @@ import AuctionApp from './auction/AuctionApp';
 import { CataloguePage } from './catalogue/CataloguePage';
 import { ClubPage } from './catalogue/ClubPage';
 import { ItemPage } from './catalogue/ItemPage';
+import { ProfilePage } from './profile/ProfilePage';
 
 /**
  * Root Application Component
@@ -11,6 +12,7 @@ import { ItemPage } from './catalogue/ItemPage';
  * - /                 home page: memorabilia catalogue
  * - /auction/:id      item page with its live auction
  * - /club/:slug       club page
+ * - /profile          account page of the logged in user
  * - /reset-password   link sent by email, opens the reset password form
  * - /demo             live auction prototype from Sprint 0
  */
@@ -21,6 +23,7 @@ function App() {
         <Route path="/" element={<CataloguePage />} />
         <Route path="/auction/:id" element={<ItemPage />} />
         <Route path="/club/:slug" element={<ClubPage />} />
+        <Route path="/profile" element={<ProfilePage />} />
         <Route path="/reset-password" element={<CataloguePage />} />
         <Route path="/demo" element={<AuctionApp />} />
         <Route

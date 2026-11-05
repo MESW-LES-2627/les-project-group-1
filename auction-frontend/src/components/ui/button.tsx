@@ -22,6 +22,8 @@ const buttonVariants = cva(
           "border-2 border-ink-strong bg-ink-strong font-bold text-white hover:bg-ink-hover max-tablet:hidden",
         navbarOutline:
           "border-2 border-ink-strong bg-white font-bold text-ink-strong hover:bg-surface max-mobile:min-w-0 max-mobile:rounded-[14px] max-mobile:px-[10px] max-mobile:py-[7px] max-mobile:text-[0.75rem]",
+        solid:
+          "border-2 border-ink-strong bg-ink-strong font-bold text-white hover:bg-ink-hover",
       },
       size: {
         default:
@@ -37,6 +39,7 @@ const buttonVariants = cva(
         "icon-lg": "size-9",
         navbar:
           "h-auto min-w-[150px] rounded-[22px] px-[22px] py-[9px] text-[clamp(0.9rem,1.05vw,1.3rem)] max-wide:min-w-[110px] max-wide:px-[14px]",
+        form: "h-auto rounded-2xl px-6 py-3 text-lg",
       },
     },
     defaultVariants: {
