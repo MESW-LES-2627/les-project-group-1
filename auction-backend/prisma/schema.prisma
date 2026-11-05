@@ -27,6 +27,7 @@ model User {
   avatar            String?
   createdAt         DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
   role              Role @default(BUYER)
+  addresses         Address[]
 
   @@map("users")
 }
@@ -95,4 +96,21 @@ model Listing {
   category          Category  @relation(fields: [categoryId], references: [id], onDelete: NoAction, onUpdate: NoAction)
 
   @@map("listings")
+}
+
+model Address {
+  id         Int      @id @default(autoincrement())
+  userId     Int      @map("user_id")
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  fullName   String   @map("full_name")
+  street     String
+  city       String
+  state      String?
+  postalCode String   @map("postal_code")
+  country    String
+  isDefault  Boolean  @default(false) @map("is_default")
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt  DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@map("shipping_addresses")
 }
