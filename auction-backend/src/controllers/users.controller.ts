@@ -20,17 +20,23 @@ export async function updateMe(req: Request, res: Response) {
     if (!result.ok) return res.status(400).json({ error: result.error });
 
     const userId = req.user!.id;
-    const { username, country } = result.value;
+    const { username, country, email } = result.value;
 
     if (await User.usernameTakenByOther(username, userId)) {
       return res.status(409).json({ error: "username_taken" });
     }
 
-    const user = await User.updateProfile(userId, username, country);
+    if (email && (await User.emailTakenByOther(email, userId))) {
+      return res.status(409).json({ error: "email_taken" });
+    }
+
+    const user = await User.updateProfile(userId, username, country, email);
     return res.status(200).json({ user });
   } catch (error) {
     if ((error as { code?: string }).code === "P2002") {
-      return res.status(409).json({ error: "username_taken" });
+      const target = (error as { meta?: { target?: unknown } }).meta?.target;
+      const isEmail = Array.isArray(target) ? target.includes("email") : String(target ?? "").includes("email");
+      return res.status(409).json({ error: isEmail ? "email_taken" : "username_taken" });
     }
     console.error("Update profile error:", (error as Error).message);
     return res.status(500).json({ error: "Internal server error." });

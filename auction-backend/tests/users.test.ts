@@ -2,7 +2,7 @@ import { describe, it, expect, beforeAll, afterAll } from "bun:test";
 import { httpServer } from "../src/app";
 import { prisma } from "../src/config/prisma";
 
-const EMAILS = ["profile1@test.pt", "profile2@test.pt"];
+const EMAILS = ["profile1@test.pt", "profile1new@test.pt", "profile2@test.pt"];
 
 let baseUrl = "";
 let firstToken = "";
@@ -86,10 +86,10 @@ describe("own profile management", () => {
     expect(JSON.stringify(data)).not.toContain("password");
   });
 
-  it("updates username and country and keeps the email", async () => {
+  it("updates username and country and keeps the email when none is sent", async () => {
     const response = await fetch(
       `${baseUrl}/api/users/me`,
-      authed(firstToken, "PUT", { username: "profileuno", country: "ES", email: "hacker@test.pt" })
+      authed(firstToken, "PUT", { username: "profileuno", country: "ES" })
     );
     const data: any = await response.json();
     expect(response.status).toBe(200);
@@ -234,5 +234,63 @@ describe("profile photo", () => {
     const response = await fetch(`${baseUrl}/api/users/me`, authed(firstToken, "GET"));
     const data: any = await response.json();
     expect(data.user.avatar).toBeNull();
+  });
+});
+
+describe("email change", () => {
+  const put = (token: string, body: unknown) => fetch(`${baseUrl}/api/users/me`, authed(token, "PUT", body));
+
+  it("rejects an invalid email", async () => {
+    for (const email of ["", "abc", "a@b", "a b@c.pt"]) {
+      const response = await put(firstToken, { username: "profileuno", country: "ES", email });
+      const data: any = await response.json();
+      expect(response.status).toBe(400);
+      expect(data.error).toBe("invalid_email");
+    }
+  });
+
+  it("returns 409 when the email belongs to another user, ignoring case", async () => {
+    const response = await put(firstToken, { username: "profileuno", country: "ES", email: "Profile2@Test.pt" });
+    const data: any = await response.json();
+    expect(response.status).toBe(409);
+    expect(data.error).toBe("email_taken");
+  });
+
+  it("changes the email and moves the paid purchases with it", async () => {
+    await prisma.winner.create({
+      data: { itemName: "Old Shirt", socketId: "s9", email: "profile1@test.pt", winningBid: 40, status: "paid", paidAt: new Date() },
+    });
+
+    const response = await put(firstToken, { username: "profileuno", country: "ES", email: "profile1new@test.pt" });
+    const data: any = await response.json();
+    expect(response.status).toBe(200);
+    expect(data.user.email).toBe("profile1new@test.pt");
+
+    const me: any = await (await fetch(`${baseUrl}/api/users/me`, authed(firstToken, "GET"))).json();
+    expect(me.user.email).toBe("profile1new@test.pt");
+
+    const purchases: any = await (await fetch(`${baseUrl}/api/users/me/purchases`, authed(firstToken, "GET"))).json();
+    expect(purchases.purchases.map((p: any) => p.itemName)).toContain("Old Shirt");
+  });
+
+  it("keeps the session valid and allows logging in with the new email", async () => {
+    const response = await fetch(`${baseUrl}/api/auth/login`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email: "profile1new@test.pt", password: "securepassword123" }),
+    });
+    expect(response.status).toBe(200);
+
+    const old = await fetch(`${baseUrl}/api/auth/login`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email: "profile1@test.pt", password: "securepassword123" }),
+    });
+    expect(old.status).not.toBe(200);
+  });
+
+  it("allows saving again with the own email", async () => {
+    const response = await put(firstToken, { username: "profileuno", country: "ES", email: "profile1new@test.pt" });
+    expect(response.status).toBe(200);
   });
 });
