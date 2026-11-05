@@ -1,4 +1,6 @@
 import React from 'react';
+import { Button } from './ui/button';
+import { Input } from './ui/input';
 
 interface LoginFormProps {
     email: string;
@@ -13,6 +15,9 @@ interface LoginFormProps {
     onSwitchToForgotPassword: () => void;
 }
 
+const labelClass = 'mb-2 block text-sm font-bold tracking-wide text-ink-strong uppercase';
+const inputClass = 'h-auto rounded-2xl border-2 border-ink-strong bg-white px-5 py-3 text-lg font-semibold';
+
 export function LoginForm({
     email,
     password,
@@ -26,76 +31,78 @@ export function LoginForm({
     onSwitchToForgotPassword,
 }: LoginFormProps){
   return (
-    <div className="max-w-md mx-auto mt-10 p-6 bg-white rounded-lg shadow-md border border-gray-200">
-      <h2 className="text-2xl font-bold mb-6 text-gray-800 text-center">
-        Assist Club - Login
+    <div className="w-full max-w-md rounded-[22px] border-2 border-ink-strong bg-white p-8 max-mobile:p-5">
+      <h2 className="pb-2 text-center text-2xl font-black text-ink-strong uppercase">
+        Assist Club
       </h2>
+      <h3 className="mb-6 border-b-4 border-ink-line pb-4 text-center text-medium font-bold text-ink-strong uppercase">
+        Login
+      </h3>
+
 
       {error && (
-        <div className="mb-4 p-3 bg-red-100 text-red-700 rounded text-sm font-medium">
+        <div role="alert" className="mb-5 rounded-2xl bg-red-100 p-4 font-semibold text-red-700">
           {error}
         </div>
       )}
 
-      <form onSubmit={onSubmit} className="space-y-4">
+      <form onSubmit={onSubmit} className="space-y-5">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+          <label htmlFor="login-email" className={labelClass}>
             Email
           </label>
-          <input
+          <Input
+            id="login-email"
             type="email"
             value={email}
             onChange={(e) => onEmailChange(e.target.value)}
             required
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            placeholder="Your email"
+            className={inputClass}
+            placeholder="you@example.com"
           />
         </div>
 
         <div>
-          <div className="flex justify-between items-center mb-1">
-            <label className="block text-sm font-medium text-gray-700">
+          <div className="mb-2 flex items-center justify-between">
+            <label htmlFor="login-password" className="text-sm font-bold tracking-wide text-ink-strong uppercase">
               Password
             </label>
             <button
               type="button"
               onClick={onSwitchToForgotPassword}
-              className="text-xs text-blue-600 hover:underline font-medium cursor-pointer"
+              className="cursor-pointer text-sm font-bold text-link hover:underline"
             >
               Forgot password?
             </button>
           </div>
-          <input
+          <Input
+            id="login-password"
             type="password"
             value={password}
             onChange={(e) => onPasswordChange(e.target.value)}
             required
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className={inputClass}
             placeholder="********"
           />
         </div>
 
-        <button
-          type="submit"
-          disabled={loading}
-          className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 transition duration-200 font-medium disabled:opacity-50"
-        >
-          {loading ? "Logging in..." : "Login"}
-        </button>
+        <Button type="submit" variant="solid" size="form" className="w-full" disabled={loading}>
+          {loading ? "LOGGING IN..." : "LOGIN"}
+        </Button>
       </form>
 
-      <div className="flex justify-between items-center mt-4 text-sm">
+      <div className="mt-5 flex items-center justify-between text-sm">
         <button
           type="button"
           onClick={onBackToAuction}
-          className="text-gray-600 hover:underline font-medium cursor-pointer"
+          className="cursor-pointer font-bold text-ink-soft hover:underline"
         >
           ← Back to auction
         </button>
         <button
           type="button"
           onClick={onSwitchToRegister}
-          className="text-blue-600 hover:underline font-medium cursor-pointer"
+          className="cursor-pointer font-bold text-link hover:underline"
         >
           Create account
         </button>
