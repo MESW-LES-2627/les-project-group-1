@@ -10,6 +10,10 @@ import { RegisterForm } from '../components/RegisterForm';
 import { LoginForm } from '../components/LoginForm';
 import { ForgotPassword } from '../components/ForgotPassword';   
 import { ResetPassword } from '../components/ResetPassword';
+import { Button } from '../components/ui/button';
+import { Navbar } from '../components/Navbar';
+import { AccountProfile } from '../components/AccountProfile';
+import type { ProfileUser } from '../profile/api';
 
 
 // Register event listeners before connecting so the initial state is not missed.
@@ -34,6 +38,8 @@ function AuctionApp() {
   //const [] = useState('');
   const [email, setEmail] = useState(() => localStorage.getItem('bidderEmail') ?? '');
   const [username, setUsername] = useState(() => localStorage.getItem('bidderUsername') ?? '');
+  const [country, setCountry] = useState(() => localStorage.getItem('bidderCountry') ?? '');
+  const [token, setToken] = useState(() => localStorage.getItem('bidderToken') ?? '');
 
   //Register
   const [showRegisterForm, setShowRegisterForm] = useState(false);
@@ -61,6 +67,14 @@ function AuctionApp() {
   const queryParams = new URLSearchParams(window.location.search);
   const resetTokenParam = queryParams.get('token');
   const [showResetPassword, setShowResetPassword] = useState(Boolean(resetTokenParam));
+
+  const [hash, setHash] = useState(() => window.location.hash);
+
+  useEffect(() => {
+    const onHashChange = () => setHash(window.location.hash);
+    window.addEventListener('hashchange', onHashChange);
+    return () => window.removeEventListener('hashchange', onHashChange);
+  }, []);
 
   useEffect(() => {
 
@@ -169,7 +183,7 @@ function AuctionApp() {
         body: JSON.stringify({ username: valueUsername,email: value, password: registerPassword, country: registerCountry }),
       });
 
-      const data = (await response.json()) as { error?: string };
+      const data = (await response.json()) as { error?: string; token?: string };
 
       if (!response.ok) {
         throw new Error(data.error || 'Error registering user. Please try again.');
@@ -178,10 +192,15 @@ function AuctionApp() {
       setRegisterSuccessMessage('Account created successfully! You can now place bids.');
 
       setTimeout(() => {
+        if (data.token) {
+          localStorage.setItem('bidderToken', data.token);
+          setToken(data.token);
+        }
         localStorage.setItem('bidderUsername', valueUsername);
         localStorage.setItem('bidderEmail', value);
         localStorage.setItem('bidderCountry', registerCountry);
         setUsername(valueUsername);
+        setCountry(registerCountry);
         setEmail(value);
         setShowRegisterForm(false);
         setAuthView(null);
@@ -214,8 +233,13 @@ function AuctionApp() {
         body: JSON.stringify({ email: valueEmail, password: loginPassword }),
       });
 
-      const data = (await response.json()) as { error?: string; user?: { username: string; email: string, country?: string } };
+      const data = (await response.json()) as { error?: string; token?: string; user?: { username: string; email: string, country?: string } };
       if (!response.ok) throw new Error(data.error || 'Error logging in. Please try again.');
+
+      if (data.token) {
+        localStorage.setItem('bidderToken', data.token);
+        setToken(data.token);
+      }
       
 
       const loggedUsername = data.user?.username || '';
@@ -228,6 +252,7 @@ function AuctionApp() {
       const loggedCountry = data.user?.country || '';
       if (loggedCountry) {
         localStorage.setItem('bidderCountry', loggedCountry);
+        setCountry(loggedCountry);
       }
       
       setEmail(data.user?.email || valueEmail);
@@ -259,7 +284,10 @@ function AuctionApp() {
   const handleLogout =  async () => {
     try {
       const backendUrl = socketUrl.replace(/\/+$/, '');
-      const response = await fetch(`${backendUrl}/api/auth/logout`, { method: 'POST' }); // Call the logout endpoint
+      const response = await fetch(`${backendUrl}/api/auth/logout`, {
+        method: 'POST',
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      }); // Call the logout endpoint
       if (!response.ok) throw new Error(`Logout failed with status ${response.status}`);
     } catch (err: any) {
       console.error('Error logging out:', err.message);
@@ -270,8 +298,35 @@ function AuctionApp() {
       localStorage.removeItem('bidderEmail');
       localStorage.removeItem('bidderUsername');
       localStorage.removeItem('bidderCountry');
+      localStorage.removeItem('bidderToken');
+      setCountry('');
+      setToken('');
       setShowAuthChoice(true);
     }
+  };
+
+  const handleProfileSaved = (user: ProfileUser) => {
+    localStorage.setItem('bidderUsername', user.username);
+    localStorage.setItem('bidderCountry', user.country);
+    setUsername(user.username);
+    setCountry(user.country);
+  };
+
+  const openSignUp = () => {
+    setRegisterUsername('');
+    setRegisterEmail('');
+    setRegisterPassword('');
+    setRegisterCountry('');
+    setRegisterError(null);
+    setRegisterSuccessMessage(null);
+    setAuthView('register');
+  };
+
+  const openLogin = () => {
+    setLoginEmail('');
+    setLoginPassword('');
+    setLoginError(null);
+    setAuthView('login');
   };
 
   //Login vs Register choice 
@@ -421,6 +476,35 @@ function AuctionApp() {
     );
   }
 
+  if (hash === '#profile') {
+    return (
+      <>
+        <Navbar
+          isLoggedIn={Boolean(email)}
+          onSignUpClick={openSignUp}
+          onLoginClick={openLogin}
+          onLogout={handleLogout}
+        />
+        {email ? (
+          <AccountProfile
+            token={token}
+            username={username}
+            email={email}
+            country={country}
+            onSaved={handleProfileSaved}
+          />
+        ) : (
+          <div className="mx-auto mt-10 max-w-md space-y-4 p-6 text-center">
+            <p>Log in to see your profile.</p>
+            <Button variant="solid" size="form" onClick={openLogin}>
+              LOG IN
+            </Button>
+          </div>
+        )}
+      </>
+    );
+  }
+
   if (!auction) return <div className="p-8">Connecting to live bid…</div>;
 
   return (
@@ -441,21 +525,8 @@ function AuctionApp() {
       onReset={handleReset}
       isResetting={isResetting}
       resetError={resetError}
-      onSignUpClick={() => {
-        setRegisterUsername('');
-        setRegisterEmail('');
-        setRegisterPassword('');
-        setRegisterCountry('');
-        setRegisterError(null);
-        setRegisterSuccessMessage(null);
-        setAuthView('register');
-      }}
-      onLoginClick={() => {
-        setLoginEmail('');
-        setLoginPassword('');
-        setLoginError(null);
-        setAuthView('login');
-      }}
+      onSignUpClick={openSignUp}
+      onLoginClick={openLogin}
       isLoggedIn={Boolean(email)}
       onLogout={handleLogout}
     />

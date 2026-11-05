@@ -7,6 +7,8 @@ import { sendEmail } from './src/email';
 import { saveWinner } from './src/winners';
 import * as auth from './src/auth';
 import { sql } from './src/db';
+import { userRouter } from './src/userRoutes';
+import { logoutUser } from './src/session';
 
 /**
  * Main auction server
@@ -16,13 +18,14 @@ import { sql } from './src/db';
 
 const app = express();
 app.use(cors());
-app.use(express.json())
 
 app.post(
   '/api/stripe/webhook',
   express.raw({ type: 'application/json' }),
   stripeWebhook
 );
+
+app.use(express.json());
 
 export const httpServer = createServer(app);
 const io = new Server(httpServer, {
@@ -34,11 +37,10 @@ const io = new Server(httpServer, {
 
 app.post("/api/auth/register", auth.registerUser);
 app.post("/api/auth/login", auth.loginUser);
-app.post('/api/auth/logout', (req, res) => {
-  return res.status(200).json({ message: 'Logged out successfully.' });
-}); // Simple logout endpoint; 
+app.post("/api/auth/logout", logoutUser);
 app.post("/api/auth/forgot-password", auth.forgotPassword);
 app.post("/api/auth/reset-password", auth.resetPassword);
+app.use("/api/users", userRouter);
 
 
 

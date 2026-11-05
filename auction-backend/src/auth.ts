@@ -2,6 +2,7 @@ import type {Request, Response} from "express";
 import {sql} from "./db";
 import crypto  from 'crypto';
 import {sendEmail} from "./email";
+import { createSession } from "./session";
 
 /*
 * Authentication Service
@@ -27,10 +28,12 @@ export async function registerUser(req: Request, res: Response){
         const info = await sql`
             insert into users (username,email, password_hash, country)
             values (${username}, ${email}, ${hashedPassword}, ${country})
-            returning username, email, created_at, country`;
+            returning id, username, email, created_at, country`;
         const newUser = info[0];
+        const token = await createSession(newUser.id);
 
         return res.status(201).json({message: "User registered successfully.", 
+            token,
             user: { 
                 username: newUser.username,
                 email: newUser.email,
@@ -60,7 +63,10 @@ export async function loginUser(req: Request, res: Response){
         const isPasswordValid = await Bun.password.verify(password, user.password_hash);
         if(!isPasswordValid) return res.status(401).json({error: "Invalid credentials."});
 
+        const token = await createSession(user.id);
+
         return res.status(200).json({message: "Login successful.",
+            token,
             user: {
                 id: user.id,
                 username: user.username,

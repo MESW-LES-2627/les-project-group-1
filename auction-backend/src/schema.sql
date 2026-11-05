@@ -20,3 +20,10 @@ create table if not exists winners (
   ended_at timestamptz not null default now(),
   paid_at timestamptz
 );
+
+create table if not exists sessions (
+  token text primary key,
+  user_id integer not null references users(id) on delete cascade,
+  expires_at timestamptz not null,
+  created_at timestamptz not null default now()
+);
