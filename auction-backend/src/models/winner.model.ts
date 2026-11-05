@@ -1,13 +1,8 @@
-import { sql } from "./db";
+import { sql } from "../config/db";
 
-/**
- * Winner database operations
- * 
- * Provides functions to save winner information and mark payments as paid.
- */
+/** Queries for the `winners` table. */
 
-
-interface WinnerInput {
+export interface WinnerInput {
   itemName: string;
   socketId: string;
   email?: string;
@@ -18,8 +13,7 @@ interface WinnerInput {
 
 export async function saveWinner(w: WinnerInput) {
   await sql.begin(async (tx) => {
-    // Demo resets reuse the same item, so keep its latest winner rather than
-    // accumulating stale winner rows for every run.
+    // Demo resets reuse the same item, so keep only its latest winner.
     await tx`delete from winners where item_name = ${w.itemName}`;
     await tx`
       insert into winners (item_name, socket_id, email, winning_bid, ended_at, stripe_session_id)

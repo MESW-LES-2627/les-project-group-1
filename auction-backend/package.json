@@ -1,9 +1,13 @@
 {
   "name": "ac-backend",
-  "module": "index.ts",
+  "module": "src/server.ts",
   "type": "module",
   "private": true,
   "scripts": {
+    "dev": "bun --watch src/server.ts",
+    "start": "bun src/server.ts",
+    "migrate": "bun src/utils/migrate.ts",
+    "seed": "bun src/utils/seed.ts",
     "test": "bun test"
   },
   "devDependencies": {
