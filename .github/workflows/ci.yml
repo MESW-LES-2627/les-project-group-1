@@ -109,4 +109,4 @@ jobs:
           VPS_USER: ${{ secrets.VPS_USER }}
           DEPLOY_PATH: ${{ github.ref_name == 'main' && '/home/ubuntu/assistclub-prod' || '/home/ubuntu/assistclub-dev' }}
         run: |
-          ssh "$VPS_USER@$VPS_HOST" "cd '$DEPLOY_PATH' && git pull --ff-only && docker compose -f docker-compose.prod.yml build && docker compose -f docker-compose.prod.yml run --rm backend bun --bun run migrate && docker compose -f docker-compose.prod.yml run --rm backend bun seeds/admin.ts && docker compose -f docker-compose.prod.yml up -d"
+          ssh "$VPS_USER@$VPS_HOST" "cd '$DEPLOY_PATH' && git pull --ff-only && docker compose -f docker-compose.prod.yml build && docker compose -f docker-compose.prod.yml run --rm backend bun --bun run migrate && docker compose -f docker-compose.prod.yml run --rm backend bun --bun run seed:admin && docker compose -f docker-compose.prod.yml up -d"
