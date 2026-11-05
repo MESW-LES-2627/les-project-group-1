@@ -8,5 +8,6 @@ import { sql } from "./db";
  */
 
 await sql.file("./src/schema.sql");
+await sql.file("./src/seed.sql");
 console.log("schema aplied");
 await sql.close();

@@ -1,6 +1,6 @@
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
-import { ITEM } from '../auction/data';
+import { useItem } from '../auction/ItemContext';
 
 const styles = {
   row: 'flex flex-wrap items-center gap-[14px] max-mobile:gap-2',
@@ -11,11 +11,13 @@ const styles = {
 };
 
 export function AuctionItemHeading({ itemName }: { itemName: string }) {
+  const item = useItem();
+
   return (
     <>
       <div className={styles.row}>
         <h1 className={styles.title}>{itemName}</h1>
-        {ITEM.tags.map((tag) => (
+        {item.tags.map((tag) => (
           <Badge
             key={tag}
             variant="outline"
@@ -25,7 +27,7 @@ export function AuctionItemHeading({ itemName }: { itemName: string }) {
           </Badge>
         ))}
       </div>
-      <p className={styles.subtitle}>{ITEM.subtitle}</p>
+      <p className={styles.subtitle}>{item.subtitle}</p>
     </>
   );
 }

@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Menu, Search, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Link } from 'react-router-dom';
 
 const NAV_LINKS = [
   ['SPORTS', '#sports'],
@@ -43,23 +44,25 @@ interface NavbarProps {
   onLoginClick?: () => void;
   isLoggedIn?: boolean;
   onLogout?: () => void;
+  searchValue?: string;
+  onSearchChange?: (value: string) => void;
 }
 
 // Slim responsive site navigation, using the public brand mark and shadcn inputs/buttons.
-export function Navbar({ onSignUpClick, onLoginClick, isLoggedIn, onLogout }: NavbarProps) {
+export function Navbar({ onSignUpClick, onLoginClick, isLoggedIn, onLogout, searchValue, onSearchChange }: NavbarProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   const closeMenu = () => setIsMenuOpen(false);
 
   return (
     <header className={styles.header}>
-      <a className={styles.logoLink} href="#top" aria-label="Assist Club home">
+      <Link className={styles.logoLink} to="/" aria-label="Assist Club home">
         <img className="h-auto w-full" src="/ac_logo.svg" alt="Assist Club" />
-      </a>
+      </Link>
 
       <label className={styles.search}>
         <Search className={styles.searchIcon} aria-hidden="true" />
-        <Input className={styles.searchInput} type="search" placeholder="Search auctions" aria-label="Search auctions" />
+        <Input className={styles.searchInput} type="search" placeholder="Search auctions" aria-label="Search auctions" value={searchValue} onChange={onSearchChange ? (event) => onSearchChange(event.target.value) : undefined} />
       </label>
 
       <nav className={styles.nav} aria-label="Main navigation">

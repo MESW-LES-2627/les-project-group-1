@@ -1,4 +1,4 @@
-import { ITEM } from '../auction/data';
+import { useItem } from '../auction/ItemContext';
 import { cn } from '@/lib/utils';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
@@ -39,10 +39,12 @@ const styles = {
 };
 
 export function PlayerGallery({ itemName, activeImage, onImageChange, className }: PlayerGalleryProps) {
+  const item = useItem();
+
   return (
     <Card className={cn(styles.gallery, className)}>
       <div className={styles.thumbnails}>
-        {ITEM.images.map((src, index) => (
+        {item.images.map((src, index) => (
           <button
             key={src}
             type="button"
@@ -55,15 +57,17 @@ export function PlayerGallery({ itemName, activeImage, onImageChange, className 
         ))}
       </div>
       <div className={styles.mainImage}>
-        <img className="block h-full w-full object-contain" src={ITEM.images[activeImage]} alt={itemName} />
+        <img className="block h-full w-full object-contain" src={item.images[activeImage]} alt={itemName} />
       </div>
     </Card>
   );
 }
 
 export function PlayerProfile({ className }: { className?: string }) {
-  const { player } = ITEM;
+  const { player } = useItem();
 
+  if (!player) return null;
+  
   return (
     <Card className={cn(styles.profileCard, className)}>
       <CardHeader className={styles.profileHeader}>
