@@ -3,6 +3,15 @@ import type { Role } from "../../generated/prisma/enums";
 
 export type { Role };
 
+const publicSelect = {
+  id: true,
+  username: true,
+  email: true,
+  country: true,
+  role: true,
+  createdAt: true,
+} as const;
+
 export async function emailExists(email: string) {
   return (await prisma.user.count({ where: { email } })) > 0;
 }
@@ -98,4 +107,38 @@ export async function updatePassword(userId: number, passwordHash: string) {
 
 export async function findAuthById(id: number) {
   return prisma.user.findUnique({ where: { id }, select: { id: true, role: true } });
+}
+
+export async function listUsers(opts: { role?: Role; search?: string; skip: number; take: number }) {
+  const where = {
+    ...(opts.role ? { role: opts.role } : {}),
+    ...(opts.search
+        ? {
+          OR: [
+            { username: { contains: opts.search, mode: "insensitive" as const } },
+            { email: { contains: opts.search, mode: "insensitive" as const } },
+          ],
+        }
+        : {}),
+  };
+  const [items, total] = await prisma.$transaction([
+    prisma.user.findMany({ where, select: publicSelect, orderBy: { id: "asc" }, skip: opts.skip, take: opts.take }),
+    prisma.user.count({ where }),
+  ]);
+  return { items, total };
+}
+
+export async function findById(id: number) {
+  return prisma.user.findUnique({ where: { id }, select: publicSelect });
+}
+
+export async function updateUser(
+    id: number,
+    data: { username?: string; email?: string; country?: string; role?: Role; passwordHash?: string },
+) {
+  return prisma.user.update({ where: { id }, data, select: publicSelect });
+}
+
+export async function deleteUser(id: number) {
+  await prisma.user.delete({ where: { id } });
 }
