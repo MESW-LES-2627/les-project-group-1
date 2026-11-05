@@ -7,6 +7,15 @@ datasource db {
   provider = "postgresql"
 }
 
+
+enum Role {
+  ADMIN
+  CLUB
+  BUYER
+
+  @@map("user_role")
+}
+
 model User {
   id                Int       @id @default(autoincrement())
   username          String    @unique
@@ -16,6 +25,7 @@ model User {
   resetToken        String?   @map("reset_token")
   resetTokenExpires DateTime? @map("reset_token_expires") @db.Timestamptz(6)
   createdAt         DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  role Role @default(BUYER)
 
   @@map("users")
 }
