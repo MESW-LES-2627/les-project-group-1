@@ -24,6 +24,11 @@ describe('navbar page links', () => {
 
     expect(screen.getByRole('link', { name: 'CHARITIES' })).toHaveAttribute('href', '/charities');
   });
+  it('links to the sports page', () => {
+    renderWithRouter(<Navbar />);
+
+    expect(screen.getByRole('link', { name: 'SPORTS' })).toHaveAttribute('href', '/sports');
+  });
 });
 
 describe('navbar mobile menu', () => {
