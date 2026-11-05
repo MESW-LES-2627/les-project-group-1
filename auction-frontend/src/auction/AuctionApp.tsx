@@ -11,6 +11,7 @@ import { RegisterForm } from '../components/RegisterForm';
 import { LoginForm } from '../components/LoginForm';
 import { ForgotPassword } from '../components/ForgotPassword';   
 import { ResetPassword } from '../components/ResetPassword';
+import { Button } from '../components/ui/button';
 
 
 // Register event listeners before connecting so the initial state is not missed.
@@ -344,41 +345,45 @@ function AuctionApp({ auctionId = 'demo', children, renderPage }: AuctionAppProp
   //Login vs Register choice 
   if (showAuthChoice) {
     return (
-      <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center py-12 px-4">
-        <div className="max-w-md w-full p-6 bg-white rounded-lg shadow-md border border-gray-200 text-center space-y-4">
-          <h3 className="text-xl font-bold text-gray-800">Authentication needed</h3>
-          <p className="text-sm text-gray-600">
+      <div className="flex min-h-screen flex-col items-center justify-center bg-chalk px-4 py-12">
+        <div className="w-full max-w-md space-y-5 rounded-[22px] border-2 border-ink-strong bg-white p-8 text-center max-mobile:p-5">
+          <h3 className="text-2xl font-black text-ink-strong uppercase">Authentication needed</h3>
+          <p className="text-base font-semibold text-slate-strong">
             To place a bid, you need to have an account and log in.
           </p>
 
-          <div className="flex flex-col space-y-3 pt-2">
-            <button
+          <div className="flex flex-col gap-3 pt-2">
+            <Button
               type="button"
+              variant="solid"
+              size="form"
+              className="w-full"
               onClick={() => {
                 setShowAuthChoice(false);
                 setShowLoginForm(true);
               }}
-              className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 font-medium transition cursor-pointer"
             >
-              Login
-            </button>
+              LOGIN
+            </Button>
 
-            <button
+            <Button
               type="button"
+              variant="outline"
+              size="form"
+              className="w-full border-2 border-ink-strong bg-white font-bold text-ink-strong uppercase hover:bg-surface"
               onClick={() => {
                 setShowAuthChoice(false);
                 setShowRegisterForm(true);
               }}
-              className="w-full bg-gray-100 text-gray-700 py-2 px-4 rounded-md hover:bg-gray-200 font-medium transition border border-gray-300 cursor-pointer"
             >
-              Create Account (Register)
-            </button>
+              CREATE ACCOUNT
+            </Button>
           </div>
 
           <button
             type="button"
             onClick={() => setShowAuthChoice(false)}
-            className="text-sm text-gray-500 hover:underline pt-2 inline-block cursor-pointer"
+            className="inline-block cursor-pointer pt-2 text-sm font-bold text-ink-soft hover:underline"
           >
             ← Back to auction
           </button>
@@ -390,7 +395,7 @@ function AuctionApp({ auctionId = 'demo', children, renderPage }: AuctionAppProp
   //Register form
   if (showRegisterForm || authView === 'register') {
     return (
-      <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center py-12 px-4">
+      <div className="flex min-h-screen flex-col items-center justify-center bg-chalk px-4 py-12">
         <div className="w-full max-w-md">
           <RegisterForm
             username={registerUsername}
@@ -414,7 +419,7 @@ function AuctionApp({ auctionId = 'demo', children, renderPage }: AuctionAppProp
                 setShowRegisterForm(false);
                 setAuthView(null);
               }}
-              className="text-sm text-gray-600 hover:underline font-medium cursor-pointer"
+              className="cursor-pointer text-sm font-bold text-ink-soft hover:underline"
             >
               ← Back to auction
             </button>
@@ -427,7 +432,7 @@ function AuctionApp({ auctionId = 'demo', children, renderPage }: AuctionAppProp
   //Login form
   if (showLoginForm || authView === 'login') {
     return (
-      <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center py-12 px-4">
+      <div className="flex min-h-screen flex-col items-center justify-center bg-chalk px-4 py-12">
         <div className="w-full max-w-md">
           <LoginForm
             email={loginEmail}
@@ -458,7 +463,7 @@ function AuctionApp({ auctionId = 'demo', children, renderPage }: AuctionAppProp
   //Forgot Password 
   if (showForgotPassword) {
     return (
-      <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center py-12 px-4">
+      <div className="flex min-h-screen flex-col items-center justify-center bg-chalk px-4 py-12">
         <div className="w-full max-w-md">
           <ForgotPassword
             onBackToLogin={() => {
@@ -474,7 +479,7 @@ function AuctionApp({ auctionId = 'demo', children, renderPage }: AuctionAppProp
   //Reset Passowrd
   if (showResetPassword) {
     return (
-      <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center py-12 px-4">
+      <div className="flex min-h-screen flex-col items-center justify-center bg-chalk px-4 py-12">
         <div className="w-full max-w-md">
           <ResetPassword
             onSuccessfulReset={() => {

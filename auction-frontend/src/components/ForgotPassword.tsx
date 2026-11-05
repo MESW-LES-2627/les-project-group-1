@@ -1,8 +1,13 @@
 import React, {useState} from 'react';
+import { Button } from './ui/button';
+import { Input } from './ui/input';
 
 interface ForgotPasswordProps {
     onBackToLogin: () => void;
 }
+
+const labelClass = 'mb-2 block text-sm font-bold tracking-wide text-ink-strong uppercase';
+const inputClass = 'h-auto rounded-2xl border-2 border-ink-strong bg-white px-5 py-3 text-lg font-semibold';
 
 export function ForgotPassword({ onBackToLogin }: ForgotPasswordProps) {
   const [email, setEmail] = useState('');
@@ -35,56 +40,53 @@ export function ForgotPassword({ onBackToLogin }: ForgotPasswordProps) {
   };
 
   return (
-    <div className="max-w-md mx-auto mt-10 p-6 bg-white rounded-lg shadow-md border border-gray-200">
-      <h2 className="text-2xl font-bold mb-6 text-gray-800 text-center">
+    <div className="w-full max-w-md rounded-[22px] border-2 border-ink-strong bg-white p-8 max-mobile:p-5">
+      <h2 className="mb-6 border-b-4 border-ink-line pb-4 text-center text-2xl font-black text-ink-strong uppercase">
         Assist Club - Forgot Password
       </h2>
 
-      <p className="text-sm text-gray-600 mb-4 text-center">
+      <p className="mb-5 text-center text-base font-semibold text-slate-strong">
         Enter your registered email address and we'll send you a link to reset your password.
       </p>
 
       {error && (
-        <div className="mb-4 p-3 bg-red-100 text-red-700 rounded text-sm font-medium">
+        <div role="alert" className="mb-5 rounded-2xl bg-red-100 p-4 font-semibold text-red-700">
           {error}
         </div>
       )}
 
       {message && (
-        <div className="mb-4 p-3 bg-green-100 text-green-700 rounded text-sm font-medium">
+        <div role="status" className="mb-5 rounded-2xl bg-green-100 p-4 font-semibold text-green-700">
           {message}
         </div>
       )}
 
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <form onSubmit={handleSubmit} className="space-y-5">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+          <label htmlFor="forgot-email" className={labelClass}>
             Email
           </label>
-          <input
+          <Input
+            id="forgot-email"
             type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            placeholder="Your email"
+            className={inputClass}
+            placeholder="you@example.com"
           />
         </div>
 
-        <button
-          type="submit"
-          disabled={loading}
-          className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 transition duration-200 font-medium disabled:opacity-50"
-        >
-          {loading ? "Sending..." : "Send Reset Link"}
-        </button>
+        <Button type="submit" variant="solid" size="form" className="w-full" disabled={loading}>
+          {loading ? "SENDING..." : "SEND RESET LINK"}
+        </Button>
       </form>
 
-      <div className="flex justify-center items-center mt-4 text-sm">
+      <div className="mt-5 flex justify-center">
         <button
           type="button"
           onClick={onBackToLogin}
-          className="text-gray-600 hover:underline font-medium cursor-pointer"
+          className="cursor-pointer text-sm font-bold text-ink-soft hover:underline"
         >
           ← Back to Login
         </button>

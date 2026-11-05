@@ -1,8 +1,13 @@
 import React, {useState} from 'react';
+import { Button } from './ui/button';
+import { Input } from './ui/input';
 
 interface ResetPasswordProps {
     onSuccessfulReset: () => void;
 }
+
+const labelClass = 'mb-2 block text-sm font-bold tracking-wide text-ink-strong uppercase';
+const inputClass = 'h-auto rounded-2xl border-2 border-ink-strong bg-white px-5 py-3 text-lg font-semibold';
 
 export function ResetPassword({ onSuccessfulReset }: ResetPasswordProps) {
   const queryParams = new URLSearchParams(window.location.search);
@@ -54,66 +59,66 @@ export function ResetPassword({ onSuccessfulReset }: ResetPasswordProps) {
 
   if (!token) {
     return (
-      <div className="max-w-md mx-auto mt-10 p-6 bg-white rounded-lg shadow-md border border-gray-200 text-center">
-        <p className="text-red-600 font-medium">Invalid or missing reset token in URL.</p>
+      <div className="w-full max-w-md rounded-[22px] border-2 border-ink-strong bg-white p-8 text-center max-mobile:p-5">
+        <p role="alert" className="rounded-2xl bg-red-100 p-4 font-semibold text-red-700">
+          Invalid or missing reset token in URL.
+        </p>
       </div>
     );
   }
 
   return (
-    <div className="max-w-md mx-auto mt-10 p-6 bg-white rounded-lg shadow-md border border-gray-200">
-      <h2 className="text-2xl font-bold mb-6 text-gray-800 text-center">
+    <div className="w-full max-w-md rounded-[22px] border-2 border-ink-strong bg-white p-8 max-mobile:p-5">
+      <h2 className="mb-6 border-b-4 border-ink-line pb-4 text-center text-2xl font-black text-ink-strong uppercase">
         Assist Club - Reset Password
       </h2>
 
       {error && (
-        <div className="mb-4 p-3 bg-red-100 text-red-700 rounded text-sm font-medium">
+        <div role="alert" className="mb-5 rounded-2xl bg-red-100 p-4 font-semibold text-red-700">
           {error}
         </div>
       )}
 
       {message && (
-        <div className="mb-4 p-3 bg-green-100 text-green-700 rounded text-sm font-medium">
+        <div role="status" className="mb-5 rounded-2xl bg-green-100 p-4 font-semibold text-green-700">
           {message}
         </div>
       )}
 
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <form onSubmit={handleSubmit} className="space-y-5">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+          <label htmlFor="reset-new-password" className={labelClass}>
             New Password
           </label>
-          <input
+          <Input
+            id="reset-new-password"
             type="password"
             value={newPassword}
             onChange={(e) => setNewPassword(e.target.value)}
             required
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className={inputClass}
             placeholder="********"
           />
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+          <label htmlFor="reset-confirm-password" className={labelClass}>
             Confirm Password
           </label>
-          <input
+          <Input
+            id="reset-confirm-password"
             type="password"
             value={confirmPassword}
             onChange={(e) => setConfirmPassword(e.target.value)}
             required
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className={inputClass}
             placeholder="********"
           />
         </div>
 
-        <button
-          type="submit"
-          disabled={loading}
-          className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 transition duration-200 font-medium disabled:opacity-50"
-        >
-          {loading ? "Resetting..." : "Update Password"}
-        </button>
+        <Button type="submit" variant="solid" size="form" className="w-full" disabled={loading}>
+          {loading ? "RESETTING..." : "UPDATE PASSWORD"}
+        </Button>
       </form>
     </div>
   );
