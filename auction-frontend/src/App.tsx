@@ -8,6 +8,7 @@ import { CharitiesPage } from './charities/CharitiesPage';
 import { SportsPage } from './sports/SportsPage';
 import { AboutPage } from './about/AboutPage';
 import { SupportPage } from './support/SupportPage';
+import { LivePage } from './live/LivePage';
 
 /**
  * Root Application Component
@@ -27,6 +28,7 @@ function App() {
         <Route path="/" element={<CataloguePage />} />
         <Route path="/auction/:id" element={<ItemPage />} />
         <Route path="/club/:slug" element={<ClubPage />} />
+        <Route path="/live" element={<LivePage />} />
         <Route path="/sports" element={<SportsPage />} />
         <Route path="/charities" element={<CharitiesPage />} />
         <Route path="/about" element={<AboutPage />} />

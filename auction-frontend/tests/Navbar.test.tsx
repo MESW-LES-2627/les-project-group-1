@@ -39,6 +39,11 @@ describe('navbar page links', () => {
 
     expect(screen.getByRole('link', { name: 'SUPPORT' })).toHaveAttribute('href', '/support');
   });
+  it('links to the live page', () => {
+    renderWithRouter(<Navbar />);
+
+    expect(screen.getByRole('link', { name: 'NOW LIVE' })).toHaveAttribute('href', '/live');
+  });
 });
 
 describe('navbar mobile menu', () => {

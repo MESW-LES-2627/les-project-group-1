@@ -66,9 +66,9 @@ export function Navbar({ onSignUpClick, onLoginClick, isLoggedIn, onLogout, sear
       </label>
 
       <nav className={styles.nav} aria-label="Main navigation">
-        <a className={styles.liveLink} href="#live">
+        <Link className={styles.liveLink} to="/live">
           <span className="size-[13px] rounded-full bg-live" />NOW LIVE
-        </a>
+        </Link>
         {NAV_LINKS.map(([label, href]) =>
           href.startsWith('/') ? (
             <Link key={href} className={styles.navLink} to={href}>
@@ -117,9 +117,9 @@ export function Navbar({ onSignUpClick, onLoginClick, isLoggedIn, onLogout, sear
 
       {isMenuOpen && (
         <div id="mobile-menu" className={styles.mobileMenu}>
-          <a className={styles.mobileLive} href="#live" onClick={closeMenu}>
+          <Link className={styles.mobileLive} to="/live" onClick={closeMenu}>
             <span className="size-[13px] rounded-full bg-live" />NOW LIVE
-          </a>
+          </Link>
           {NAV_LINKS.map(([label, href]) =>
             href.startsWith('/') ? (
               <Link key={href} className={styles.mobileLink} to={href} onClick={closeMenu}>
