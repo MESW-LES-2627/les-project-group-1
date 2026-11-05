@@ -5,10 +5,10 @@ import { Input } from '@/components/ui/input';
 import { Link } from 'react-router-dom';
 
 const NAV_LINKS = [
-  ['SPORTS', '#sports'],
-  ['CHARITIES', '#charities'],
-  ['ABOUT US', '#about'],
-  ['SUPPORT', '#support'],
+  ['SPORTS', '/sports'],
+  ['CHARITIES', '/charities'],
+  ['ABOUT US', '/about'],
+  ['SUPPORT', '/support'],
 ] as const;
 
 const styles = {
@@ -66,14 +66,20 @@ export function Navbar({ onSignUpClick, onLoginClick, isLoggedIn, onLogout, sear
       </label>
 
       <nav className={styles.nav} aria-label="Main navigation">
-        <a className={styles.liveLink} href="#live">
+        <Link className={styles.liveLink} to="/live">
           <span className="size-[13px] rounded-full bg-live" />NOW LIVE
-        </a>
-        {NAV_LINKS.map(([label, href]) => (
-          <a key={href} className={styles.navLink} href={href}>
-            {label}
-          </a>
-        ))}
+        </Link>
+        {NAV_LINKS.map(([label, href]) =>
+          href.startsWith('/') ? (
+            <Link key={href} className={styles.navLink} to={href}>
+              {label}
+            </Link>
+          ) : (
+            <a key={href} className={styles.navLink} href={href}>
+              {label}
+            </a>
+          )
+        )}
       </nav>
 
       <div className={styles.account}>
@@ -111,14 +117,20 @@ export function Navbar({ onSignUpClick, onLoginClick, isLoggedIn, onLogout, sear
 
       {isMenuOpen && (
         <div id="mobile-menu" className={styles.mobileMenu}>
-          <a className={styles.mobileLive} href="#live" onClick={closeMenu}>
+          <Link className={styles.mobileLive} to="/live" onClick={closeMenu}>
             <span className="size-[13px] rounded-full bg-live" />NOW LIVE
-          </a>
-          {NAV_LINKS.map(([label, href]) => (
-            <a key={href} className={styles.mobileLink} href={href} onClick={closeMenu}>
-              {label}
-            </a>
-          ))}
+          </Link>
+          {NAV_LINKS.map(([label, href]) =>
+            href.startsWith('/') ? (
+              <Link key={href} className={styles.mobileLink} to={href} onClick={closeMenu}>
+                {label}
+              </Link>
+            ) : (
+              <a key={href} className={styles.mobileLink} href={href} onClick={closeMenu}>
+                {label}
+              </a>
+            )
+          )}
           <a className={styles.mobileSignup} href="#signup" onClick={closeMenu}>
             SIGN UP
           </a>

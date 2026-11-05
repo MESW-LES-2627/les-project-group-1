@@ -46,6 +46,24 @@ describe("validateProfileInput", () => {
   });
 });
 
+describe("validateProfileInput email", () => {
+  it("accepts and trims a valid email", () => {
+    expect(validateProfileInput({ username: "afonso", country: "PT", email: "  a@feup.pt " })).toEqual({
+      ok: true,
+      value: { username: "afonso", country: "PT", email: "a@feup.pt" },
+    });
+  });
+
+  it("rejects malformed, empty, non-string or too long emails", () => {
+    for (const email of ["", "abc", "a@b", "a b@c.pt", 5, null, `${"x".repeat(250)}@a.pt`]) {
+      expect(validateProfileInput({ username: "afonso", country: "PT", email })).toEqual({
+        ok: false,
+        error: "invalid_email",
+      });
+    }
+  });
+});
+
 describe("validateAvatar", () => {
   const valid = "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQ==";
 

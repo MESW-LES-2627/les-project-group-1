@@ -63,10 +63,63 @@ describe('AccountProfile', () => {
     expect((screen.getByLabelText('Country') as HTMLInputElement).value).toBe('PT');
   });
 
-  it('keeps the email read-only', () => {
+  it('lets the user edit the email', async () => {
+    const user = userEvent.setup();
     renderProfile();
 
-    expect(screen.getByLabelText('Email')).toBeDisabled();
+    const email = screen.getByLabelText('Email');
+    expect(email).toBeEnabled();
+    await user.clear(email);
+    await user.type(email, 'novo@feup.pt');
+
+    expect(screen.getByRole('button', { name: 'SAVE CHANGES' })).toBeEnabled();
+  });
+
+  it('saves the new email and reports it', async () => {
+    profileResponse = {
+      status: 200,
+      body: { user: { username: 'afonso', email: 'novo@feup.pt', country: 'PT' } },
+    };
+    const user = userEvent.setup();
+    let saved: ProfileUser | null = null;
+    renderProfile('abc', (value) => {
+      saved = value;
+    });
+
+    await user.clear(screen.getByLabelText('Email'));
+    await user.type(screen.getByLabelText('Email'), 'novo@feup.pt');
+    await user.click(screen.getByRole('button', { name: 'SAVE CHANGES' }));
+
+    expect(await screen.findByText('Profile saved.')).toBeInTheDocument();
+    const put = calls.find((call) => call.init?.method === 'PUT');
+    expect(JSON.parse(put!.init!.body as string)).toEqual({
+      username: 'afonso',
+      country: 'PT',
+      email: 'novo@feup.pt',
+    });
+    expect(saved).toEqual({ username: 'afonso', email: 'novo@feup.pt', country: 'PT' });
+  });
+
+  it('shows a friendly message when the email is taken', async () => {
+    profileResponse = { status: 409, body: { error: 'email_taken' } };
+    const user = userEvent.setup();
+    renderProfile();
+
+    await user.type(screen.getByLabelText('Email'), 'x');
+    await user.click(screen.getByRole('button', { name: 'SAVE CHANGES' }));
+
+    expect(await screen.findByText('That email is already in use.')).toBeInTheDocument();
+  });
+
+  it('shows a friendly message when the email is invalid', async () => {
+    profileResponse = { status: 400, body: { error: 'invalid_email' } };
+    const user = userEvent.setup();
+    renderProfile();
+
+    await user.type(screen.getByLabelText('Email'), 'x');
+    await user.click(screen.getByRole('button', { name: 'SAVE CHANGES' }));
+
+    expect(await screen.findByText('Please enter a valid email address.')).toBeInTheDocument();
   });
 
   it('shows the jerseys section', async () => {
@@ -106,7 +159,11 @@ describe('AccountProfile', () => {
     const put = calls.find((call) => call.init?.method === 'PUT');
     expect(put).toBeDefined();
     expect((put!.init!.headers as Record<string, string>).Authorization).toBe('Bearer abc');
-    expect(JSON.parse(put!.init!.body as string)).toEqual({ username: 'novo', country: 'ES' });
+    expect(JSON.parse(put!.init!.body as string)).toEqual({
+      username: 'novo',
+      country: 'ES',
+      email: 'afonso@feup.pt',
+    });
     expect(saved).toEqual({ username: 'novo', email: 'afonso@feup.pt', country: 'ES' });
   });
 

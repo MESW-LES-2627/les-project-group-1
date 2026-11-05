@@ -16,6 +16,7 @@ export type MyProfile = ProfileUser & {
 export type ProfileInput = {
   username: string;
   country: string;
+  email: string;
 };
 
 export type Purchase = {
