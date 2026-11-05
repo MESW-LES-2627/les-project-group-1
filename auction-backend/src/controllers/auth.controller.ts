@@ -27,6 +27,7 @@ export async function registerUser(req: Request, res: Response) {
         email: newUser.email,
         created_at: newUser.createdAt,
         country: newUser.country,
+        role: newUser.role,
       },
     });
   } catch (error) {
@@ -48,7 +49,7 @@ export async function loginUser(req: Request, res: Response) {
 
     return res.status(200).json({
       message: "Login successful.",
-      user: { id: user.id, username: user.username, email: user.email, country: user.country },
+      user: { id: user.id, username: user.username, email: user.email, country: user.country, role: user.role, },
     });
   } catch (error) {
     console.error("Login error:", (error as Error).message);

@@ -1,5 +1,5 @@
 import { join } from "path";
-import { sql } from "../config/db";
+import { sql } from "../src/config/db.ts";
 
 /**
  * Loads the demo catalogue (clubs, categories, listings).
@@ -7,6 +7,6 @@ import { sql } from "../config/db";
  * relative to "now", so re-seed a fresh database to get fresh countdowns.
  * Run with: bun run seed
  */
-await sql.file(join(import.meta.dir, "../../seeds/demo.sql"));
+await sql.file(join(import.meta.dir, "demo.sql"));
 console.log("demo data loaded");
 await sql.close();

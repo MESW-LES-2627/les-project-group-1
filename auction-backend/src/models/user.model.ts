@@ -7,14 +7,14 @@ export async function emailExists(email: string) {
 export async function createUser(username: string, email: string, passwordHash: string, country: string) {
   return prisma.user.create({
     data: { username, email, passwordHash, country },
-    select: { username: true, email: true, createdAt: true, country: true },
+    select: { username: true, email: true, createdAt: true, country: true, role: true },
   });
 }
 
 export async function findForLogin(email: string) {
   return prisma.user.findUnique({
     where: { email },
-    select: { id: true, username: true, email: true, passwordHash: true, country: true },
+    select: { id: true, username: true, email: true, passwordHash: true, country: true, role: true },
   });
 }
 

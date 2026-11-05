@@ -11,7 +11,8 @@
     "migrate": "prisma migrate deploy",
     "migrate:dev": "prisma migrate dev",
     "generate": "prisma generate",
-    "seed": "bun src/utils/seed.ts"
+    "seed": "bun seeds/seed.ts",
+    "seed:admin": "bun seeds/admin-seed.ts"
   },
   "devDependencies": {
     "@types/bun": "^1.4.3",
