@@ -40,4 +40,12 @@ describe('CharitiesView', () => {
     expect(first.getByText(CHARITIES[0].cause)).toBeInTheDocument();
     expect(first.getByText(String(CHARITIES[0].auctions))).toBeInTheDocument();
   });
+
+  it('shows a photo on every card', () => {
+    renderWithRouter(<CharitiesView account={account} />);
+
+    for (const charity of CHARITIES) {
+      expect(screen.getByAltText(`${charity.name} photo`)).toHaveAttribute('src', charity.image);
+    }
+  });
 });
