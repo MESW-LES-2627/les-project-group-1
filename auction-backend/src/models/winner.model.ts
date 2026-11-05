@@ -26,6 +26,14 @@ export async function saveWinner(w: WinnerInput) {
   ]);
 }
 
+export async function findPaidByEmail(email: string) {
+  return prisma.winner.findMany({
+    where: { status: "paid", email: { equals: email, mode: "insensitive" } },
+    orderBy: { paidAt: "desc" },
+    select: { id: true, itemName: true, winningBid: true, paidAt: true },
+  });
+}
+
 export async function markPaid(sessionId: string) {
   await prisma.winner.updateMany({
     where: { stripeSessionId: sessionId, status: { not: "paid" } },

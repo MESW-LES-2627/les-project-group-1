@@ -90,7 +90,7 @@ export function Navbar({ onSignUpClick, onLoginClick, isLoggedIn, onLogout, sear
         {isLoggedIn && (
           <>
             <Button variant="navbarPrimary" size="navbar">
-              <a href="#profile">PROFILE</a>
+              <Link to="/profile">PROFILE</Link>
             </Button>
             <Button variant="navbarOutline" size="navbar" onClick={onLogout}>
               <a href="#logout">LOGOUT</a>

@@ -5,6 +5,7 @@ import { AuctionPage } from './AuctionPage';
 //import { EmailGate } from '../components/EmailGate';
 import { MIN_INCREMENT } from './data';
 import type { AccountNav, AuctionState, Bid, WinnerData } from './types';
+import type { ProfileUser } from '../profile/api';
 import { formatEuro } from './utils';
 import { RegisterForm } from '../components/RegisterForm';
 import { LoginForm } from '../components/LoginForm';
@@ -46,6 +47,8 @@ function AuctionApp({ auctionId = 'demo', children, renderPage }: AuctionAppProp
   //const [] = useState('');
   const [email, setEmail] = useState(() => localStorage.getItem('bidderEmail') ?? '');
   const [username, setUsername] = useState(() => localStorage.getItem('bidderUsername') ?? '');
+  const [country, setCountry] = useState(() => localStorage.getItem('bidderCountry') ?? '');
+  const [token, setToken] = useState(() => localStorage.getItem('bidderToken') ?? '');
 
   //Register
   const [showRegisterForm, setShowRegisterForm] = useState(false);
@@ -183,7 +186,7 @@ function AuctionApp({ auctionId = 'demo', children, renderPage }: AuctionAppProp
         body: JSON.stringify({ username: valueUsername,email: value, password: registerPassword, country: registerCountry }),
       });
 
-      const data = (await response.json()) as { error?: string };
+      const data = (await response.json()) as { error?: string; token?: string };
 
       if (!response.ok) {
         throw new Error(data.error || 'Error registering user. Please try again.');
@@ -192,10 +195,15 @@ function AuctionApp({ auctionId = 'demo', children, renderPage }: AuctionAppProp
       setRegisterSuccessMessage('Account created successfully! You can now place bids.');
 
       setTimeout(() => {
+        if (data.token) {
+          localStorage.setItem('bidderToken', data.token);
+          setToken(data.token);
+        }
         localStorage.setItem('bidderUsername', valueUsername);
         localStorage.setItem('bidderEmail', value);
         localStorage.setItem('bidderCountry', registerCountry);
         setUsername(valueUsername);
+        setCountry(registerCountry);
         setEmail(value);
         setShowRegisterForm(false);
         setAuthView(null);
@@ -228,9 +236,14 @@ function AuctionApp({ auctionId = 'demo', children, renderPage }: AuctionAppProp
         body: JSON.stringify({ email: valueEmail, password: loginPassword }),
       });
 
-      const data = (await response.json()) as { error?: string; user?: { username: string; email: string, country?: string } };
+      const data = (await response.json()) as { error?: string; token?: string; user?: { username: string; email: string, country?: string } };
       if (!response.ok) throw new Error(data.error || 'Error logging in. Please try again.');
-      
+
+      if (data.token) {
+        localStorage.setItem('bidderToken', data.token);
+        setToken(data.token);
+      }
+
 
       const loggedUsername = data.user?.username || '';
       localStorage.setItem('bidderEmail', data.user?.email || valueEmail);
@@ -242,6 +255,7 @@ function AuctionApp({ auctionId = 'demo', children, renderPage }: AuctionAppProp
       const loggedCountry = data.user?.country || '';
       if (loggedCountry) {
         localStorage.setItem('bidderCountry', loggedCountry);
+        setCountry(loggedCountry);
       }
       
       setEmail(data.user?.email || valueEmail);
@@ -273,7 +287,10 @@ function AuctionApp({ auctionId = 'demo', children, renderPage }: AuctionAppProp
   const handleLogout =  async () => {
     try {
       const backendUrl = socketUrl.replace(/\/+$/, '');
-      const response = await fetch(`${backendUrl}/api/auth/logout`, { method: 'POST' }); // Call the logout endpoint
+      const response = await fetch(`${backendUrl}/api/auth/logout`, {
+        method: 'POST',
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      }); // Call the logout endpoint
       if (!response.ok) throw new Error(`Logout failed with status ${response.status}`);
     } catch (err: any) {
       console.error('Error logging out:', err.message);
@@ -284,13 +301,28 @@ function AuctionApp({ auctionId = 'demo', children, renderPage }: AuctionAppProp
       localStorage.removeItem('bidderEmail');
       localStorage.removeItem('bidderUsername');
       localStorage.removeItem('bidderCountry');
+      localStorage.removeItem('bidderToken');
+      setCountry('');
+      setToken('');
       setShowAuthChoice(true);
     }
+  };
+
+  const handleProfileSaved = (user: ProfileUser) => {
+    localStorage.setItem('bidderUsername', user.username);
+    localStorage.setItem('bidderCountry', user.country);
+    setUsername(user.username);
+    setCountry(user.country);
   };
 
     // Account actions for the navigation bar (also used by the catalogue pages)
   const account: AccountNav = {
     isLoggedIn: Boolean(email),
+    email,
+    username,
+    country,
+    token,
+    onProfileSaved: handleProfileSaved,
     onLogout: handleLogout,
     onSignUpClick: () => {
       setRegisterUsername('');
@@ -476,7 +508,7 @@ function AuctionApp({ auctionId = 'demo', children, renderPage }: AuctionAppProp
         activeImage={activeImage}
         onImageChange={setActiveImage}
         now={now}
-        onChangeEmail={() => {setEmail(''); setUsername(''); localStorage.removeItem('bidderEmail'); localStorage.removeItem('bidderUsername'); setShowAuthChoice(true);}}
+        onChangeEmail={() => {setEmail(''); setUsername(''); setCountry(''); setToken(''); localStorage.removeItem('bidderEmail'); localStorage.removeItem('bidderUsername'); localStorage.removeItem('bidderCountry'); localStorage.removeItem('bidderToken'); setShowAuthChoice(true);}}
         onReset={handleReset}
         isResetting={isResetting}
         resetError={resetError}

@@ -3,6 +3,8 @@ import crypto from "crypto";
 import { env } from "../config/env";
 import { sendEmail } from "../services/email.service";
 import * as User from "../models/user.model";
+import { createSession, deleteSession } from "../models/session.model";
+import { readToken } from "../middlewares/requireAuth";
 
 /** Registration, login and password recovery. */
 
@@ -19,9 +21,11 @@ export async function registerUser(req: Request, res: Response) {
 
     const hashedPassword = await Bun.password.hash(password, { algorithm: "argon2id" });
     const newUser = await User.createUser(username, email, hashedPassword, country);
+    const token = await createSession(newUser.id);
 
     return res.status(201).json({
       message: "User registered successfully.",
+      token,
       user: {
         username: newUser.username,
         email: newUser.email,
@@ -46,8 +50,11 @@ export async function loginUser(req: Request, res: Response) {
     const isPasswordValid = await Bun.password.verify(password, user.passwordHash);
     if (!isPasswordValid) return res.status(401).json({ error: "Invalid credentials." });
 
+    const token = await createSession(user.id);
+
     return res.status(200).json({
       message: "Login successful.",
+      token,
       user: { id: user.id, username: user.username, email: user.email, country: user.country },
     });
   } catch (error) {
@@ -56,9 +63,15 @@ export async function loginUser(req: Request, res: Response) {
   }
 }
 
-// Stateless logout: the client just discards its session data.
-export function logoutUser(_req: Request, res: Response) {
-  return res.status(200).json({ message: "Logged out successfully." });
+export async function logoutUser(req: Request, res: Response) {
+  try {
+    const token = readToken(req);
+    if (token) await deleteSession(token);
+    return res.status(200).json({ message: "Logged out successfully." });
+  } catch (error) {
+    console.error("Logout error:", (error as Error).message);
+    return res.status(500).json({ error: "Internal server error." });
+  }
 }
 
 export async function forgotPassword(req: Request, res: Response) {
