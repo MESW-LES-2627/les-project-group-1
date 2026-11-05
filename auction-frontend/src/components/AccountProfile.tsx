@@ -3,6 +3,7 @@ import type { FormEvent } from 'react';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { PurchasedJerseys } from './PurchasedJerseys';
+import { AvatarEditor } from './AvatarEditor';
 import { flagEmoji } from '../auction/utils';
 import { COUNTRIES } from '../auction/countries';
 import { ApiError, saveProfile } from '../profile/api';
@@ -69,12 +70,7 @@ export function AccountProfile({ token, username, email, country, onSaved }: Acc
 
       <div className="mt-10 grid grid-cols-2 items-start gap-10 max-tablet:grid-cols-1">
         <section className="flex flex-col items-center gap-4 px-4 text-center">
-          <div
-            aria-hidden="true"
-            className="flex size-40 items-center justify-center rounded-full bg-ink-strong text-7xl font-black text-white max-mobile:size-28 max-mobile:text-5xl"
-          >
-            {initial}
-          </div>
+          <AvatarEditor token={token} initial={initial} />
           <h2 className="max-w-full truncate text-[clamp(1.6rem,3vw,2.5rem)] leading-tight font-black text-ink-strong uppercase">
             {username}
           </h2>

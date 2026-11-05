@@ -25,7 +25,6 @@ export function PurchasedJerseys({ token }: PurchasedJerseysProps) {
   useEffect(() => {
     if (!token) return;
     let active = true;
-    setState({ status: 'loading' });
     fetchPurchases(token)
       .then((purchases) => {
         if (active) setState({ status: 'ready', purchases });

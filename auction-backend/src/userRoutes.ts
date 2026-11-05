@@ -2,14 +2,14 @@ import { Router } from "express";
 import type { Request, Response } from "express";
 import { sql } from "./db";
 import { requireAuth } from "./session";
-import { validateProfileInput } from "./profile-validation";
+import { validateAvatar, validateProfileInput } from "./profile-validation";
 
 export const userRouter = Router();
 
 userRouter.get("/me", requireAuth, async (_req: Request, res: Response) => {
     try {
         const rows = await sql`
-            SELECT username, email, country FROM users WHERE id = ${res.locals.userId}
+            SELECT username, email, country, avatar FROM users WHERE id = ${res.locals.userId}
         `;
         if (rows.length === 0) return res.status(404).json({ error: "not_found" });
         return res.status(200).json({ user: rows[0] });
@@ -63,6 +63,29 @@ userRouter.get("/me/purchases", requireAuth, async (_req: Request, res: Response
         return res.status(200).json({ purchases });
     } catch (error) {
         console.error("Get purchases error:", error);
+        return res.status(500).json({ error: "Internal server error." });
+    }
+});
+
+userRouter.put("/me/avatar", requireAuth, async (req: Request, res: Response) => {
+    try {
+        const result = validateAvatar(req.body);
+        if (!result.ok) return res.status(400).json({ error: result.error });
+
+        await sql`UPDATE users SET avatar = ${result.value} WHERE id = ${res.locals.userId}`;
+        return res.status(200).json({ avatar: result.value });
+    } catch (error) {
+        console.error("Update avatar error:", error);
+        return res.status(500).json({ error: "Internal server error." });
+    }
+});
+
+userRouter.delete("/me/avatar", requireAuth, async (_req: Request, res: Response) => {
+    try {
+        await sql`UPDATE users SET avatar = NULL WHERE id = ${res.locals.userId}`;
+        return res.status(200).json({ avatar: null });
+    } catch (error) {
+        console.error("Remove avatar error:", error);
         return res.status(500).json({ error: "Internal server error." });
     }
 });

@@ -27,3 +27,5 @@ create table if not exists sessions (
   expires_at timestamptz not null,
   created_at timestamptz not null default now()
 );
+
+alter table users add column if not exists avatar text;

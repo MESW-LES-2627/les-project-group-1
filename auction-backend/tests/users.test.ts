@@ -75,7 +75,7 @@ describe("own profile management", () => {
     const response = await fetch(`${baseUrl}/api/users/me`, authed(firstToken, "GET"));
     const data = await response.json();
     expect(response.status).toBe(200);
-    expect(data.user).toEqual({ username: "profileone", email: "profile1@test.pt", country: "PT" });
+    expect(data.user).toEqual({ username: "profileone", email: "profile1@test.pt", country: "PT", avatar: null });
     expect(JSON.stringify(data)).not.toContain("password");
   });
 
@@ -137,7 +137,7 @@ describe("own profile management", () => {
   it("does not change other users", async () => {
     const response = await fetch(`${baseUrl}/api/users/me`, authed(secondToken, "GET"));
     const data = await response.json();
-    expect(data.user).toEqual({ username: "profiletwo", email: "profile2@test.pt", country: "PT" });
+    expect(data.user).toEqual({ username: "profiletwo", email: "profile2@test.pt", country: "PT", avatar: null });
   });
 
   it("invalidates the token on logout", async () => {
@@ -183,5 +183,62 @@ describe("purchased jerseys", () => {
     expect(data.purchases[0].itemName).toBe("Velocity");
     expect(data.purchases[0].amount).toBe(56);
     expect(data.purchases[0].paidAt).toBeTruthy();
+  });
+});
+
+describe("profile photo", () => {
+  const photo = "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQ==";
+
+  it("requires authentication", async () => {
+    const response = await fetch(`${baseUrl}/api/users/me/avatar`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ image: photo }),
+    });
+    expect(response.status).toBe(401);
+  });
+
+  it("saves the photo and returns it with the profile", async () => {
+    const save = await fetch(`${baseUrl}/api/users/me/avatar`, authed(firstToken, "PUT", { image: photo }));
+    expect(save.status).toBe(200);
+
+    const response = await fetch(`${baseUrl}/api/users/me`, authed(firstToken, "GET"));
+    const data = await response.json();
+    expect(data.user.avatar).toBe(photo);
+  });
+
+  it("rejects an image that is not a jpeg", async () => {
+    const response = await fetch(
+      `${baseUrl}/api/users/me/avatar`,
+      authed(firstToken, "PUT", { image: "data:image/png;base64,iVBORw0KGgo=" })
+    );
+    const data = await response.json();
+    expect(response.status).toBe(400);
+    expect(data.error).toBe("invalid_image");
+  });
+
+  it("rejects an image that is too large", async () => {
+    const response = await fetch(
+      `${baseUrl}/api/users/me/avatar`,
+      authed(firstToken, "PUT", { image: "data:image/jpeg;base64,/9j/" + "A".repeat(90000) })
+    );
+    const data = await response.json();
+    expect(response.status).toBe(400);
+    expect(data.error).toBe("image_too_large");
+  });
+
+  it("keeps the previous photo after a rejected upload", async () => {
+    const response = await fetch(`${baseUrl}/api/users/me`, authed(firstToken, "GET"));
+    const data = await response.json();
+    expect(data.user.avatar).toBe(photo);
+  });
+
+  it("removes the photo", async () => {
+    const remove = await fetch(`${baseUrl}/api/users/me/avatar`, authed(firstToken, "DELETE"));
+    expect(remove.status).toBe(200);
+
+    const response = await fetch(`${baseUrl}/api/users/me`, authed(firstToken, "GET"));
+    const data = await response.json();
+    expect(data.user.avatar).toBeNull();
   });
 });

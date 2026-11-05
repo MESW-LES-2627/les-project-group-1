@@ -1,5 +1,5 @@
 import { describe, it, expect } from "bun:test";
-import { validateProfileInput } from "../src/profile-validation";
+import { validateAvatar, validateProfileInput } from "../src/profile-validation";
 
 describe("validateProfileInput", () => {
   it("accepts a valid username and country", () => {
@@ -43,5 +43,51 @@ describe("validateProfileInput", () => {
       error: "invalid_country",
     });
     expect(validateProfileInput({ username: "afonso" })).toEqual({ ok: false, error: "invalid_country" });
+  });
+});
+
+describe("validateAvatar", () => {
+  const valid = "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQ==";
+
+  it("accepts a jpeg data url", () => {
+    expect(validateAvatar({ image: valid })).toEqual({ ok: true, value: valid });
+  });
+
+  it("rejects a non-object body or a missing image", () => {
+    expect(validateAvatar(null)).toEqual({ ok: false, error: "invalid_body" });
+    expect(validateAvatar({})).toEqual({ ok: false, error: "invalid_image" });
+  });
+
+  it("rejects anything that is not a jpeg data url", () => {
+    expect(validateAvatar({ image: "data:image/png;base64,/9j/4AAQ" })).toEqual({
+      ok: false,
+      error: "invalid_image",
+    });
+    expect(validateAvatar({ image: "data:image/svg+xml;base64,PHN2Zz4=" })).toEqual({
+      ok: false,
+      error: "invalid_image",
+    });
+    expect(validateAvatar({ image: "https://example.com/a.jpg" })).toEqual({
+      ok: false,
+      error: "invalid_image",
+    });
+  });
+
+  it("rejects data that is not valid base64 or not a jpeg", () => {
+    expect(validateAvatar({ image: "data:image/jpeg;base64,/9j/4AAQ<script>" })).toEqual({
+      ok: false,
+      error: "invalid_image",
+    });
+    expect(validateAvatar({ image: "data:image/jpeg;base64,iVBORw0KGgo=" })).toEqual({
+      ok: false,
+      error: "invalid_image",
+    });
+  });
+
+  it("rejects images that are too large", () => {
+    expect(validateAvatar({ image: "data:image/jpeg;base64,/9j/" + "A".repeat(90000) })).toEqual({
+      ok: false,
+      error: "image_too_large",
+    });
   });
 });

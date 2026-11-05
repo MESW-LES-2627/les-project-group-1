@@ -9,6 +9,10 @@ export type ProfileUser = {
   country: string;
 };
 
+export type MyProfile = ProfileUser & {
+  avatar: string | null;
+};
+
 export type ProfileInput = {
   username: string;
   country: string;
@@ -53,4 +57,17 @@ export async function saveProfile(token: string, input: ProfileInput): Promise<P
 export async function fetchPurchases(token: string): Promise<Purchase[]> {
   const data = await request('/api/users/me/purchases', token);
   return data.purchases as Purchase[];
+}
+
+export async function fetchMe(token: string): Promise<MyProfile> {
+  const data = await request('/api/users/me', token);
+  return { ...data.user, avatar: data.user?.avatar ?? null } as MyProfile;
+}
+
+export async function saveAvatar(token: string, image: string): Promise<void> {
+  await request('/api/users/me/avatar', token, { method: 'PUT', body: JSON.stringify({ image }) });
+}
+
+export async function removeAvatar(token: string): Promise<void> {
+  await request('/api/users/me/avatar', token, { method: 'DELETE' });
 }
