@@ -3,6 +3,7 @@ import crypto from "crypto";
 import { env } from "../config/env";
 import { sendEmail } from "../services/email.service";
 import * as User from "../models/user.model";
+import { signToken } from "../services/token.service";
 
 /** Registration, login and password recovery. */
 
@@ -50,6 +51,7 @@ export async function loginUser(req: Request, res: Response) {
     return res.status(200).json({
       message: "Login successful.",
       user: { id: user.id, username: user.username, email: user.email, country: user.country, role: user.role, },
+      token: signToken(user.id)
     });
   } catch (error) {
     console.error("Login error:", (error as Error).message);

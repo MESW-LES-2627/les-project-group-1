@@ -1,12 +1,20 @@
 import { prisma } from "../config/prisma";
 
+export type Role = "ADMIN" | "CLUB" | "BUYER";
+
+export async function findAuthById(id: number) {
+  return prisma.user.findUnique({ where: { id }, select: { id: true, role: true } });
+}
+
 export async function emailExists(email: string) {
   return (await prisma.user.count({ where: { email } })) > 0;
 }
 
-export async function createUser(username: string, email: string, passwordHash: string, country: string) {
+export async function createUser(
+    username: string, email: string, passwordHash: string, country: string, role: Role = "BUYER",
+) {
   return prisma.user.create({
-    data: { username, email, passwordHash, country },
+    data: { username, email, passwordHash, country, role },
     select: { username: true, email: true, createdAt: true, country: true, role: true },
   });
 }
