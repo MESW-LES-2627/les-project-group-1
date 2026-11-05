@@ -12,6 +12,8 @@ import type { ProfileUser } from '../profile/api';
 const errorMessages: Record<string, string> = {
   invalid_username: 'The username must have between 3 and 30 characters.',
   invalid_country: 'Please select your country.',
+  invalid_email: 'Please enter a valid email address.',
+  email_taken: 'That email is already in use.',
   username_taken: 'That username is already in use.',
 };
 
@@ -29,13 +31,15 @@ interface AccountProfileProps {
 
 export function AccountProfile({ token, username, email, country, onSaved }: AccountProfileProps) {
   const [usernameInput, setUsernameInput] = useState(username);
+  const [emailInput, setEmailInput] = useState(email);
   const [countryInput, setCountryInput] = useState(country);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [saved, setSaved] = useState(false);
 
   const canEdit = Boolean(token);
-  const changed = usernameInput.trim() !== username || countryInput.trim() !== country;
+  const changed =
+    usernameInput.trim() !== username || emailInput.trim() !== email || countryInput.trim() !== country;
   const initial = (username || email || '?').charAt(0).toUpperCase();
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
@@ -45,8 +49,13 @@ export function AccountProfile({ token, username, email, country, onSaved }: Acc
     setError('');
     setSaved(false);
     try {
-      const user = await saveProfile(token, { username: usernameInput, country: countryInput });
+      const user = await saveProfile(token, {
+        username: usernameInput,
+        country: countryInput,
+        email: emailInput,
+      });
       setUsernameInput(user.username);
+      setEmailInput(user.email);
       setCountryInput(user.country);
       onSaved(user);
       setSaved(true);
@@ -117,8 +126,17 @@ export function AccountProfile({ token, username, email, country, onSaved }: Acc
               <label htmlFor="profile-email" className={labelClass}>
                 Email
               </label>
-              <Input id="profile-email" className={inputClass} value={email} disabled readOnly />
-              <p className="mt-2 text-sm text-ink-soft">Your email identifies your account and cannot be changed.</p>
+              <Input
+                id="profile-email"
+                className={inputClass}
+                type="email"
+                value={emailInput}
+                onChange={(event) => {
+                  setEmailInput(event.target.value);
+                  setSaved(false);
+                }}
+                disabled={!canEdit}
+              />
             </div>
 
             <div>

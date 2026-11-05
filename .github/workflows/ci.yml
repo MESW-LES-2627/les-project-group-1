@@ -61,6 +61,7 @@ jobs:
     env:
       DATABASE_URL: postgres://auction:auction@localhost:5432/auction
       JWT_SECRET: 8106f316709d3ec378b3242c0155ab2c9ca4c1d0beaf8de82c863e0bcacb4137
+      RESEND_API_KEY: re_dummy_key_for_tests
     steps:
       - name: Check out repository
         uses: actions/checkout@v4

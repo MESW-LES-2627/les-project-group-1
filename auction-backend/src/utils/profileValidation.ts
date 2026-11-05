@@ -1,7 +1,10 @@
 export type ProfileInput = {
   username: string;
   country: string;
+  email?: string;
 };
+
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export type ProfileValidation =
   | { ok: true; value: ProfileInput }
@@ -17,7 +20,12 @@ export function validateProfileInput(body: unknown): ProfileValidation {
   const country = typeof data.country === "string" ? data.country.trim() : "";
   if (country.length < 2 || country.length > 60) return { ok: false, error: "invalid_country" };
 
-  return { ok: true, value: { username, country } };
+  if (data.email === undefined) return { ok: true, value: { username, country } };
+
+  const email = typeof data.email === "string" ? data.email.trim() : "";
+  if (email.length > 254 || !EMAIL_PATTERN.test(email)) return { ok: false, error: "invalid_email" };
+
+  return { ok: true, value: { username, country, email } };
 }
 
 export type AvatarValidation =
