@@ -18,6 +18,34 @@ describe('navbar account links', () => {
   });
 });
 
+describe('navbar page links', () => {
+  it('links to the charities page', () => {
+    renderWithRouter(<Navbar />);
+
+    expect(screen.getByRole('link', { name: 'CHARITIES' })).toHaveAttribute('href', '/charities');
+  });
+  it('links to the sports page', () => {
+    renderWithRouter(<Navbar />);
+
+    expect(screen.getByRole('link', { name: 'SPORTS' })).toHaveAttribute('href', '/sports');
+  });
+  it('links to the about page', () => {
+    renderWithRouter(<Navbar />);
+
+    expect(screen.getByRole('link', { name: 'ABOUT US' })).toHaveAttribute('href', '/about');
+  });
+  it('links to the support page', () => {
+    renderWithRouter(<Navbar />);
+
+    expect(screen.getByRole('link', { name: 'SUPPORT' })).toHaveAttribute('href', '/support');
+  });
+  it('links to the live page', () => {
+    renderWithRouter(<Navbar />);
+
+    expect(screen.getByRole('link', { name: 'NOW LIVE' })).toHaveAttribute('href', '/live');
+  });
+});
+
 describe('navbar mobile menu', () => {
   it('opens and closes the menu', async () => {
     const user = userEvent.setup();
