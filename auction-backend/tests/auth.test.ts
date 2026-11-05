@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeAll, afterAll } from "bun:test";
-import { httpServer } from "../index"; 
-import {sql} from "../src/db";
+import { httpServer } from "../src/app";
+import { prisma } from "../src/config/prisma";
 
 const PORT = 3001; // diffent port for testing to avoid conflicts with the main server
 const BASE_URL = `http://localhost:${PORT}`;
@@ -10,12 +10,13 @@ beforeAll(async () => {
   if (!httpServer.listening) {
     httpServer.listen(PORT);
   }
-  await sql`DELETE FROM users;`;
+  await prisma.user.deleteMany();
 });
 
 // CLose the server after all tests
 afterAll(async () => {
   httpServer.close();
+  await prisma.$disconnect();
 });
 
 /*****************
@@ -36,7 +37,7 @@ describe("POST /api/auth/register", () => {
       }),
     });
 
-    const data = await response.json();
+    const data: any = await response.json();
 
     expect(response.status).toBe(201);
     expect(data.message).toBe("User registered successfully.");
@@ -57,7 +58,7 @@ describe("POST /api/auth/register", () => {
       }),
     });
 
-    const data = await response.json();
+    const data: any = await response.json();
 
     expect(response.status).toBe(400);
     expect(data.error).toBe("Username, email, password and country are required.");
@@ -75,7 +76,7 @@ describe("POST /api/auth/register", () => {
       }),
     });
 
-    const data = await response.json();
+    const data: any = await response.json();
 
     expect(response.status).toBe(400);
     expect(data.error).toBe("Password must be at least 8 characters long.");
@@ -94,7 +95,7 @@ describe("POST /api/auth/register", () => {
       }),
     });
 
-    const data = await response.json();
+    const data: any = await response.json();
 
     expect(response.status).toBe(400);
     expect(data.error).toBe("User already exists.");
@@ -118,7 +119,7 @@ describe("POST /api/auth/login", () => {
       }),
     });
 
-    const data = await response.json();
+    const data: any = await response.json();
 
     expect(response.status).toBe(200);
     expect(data.message).toBe("Login successful.");
@@ -136,7 +137,7 @@ describe("POST /api/auth/login", () => {
       }),
     });
 
-    const data = await response.json();
+    const data: any = await response.json();
 
     expect(response.status).toBe(401);
     expect(data.error).toBe("Invalid credentials.");
@@ -152,7 +153,7 @@ describe("POST /api/auth/login", () => {
       }),
     });
 
-    const data = await response.json();
+    const data: any = await response.json();
 
     expect(response.status).toBe(401);
     expect(data.error).toBe("Invalid credentials.");
@@ -182,7 +183,7 @@ describe("POST /api/auth/logout", () => {
       headers: { "Content-Type": "application/json" },
     });
 
-    const data = await response.json();
+    const data: any = await response.json();
     expect(response.status).toBe(200);
     expect(data.message).toBe("Logged out successfully.");
   });
@@ -201,7 +202,7 @@ describe("POST /api/auth/forgot-password & /api/auth/reset-password", () => {
       body: JSON.stringify({ email: "test@feup.pt" }),
     });
 
-    const data = await response.json();
+    const data: any = await response.json();
     expect(response.status).toBe(200);
     expect(data.message).toBe("If the email exists, a reset link has been sent.");
   });
@@ -216,7 +217,7 @@ describe("POST /api/auth/forgot-password & /api/auth/reset-password", () => {
       }),
     });
 
-    const data = await response.json();
+    const data: any = await response.json();
     expect(response.status).toBe(400);
     expect(data.error).toBe("Invalid or expired reset token.");
   });
@@ -231,7 +232,7 @@ describe("POST /api/auth/forgot-password & /api/auth/reset-password", () => {
       }),
     });
 
-    const data = await response.json();
+    const data: any = await response.json();
     expect(response.status).toBe(400);
     expect(data.error).toBe("Password must be at least 8 characters long.");
   });

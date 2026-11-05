@@ -25,7 +25,7 @@ export async function registerUser(req: Request, res: Response) {
       user: {
         username: newUser.username,
         email: newUser.email,
-        created_at: newUser.created_at,
+        created_at: newUser.createdAt,
         country: newUser.country,
       },
     });
@@ -43,7 +43,7 @@ export async function loginUser(req: Request, res: Response) {
     const user = await User.findForLogin(email);
     if (!user) return res.status(401).json({ error: "Invalid credentials." });
 
-    const isPasswordValid = await Bun.password.verify(password, user.password_hash);
+    const isPasswordValid = await Bun.password.verify(password, user.passwordHash);
     if (!isPasswordValid) return res.status(401).json({ error: "Invalid credentials." });
 
     return res.status(200).json({

@@ -1,6 +1,4 @@
-import { sql } from "../config/db";
-
-/** Queries for the catalogue. Listings are always read from the public_listings view (verified only). */
+import { prisma } from "../config/prisma";
 
 // Row shape returned by the public_listings view.
 export interface ListingRow {
@@ -26,7 +24,7 @@ export interface ListingRow {
 }
 
 export async function findPublicListings(pattern: string | null, categorySlug: string | null) {
-  const rows = await sql`
+  return prisma.$queryRaw<ListingRow[]>`
     select * from public_listings
     where (${pattern}::text is null
         or title ilike ${pattern}
@@ -35,41 +33,40 @@ export async function findPublicListings(pattern: string | null, categorySlug: s
       and (${categorySlug}::text is null or category_slug = ${categorySlug})
     order by id
   `;
-  return rows as ListingRow[];
 }
 
 export async function findPublicListingById(id: number) {
-  const [row] = await sql`select * from public_listings where id = ${id}`;
-  return row as ListingRow | undefined;
+  const rows = await prisma.$queryRaw<ListingRow[]>`select * from public_listings where id = ${id}`;
+  return rows[0];
 }
 
 export async function findCategories() {
-  return await sql`select slug, name from categories order by name`;
+  return prisma.category.findMany({ select: { slug: true, name: true }, orderBy: { name: "asc" } });
 }
 
 export async function findClubBySlug(slug: string) {
-  const [club] = await sql`
-    select slug, name, description, logo_url as "logoUrl" from clubs where slug = ${slug}
-  `;
-  return club;
+  return prisma.club.findUnique({
+    where: { slug },
+    select: { slug: true, name: true, description: true, logoUrl: true },
+  });
 }
 
 export async function findPublicListingsByClub(slug: string) {
-  const rows = await sql`select * from public_listings where club_slug = ${slug} order by id`;
-  return rows as ListingRow[];
+  return prisma.$queryRaw<ListingRow[]>`select * from public_listings where club_slug = ${slug} order by id`;
 }
 
 /** Data needed to open a live auction for a verified listing, or null if it has no auction data. */
 export async function findListingAuction(id: number) {
   if (!Number.isInteger(id)) return null;
 
-  const [row] = await sql`
-    select title, starting_price, auction_ends_at from public_listings where id = ${id}
-  `;
+  const rows = await prisma.$queryRaw<
+      { title: string; starting_price: number | null; auction_ends_at: Date | null }[]
+  >`select title, starting_price, auction_ends_at from public_listings where id = ${id}`;
+  const row = rows[0];
   if (!row || row.starting_price === null || !row.auction_ends_at) return null;
 
   return {
-    title: row.title as string,
+    title: row.title,
     startingPrice: Number(row.starting_price),
     endsAt: new Date(row.auction_ends_at),
   };
