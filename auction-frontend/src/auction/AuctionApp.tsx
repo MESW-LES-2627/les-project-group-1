@@ -1,10 +1,10 @@
 import { useEffect, useRef, useState } from 'react';
-import type { FormEvent } from 'react';
+import type { FormEvent, ReactNode } from 'react';
 import { io } from 'socket.io-client';
 import { AuctionPage } from './AuctionPage';
 //import { EmailGate } from '../components/EmailGate';
 import { MIN_INCREMENT } from './data';
-import type { AuctionState, Bid, WinnerData } from './types';
+import type { AccountNav, AuctionState, Bid, WinnerData } from './types';
 import { formatEuro } from './utils';
 import { RegisterForm } from '../components/RegisterForm';
 import { LoginForm } from '../components/LoginForm';
@@ -19,7 +19,19 @@ const socketUrl =
 const socket = io(socketUrl, { autoConnect: false });
 const INITIAL_NOW = Date.now();
 
-function AuctionApp() {
+//Props for the AuctionApp component
+interface AuctionAppProps {
+  // Which live auction to join. Defaults to the Sprint 0 prototype auction.
+  auctionId?: string;
+  // Extra content rendered below the auction page (used by the catalogue item page).
+  children?: ReactNode;
+  // Renders a page without a live auction (home and club pages), with the account actions for the navigation bar.
+  renderPage?: (account: AccountNav) => ReactNode;
+}
+
+function AuctionApp({ auctionId = 'demo', children, renderPage }: AuctionAppProps) {
+  const isLive = !renderPage;
+
   const [auction, setAuction] = useState<AuctionState | null>(null);
   const [bidAmount, setBidAmount] = useState('');
   const [winnerData, setWinnerData] = useState<WinnerData | null>(null);
@@ -64,6 +76,8 @@ function AuctionApp() {
 
   useEffect(() => {
 
+    if (!isLive) return;
+
     socket.on('auction_state', (state: AuctionState) => {
       setAuction(state);
 
@@ -101,9 +115,9 @@ function AuctionApp() {
     socket.on('connect_error', onError);
 
     if (email) {
-      socket.auth = {email, username};
+      socket.auth = {email, username, auctionId};
     } else {
-      socket.auth = {};
+      socket.auth = {auctionId};
     }
 
     if (socket.connected) onConnect();
@@ -118,7 +132,7 @@ function AuctionApp() {
       socket.off('payment_link');
       socket.disconnect();
     };
-  }, [email, username]);
+  }, [email, username, auctionId, isLive]);
 
   useEffect(() => {
     if (!auction?.isActive) return;
@@ -246,7 +260,7 @@ function AuctionApp() {
     setResetError('');
     try {
       const backendUrl = socketUrl.replace(/\/+$/, '');
-      const response = await fetch(`${backendUrl}/api/auction/reset`, { method: 'POST' });
+      const response = await fetch(`${backendUrl}/api/auction/reset?auctionId=${encodeURIComponent(auctionId)}`, { method: 'POST' },);
       if (!response.ok) throw new Error(`Reset failed with status ${response.status}`);
     } catch {
       setResetError('Reset failed. Please try again.');
@@ -272,6 +286,27 @@ function AuctionApp() {
       localStorage.removeItem('bidderCountry');
       setShowAuthChoice(true);
     }
+  };
+
+    // Account actions for the navigation bar (also used by the catalogue pages)
+  const account: AccountNav = {
+    isLoggedIn: Boolean(email),
+    onLogout: handleLogout,
+    onSignUpClick: () => {
+      setRegisterUsername('');
+      setRegisterEmail('');
+      setRegisterPassword('');
+      setRegisterCountry('');
+      setRegisterError(null);
+      setRegisterSuccessMessage(null);
+      setAuthView('register');
+    },
+    onLoginClick: () => {
+      setLoginEmail('');
+      setLoginPassword('');
+      setLoginError(null);
+      setAuthView('login');
+    },
   };
 
   //Login vs Register choice 
@@ -421,45 +456,38 @@ function AuctionApp() {
     );
   }
 
+  // Pages without a live auction (home and club pages), rendered with the same account actions
+  if (renderPage) return <>{renderPage(account)}</>;
+
   if (!auction) return <div className="p-8">Connecting to live bid…</div>;
 
   return (
-    <AuctionPage
-      auction={auction}
-      bids={auction.bids ?? localBids}
-      bidAmount={bidAmount}
-      onBidAmountChange={setBidAmount}
-      onBid={handleBid}
-      error={error}
-      winnerData={winnerData}
-      paymentUrl={paymentUrl}
-      myId={email ? username : ''}
-      activeImage={activeImage}
-      onImageChange={setActiveImage}
-      now={now}
-      onChangeEmail={() => {setEmail(''); setUsername(''); localStorage.removeItem('bidderEmail'); localStorage.removeItem('bidderUsername'); setShowAuthChoice(true);}}
-      onReset={handleReset}
-      isResetting={isResetting}
-      resetError={resetError}
-      onSignUpClick={() => {
-        setRegisterUsername('');
-        setRegisterEmail('');
-        setRegisterPassword('');
-        setRegisterCountry('');
-        setRegisterError(null);
-        setRegisterSuccessMessage(null);
-        setAuthView('register');
-      }}
-      onLoginClick={() => {
-        setLoginEmail('');
-        setLoginPassword('');
-        setLoginError(null);
-        setAuthView('login');
-      }}
-      isLoggedIn={Boolean(email)}
-      onLogout={handleLogout}
-    />
+    <>
+      <AuctionPage
+        auction={auction}
+        bids={auction.bids ?? localBids}
+        bidAmount={bidAmount}
+        onBidAmountChange={setBidAmount}
+        onBid={handleBid}
+        error={error}
+        winnerData={winnerData}
+        paymentUrl={paymentUrl}
+        myId={email ? username : ''}
+        activeImage={activeImage}
+        onImageChange={setActiveImage}
+        now={now}
+        onChangeEmail={() => {setEmail(''); setUsername(''); localStorage.removeItem('bidderEmail'); localStorage.removeItem('bidderUsername'); setShowAuthChoice(true);}}
+        onReset={handleReset}
+        isResetting={isResetting}
+        resetError={resetError}
+        onSignUpClick={account.onSignUpClick}
+        onLoginClick={account.onLoginClick}
+        isLoggedIn={account.isLoggedIn}
+        onLogout={account.onLogout}
+      />
+      {children}
+    </>
   );
-}
+  }
 
-export default AuctionApp;
+  export default AuctionApp;

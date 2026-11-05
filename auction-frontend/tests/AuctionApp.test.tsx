@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, mock } from 'bun:test';
-import { act, fireEvent, render, screen } from '@testing-library/react';
+import { act, fireEvent, screen } from '@testing-library/react';
+import { renderWithRouter } from './setup/render';
 import userEvent from '@testing-library/user-event';
 
 // ---------------------------------------------------------------------------
@@ -49,7 +50,7 @@ const makeAuction = (overrides = {}) => ({
 // Renders the app already past the email screen and with an auction loaded.
 async function renderLoggedIn(auctionOverrides = {}) {
   localStorage.setItem('bidderEmail', 'me@test.com'); // pre-fills the email box
-  render(<AuctionApp />);
+  renderWithRouter(<AuctionApp />);
   const user = userEvent.setup();
   act(() => { handlers['connect']?.();});
   serverSends('auction_state', makeAuction(auctionOverrides));

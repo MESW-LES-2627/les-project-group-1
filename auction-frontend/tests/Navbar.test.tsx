@@ -1,12 +1,13 @@
 import { describe, expect, it } from 'bun:test';
-import { render, screen } from '@testing-library/react';
+import { screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Navbar } from '../src/components/Navbar';
+import { renderWithRouter } from './setup/render';
 
 describe('navbar mobile menu', () => {
   it('opens and closes the menu', async () => {
     const user = userEvent.setup();
-    render(<Navbar />);
+    renderWithRouter(<Navbar />);
 
     expect(document.getElementById('mobile-menu')).toBeNull();
 

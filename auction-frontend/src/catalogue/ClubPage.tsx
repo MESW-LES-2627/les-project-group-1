@@ -1,0 +1,52 @@
+import { Link, useParams } from 'react-router-dom';
+import AuctionApp from '@/auction/AuctionApp';
+import { ListingGrid } from '@/components/ListingGrid';
+import { Navbar } from '@/components/Navbar';
+import { useApi } from './api';
+import type { ClubDetail } from './types';
+
+/**
+ * ClubPage
+ *
+ * Public club page (/club/:slug). Shows the club profile and the verified items it offers.
+ */
+
+const styles = {
+  main: 'mx-auto w-[calc(100%_-_112px)] max-w-[1888px] py-[60px] pb-[70px] max-tablet:w-[calc(100%_-_64px)] max-mobile:w-[calc(100%_-_36px)] max-mobile:py-6',
+  title: 'm-0 text-[clamp(2rem,3.2vw,3.4rem)] leading-none font-extrabold tracking-[-0.055em] text-ink-strong uppercase',
+  description: 'mt-3 mb-9 max-w-[760px] text-[clamp(1rem,1.15vw,1.3rem)] font-medium text-slate',
+  section: 'mb-5 text-[clamp(1.5rem,2vw,2.2rem)] font-extrabold tracking-[-0.04em]',
+};
+
+export function ClubPage() {
+  const { slug } = useParams();
+  const { data: club, loading, error } = useApi<ClubDetail>(`/api/clubs/${slug}`);
+
+  // Rendered inside AuctionApp so the login and register screens work on this page too.
+  return (
+    <AuctionApp
+      renderPage={(account) => (
+        <>
+          <Navbar {...account} />
+          <main className={styles.main}>
+            {loading && <p className="font-medium text-slate">Loading…</p>}
+            {(error || (!loading && !club)) && (
+              <>
+                <p role="alert" className="mb-3 font-bold text-danger">{error || 'Club not found'}</p>
+                <Link className="text-link underline" to="/">Back to the catalogue</Link>
+              </>
+            )}
+            {club && (
+              <>
+                <h1 className={styles.title}>{club.name}</h1>
+                <p className={styles.description}>{club.description}</p>
+                <h2 className={styles.section}>Items offered</h2>
+                <ListingGrid listings={club.listings} />
+              </>
+            )}
+          </main>
+        </>
+      )}
+    />
+  );
+}

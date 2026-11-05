@@ -1,4 +1,4 @@
-import { ITEM } from '../auction/data';
+import { useItem } from '../auction/ItemContext';
 
 const styles = {
   section: 'mt-8 max-mobile:mt-7',
@@ -12,11 +12,14 @@ const styles = {
 
 //Displays the list of chariable causes supported by this auction
 export function CausesList() {
+  const item = useItem();
+  if (item.causes.length === 0) return null;
+
   return (
     <section className={styles.section}>
       <h2 className={styles.title}>Supported cause</h2>
       <ul className={styles.list}>
-        {ITEM.causes.map((cause) => (
+        {item.causes.map((cause) => (
           <li key={cause.name} className={styles.row}>
             <div className={styles.logo}>
               <img src={cause.logo} alt="" />
