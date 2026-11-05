@@ -7,8 +7,8 @@ import { Link } from 'react-router-dom';
 const NAV_LINKS = [
   ['SPORTS', '/sports'],
   ['CHARITIES', '/charities'],
-  ['ABOUT US', '#about'],
-  ['SUPPORT', '#support'],
+  ['ABOUT US', '/about'],
+  ['SUPPORT', '/support'],
 ] as const;
 
 const styles = {

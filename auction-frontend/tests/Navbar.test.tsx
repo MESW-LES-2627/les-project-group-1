@@ -29,6 +29,16 @@ describe('navbar page links', () => {
 
     expect(screen.getByRole('link', { name: 'SPORTS' })).toHaveAttribute('href', '/sports');
   });
+  it('links to the about page', () => {
+    renderWithRouter(<Navbar />);
+
+    expect(screen.getByRole('link', { name: 'ABOUT US' })).toHaveAttribute('href', '/about');
+  });
+  it('links to the support page', () => {
+    renderWithRouter(<Navbar />);
+
+    expect(screen.getByRole('link', { name: 'SUPPORT' })).toHaveAttribute('href', '/support');
+  });
 });
 
 describe('navbar mobile menu', () => {
