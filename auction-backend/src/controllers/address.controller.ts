@@ -7,7 +7,7 @@ import { env } from "../config/env";
 function getUserIdFromReq(req: Request): number | null {
   const authHeader = req.headers.authorization;
   if (!authHeader || !authHeader.startsWith("Bearer ")) return null;
-  const token = authHeader.split(" ")[1];
+  const token = authHeader.split(" ")[1] ?? "";
   try {
     const decoded: any = jwt.verify(token, env.jwtSecret!);
     return Number(decoded.userId || decoded.id || decoded.sub);
