@@ -67,17 +67,19 @@ jobs:
       - name: Set up Bun
         uses: oven-sh/setup-bun@v2
 
+      # Also runs `prisma generate` through the postinstall script
       - name: Install dependencies
         working-directory: auction-backend
         run: bun install --frozen-lockfile
 
       - name: Compile backend
         working-directory: auction-backend
-        run: bun build index.ts --target=bun --outdir=/tmp/assist-club-backend-build
+        run: bun build src/server.ts --target=bun --outdir=/tmp/assist-club-backend-build
 
-      - name: Apply database schema
+      # Builds a fresh database from prisma/migrations (0_init)
+      - name: Apply database migrations
         working-directory: auction-backend
-        run: bun run src/migrate.ts
+        run: bun --bun run migrate
 
       - name: Run tests
         working-directory: auction-backend
@@ -99,10 +101,11 @@ jobs:
           chmod 600 ~/.ssh/id_ed25519
           echo "$KNOWN_HOSTS" > ~/.ssh/known_hosts
 
+      # Build the new image, run migrations with it, then start the new containers.
       - name: Deploy on VPS
         env:
           VPS_HOST: ${{ secrets.VPS_HOST }}
           VPS_USER: ${{ secrets.VPS_USER }}
           DEPLOY_PATH: ${{ github.ref_name == 'main' && '/home/ubuntu/assistclub-prod' || '/home/ubuntu/assistclub-dev' }}
         run: |
-          ssh "$VPS_USER@$VPS_HOST" "cd '$DEPLOY_PATH' && git pull --ff-only && docker compose -f docker-compose.prod.yml up -d --build"
+          ssh "$VPS_USER@$VPS_HOST" "cd '$DEPLOY_PATH' && git pull --ff-only && docker compose -f docker-compose.prod.yml build && docker compose -f docker-compose.prod.yml run --rm backend bun --bun run migrate && docker compose -f docker-compose.prod.yml up -d"
