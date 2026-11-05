@@ -8,7 +8,7 @@ process.env.STRIPE_SECRET_KEY = 'sk_test_auction_reset';
 process.env.RESEND_API_KEY = 're_test_auction_reset';
 process.env.FRONTEND_URL = 'http://localhost:5173';
 
-const { httpServer } = await import('../index');
+const { httpServer } = await import('../src/app');
 
 interface AuctionState {
   itemName: string;

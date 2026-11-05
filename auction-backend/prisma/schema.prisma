@@ -1,0 +1,84 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id                Int       @id @default(autoincrement())
+  username          String    @unique
+  email             String    @unique
+  passwordHash      String    @map("password_hash")
+  country           String
+  resetToken        String?   @map("reset_token")
+  resetTokenExpires DateTime? @map("reset_token_expires") @db.Timestamptz(6)
+  createdAt         DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@map("users")
+}
+
+model Winner {
+  id              Int       @id @default(autoincrement())
+  itemName        String    @map("item_name")
+  socketId        String    @map("socket_id")
+  email           String?
+  winningBid      Decimal   @map("winning_bid") @db.Decimal(10, 2)
+  status          String    @default("pending_payment")
+  stripeSessionId String?   @unique @map("stripe_session_id")
+  endedAt         DateTime  @default(now()) @map("ended_at") @db.Timestamptz(6)
+  paidAt          DateTime? @map("paid_at") @db.Timestamptz(6)
+
+  @@map("winners")
+}
+
+model Club {
+  id          Int       @id @default(autoincrement())
+  slug        String    @unique
+  name        String    @unique
+  description String    @default("")
+  logoUrl     String?   @map("logo_url")
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  listings    Listing[]
+
+  @@map("clubs")
+}
+
+model Category {
+  id       Int       @id @default(autoincrement())
+  slug     String    @unique
+  name     String    @unique
+  listings Listing[]
+
+  @@map("categories")
+}
+
+// "status" has a CHECK constraint in the database (draft, pending_verification,
+// verified, rejected). Prisma can't model it, so it lives in the migration SQL only.
+model Listing {
+  id                Int       @id @default(autoincrement())
+  clubId            Int       @map("club_id")
+  categoryId        Int       @map("category_id")
+  title             String    @unique
+  playerName        String?   @map("player_name")
+  playerDetails     Json?     @map("player_details")
+  season            String?
+  competition       String?
+  tags              String[]  @default([])
+  description       String
+  images            String[]  @default([])
+  status            String    @default("draft")
+  authenticityNotes String?   @map("authenticity_notes")
+  evidenceImages    String[]  @default([]) @map("evidence_images")
+  certificateCode   String?   @unique @map("certificate_code")
+  startingPrice     Decimal?  @map("starting_price") @db.Decimal(10, 2)
+  auctionEndsAt     DateTime? @map("auction_ends_at") @db.Timestamptz(6)
+  createdAt         DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  verifiedAt        DateTime? @map("verified_at") @db.Timestamptz(6)
+  club              Club      @relation(fields: [clubId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  category          Category  @relation(fields: [categoryId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@map("listings")
+}
