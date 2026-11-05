@@ -33,7 +33,7 @@ Process and planning:
 - [Project board](https://github.com/orgs/MESW-LES-2627/projects/11) - backlog, iterations and status of all issues
 
 Setup and delivery:
-- [README.md](https://github.com/MESW-LES-2627/les-project-group-1/blob/iteration-0/README.md) - setup, tech stack, how to run the full flow and the tests
-- [.env.example](https://github.com/MESW-LES-2627/les-project-group-1/blob/iteration-0/.env.example) - environment variables
-- [.github/workflows/ci.yml](https://github.com/MESW-LES-2627/les-project-group-1/blob/iteration-0/.github/workflows/ci.yml) - CI pipeline
-- [docker-compose.prod.yml](https://github.com/MESW-LES-2627/les-project-group-1/blob/iteration-0/docker-compose.prod.yml) - production container setup
+- [README.md](https://github.com/MESW-LES-2627/les-project-group-1/blob/iteration-1/README.md) - setup, tech stack, how to run the full flow and the tests
+- [.env.example](https://github.com/MESW-LES-2627/les-project-group-1/blob/iteration-1/.env.example) - environment variables
+- [.github/workflows/ci.yml](https://github.com/MESW-LES-2627/les-project-group-1/blob/iteration-1/.github/workflows/ci.yml) - CI pipeline
+- [docker-compose.prod.yml](https://github.com/MESW-LES-2627/les-project-group-1/blob/iteration-1/docker-compose.prod.yml) - production container setup
