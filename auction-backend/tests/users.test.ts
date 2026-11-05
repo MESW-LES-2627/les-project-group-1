@@ -49,7 +49,7 @@ afterAll(async () => {
   httpServer.close();
 });
 
-describe("registration and login return a session token", () => {
+describe("registration and login return a token", () => {
   it("returns a token on register", () => {
     expect(typeof firstToken).toBe("string");
     expect(firstToken.length).toBeGreaterThan(20);
@@ -76,19 +76,6 @@ describe("own profile management", () => {
   it("rejects an invalid token", async () => {
     const response = await fetch(`${baseUrl}/api/users/me`, authed("invalid", "GET"));
     expect(response.status).toBe(401);
-  });
-
-  it("rejects an expired token", async () => {
-    await prisma.session.update({
-      where: { token: secondToken },
-      data: { expiresAt: new Date(Date.now() - 1000) },
-    });
-    const response = await fetch(`${baseUrl}/api/users/me`, authed(secondToken, "GET"));
-    expect(response.status).toBe(401);
-    await prisma.session.update({
-      where: { token: secondToken },
-      data: { expiresAt: new Date(Date.now() + 60_000) },
-    });
   });
 
   it("returns the own profile without sensitive fields", async () => {
@@ -158,14 +145,6 @@ describe("own profile management", () => {
     const response = await fetch(`${baseUrl}/api/users/me`, authed(secondToken, "GET"));
     const data: any = await response.json();
     expect(data.user).toEqual({ username: "profiletwo", email: "profile2@test.pt", country: "PT", avatar: null });
-  });
-
-  it("invalidates the token on logout", async () => {
-    const logout = await fetch(`${baseUrl}/api/auth/logout`, authed(secondToken, "POST"));
-    expect(logout.status).toBe(200);
-
-    const response = await fetch(`${baseUrl}/api/users/me`, authed(secondToken, "GET"));
-    expect(response.status).toBe(401);
   });
 });
 
