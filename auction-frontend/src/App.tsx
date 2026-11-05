@@ -4,6 +4,7 @@ import { CataloguePage } from './catalogue/CataloguePage';
 import { ClubPage } from './catalogue/ClubPage';
 import { ItemPage } from './catalogue/ItemPage';
 import { ProfilePage } from './profile/ProfilePage';
+import { CharitiesPage } from './charities/CharitiesPage';
 
 /**
  * Root Application Component
@@ -23,6 +24,7 @@ function App() {
         <Route path="/" element={<CataloguePage />} />
         <Route path="/auction/:id" element={<ItemPage />} />
         <Route path="/club/:slug" element={<ClubPage />} />
+        <Route path="/charities" element={<CharitiesPage />} />
         <Route path="/profile" element={<ProfilePage />} />
         <Route path="/reset-password" element={<CataloguePage />} />
         <Route path="/demo" element={<AuctionApp />} />

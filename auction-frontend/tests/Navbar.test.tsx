@@ -18,6 +18,14 @@ describe('navbar account links', () => {
   });
 });
 
+describe('navbar page links', () => {
+  it('links to the charities page', () => {
+    renderWithRouter(<Navbar />);
+
+    expect(screen.getByRole('link', { name: 'CHARITIES' })).toHaveAttribute('href', '/charities');
+  });
+});
+
 describe('navbar mobile menu', () => {
   it('opens and closes the menu', async () => {
     const user = userEvent.setup();
