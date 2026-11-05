@@ -309,6 +309,10 @@ function AuctionApp({ auctionId = 'demo', children, renderPage }: AuctionAppProp
   };
 
   const handleProfileSaved = (user: ProfileUser) => {
+    if (user.email !== email) {
+      void handleLogout();
+      return;
+    }
     localStorage.setItem('bidderUsername', user.username);
     localStorage.setItem('bidderCountry', user.country);
     setUsername(user.username);
