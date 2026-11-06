@@ -42,7 +42,7 @@ Every suggestion was reviewed by team members and verified with tests before bei
 | 2026-11-05 | Claude | Get assistance with implementing catalogue search and category filtering | Suggestions for the search and filtering logic in the frontend and backend | Reviewed and adapted the suggestions to the existing implementation |
 | 2026-11-05 | Claude | Support the implementation of independent auctions for each jersey | Suggestions for adapting the auction logic to handle multiple auctions using each listing's ID | Reviewed and adapted the changes while preserving the existing auction functionality |
 | 2026-11-05 | Gemini | Assistance on frontend logic for address CRUD operations and JWT authentication | Suggested implementation patterns for asynchronous HTTP requests with JWT tokens and local state management | Reviewed and adapted to integrate seamlessly with backend REST endpoints |
-| 2026-11-05 | Claude | Log the user out automatically after the email changes | A change to the profile save handler that calls the existing logout when the saved email differs from the current one | Adopted; the old token stays valid until it expires because logout is stateless, and invalidating it on the server was left out of scope |
+| 2026-11-05 | Claude | Log the user out automatically after the email changes | A change to the profile save handler that calls the existing logout when the saved email differs from the current one | Adopted, the logout only clears the session in the browser |
 
 ## Debugging
 
