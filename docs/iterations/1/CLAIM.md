@@ -19,10 +19,11 @@ Use links that work on tag `iter-1`. If something does not exist yet, write `non
 | MVP | [MVP.md](https://github.com/MESW-LES-2627/les-project-group-1/blob/iter-1/docs/iterations/0/MVP.md) |
 | Vision | [vision.md](https://github.com/MESW-LES-2627/les-project-group-1/blob/iter-1/docs/iterations/0/vision.md) |
 | Definition of Done | [definition-of-done.md](https://github.com/MESW-LES-2627/les-project-group-1/blob/iter-1/docs/iterations/0/definition-of-done.md) |
-| This tag (`iter-1`) | [iteration-1](https://github.com/MESW-LES-2627/les-project-group-1/releases/tag/iter-1) |
+| This tag (`iter-1`) | [iter-1](https://github.com/MESW-LES-2627/les-project-group-1/releases/tag/iter-1) |
 | Production | [assistclub.joaovicente.dev](https://assistclub.joaovicente.dev) |
 | Staging | [assistclub-dev.joaovicente.dev](https://assistclub-dev.joaovicente.dev) |
 | CI/CD Pipeline | [GitHub Actions](https://github.com/MESW-LES-2627/les-project-group-1/actions) |
 | Stories in this increment | [Iteration 1 board](https://github.com/orgs/MESW-LES-2627/projects/11/views/6) |
 | Retrospective | [retrospective.md](https://github.com/MESW-LES-2627/les-project-group-1/blob/iter-1/docs/iterations/1/retrospective.md) |
 | AI log | [AI-log.md](https://github.com/MESW-LES-2627/les-project-group-1/blob/iter-1/docs/iterations/1/AI-log.md) |
+| Snapshots | [snapshot.md](https://github.com/MESW-LES-2627/les-project-group-1/blob/iter-1/docs/iterations/1/snapshot.md)
