@@ -4,6 +4,7 @@ import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { COUNTRIES } from '../auction/countries';
 import { flagEmoji } from '../auction/utils';
+import { API_URL } from '../lib/api';
 
 interface Address {
   id: number;
@@ -39,7 +40,7 @@ export function ShippingAddresses({ token }: { token: string }) {
         return;
         }
         try {
-        const res = await fetch('http://localhost:3000/api/addresses', { headers: { Authorization: `Bearer ${token}` },});
+        const res = await fetch(`${API_URL}/api/addresses`, { headers: { Authorization: `Bearer ${token}` },});
         if (res.ok) {
             const data = await res.json();
             setAddresses(Array.isArray(data) ? data : []);
@@ -75,8 +76,8 @@ export function ShippingAddresses({ token }: { token: string }) {
 
     const payload = { fullName, street, city, state, postalCode, country, isDefault };
     const url = isEditing 
-      ? `http://localhost:3000/api/addresses/${isEditing}` 
-      : 'http://localhost:3000/api/addresses';
+      ? `${API_URL}/api/addresses/${isEditing}` 
+      : `${API_URL}/api/addresses`;
     const method = isEditing ? 'PUT' : 'POST';
 
     try {
@@ -97,7 +98,7 @@ export function ShippingAddresses({ token }: { token: string }) {
 
   const handleDelete = async (id: number) => {
     try {
-      await fetch(`http://localhost:3000/api/addresses/${id}`, {
+      await fetch(`${API_URL}/api/addresses/${id}`, {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${token}` },
       });
