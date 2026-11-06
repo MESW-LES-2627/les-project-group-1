@@ -17,20 +17,30 @@ This project is part of the Laboratory of Software Engineering unit of the Maste
 
 ## Tech stack
 
-- **Backend**: Express (TypeScript), running on Bun
+- **Backend**: Express (TypeScript) with Socket.IO, running on Bun
 
-- **DB**: Postgres
+- **DB**: Postgres, accessed through Prisma
 
-- **Frontend**: Vite (React + TypeScript)
+- **Frontend**: Vite (React + TypeScript, Tailwind CSS)
 
 - **External APIs**: Resend (email sending), Stripe (payment)
+
+- **CI/CD**: GitHub Actions, deploying with Docker Compose
 
 ## Repository structure
 
 ```
-auction-backend/    Express + Socket.IO server, Stripe, Resend and Postgres integrations
-auction-frontend/   Vite + React client
-docs/               Project documentation
+.github/workflows/    CI pipeline and deployment workflow
+auction-backend/      Express + Socket.IO + Prisma API, with Stripe, Resend and Postgres
+  src/                routes, controllers, services, models and config
+  prisma/             Prisma schema and migrations
+  seeds/              Demo catalogue and first admin seeds
+  tests/              Backend tests
+auction-frontend/     Vite + React + Tailwind client
+  src/                Feature folders (auction, catalogue, profile, ...)
+  tests/              Frontend component tests
+docs/                 Project documentation (iterations 0 and 1)
+docker-compose.prod.yml   Production deployment (Postgres, backend and frontend)
 ```
 
 ## Getting started
@@ -71,7 +81,7 @@ Without a verified domain, Resend only delivers emails to the address of the acc
 cd auction-backend
 cp .env.example .env
 bun install
-bun run src/migrate.ts
+bun run migrate
 ```
 
 Fill in `.env`:
@@ -84,6 +94,17 @@ Fill in `.env`:
 | `RESEND_API_KEY` | your `re_...` key |
 | `EMAIL_FROM` | `onboarding@resend.dev` |
 | `FRONTEND_URL` | `http://localhost:5173` |
+| `JWT_SECRET` | any long random string |
+| `ADMIN_USERNAME` | username for the first admin account |
+| `ADMIN_EMAIL` | email for the first admin account |
+| `ADMIN_PASSWORD` | password for the first admin account |
+
+Optionally load the demo catalogue and create the first admin:
+
+```bash
+bun run seed
+bun run seed:admin
+```
 
 ### 5. Frontend setup
 
@@ -99,7 +120,7 @@ Three terminals are needed:
 ```bash
 # terminal 1: backend (http://localhost:3000)
 cd auction-backend
-bun --watch index.ts
+bun run dev
 
 # terminal 2: frontend (http://localhost:5173)
 cd auction-frontend
@@ -161,7 +182,9 @@ The tests also run automatically in CI on every push and pull request to `develo
 
 
 
-## Iteration 0
+## Iterations
+
+### Iteration 0
 
 - [Vision](docs/iterations/0/vision.md)
 - [Definition of done](docs/iterations/0/definition-of-done.md)
@@ -169,3 +192,11 @@ The tests also run automatically in CI on every push and pull request to `develo
 - [AI log](docs/iterations/0/AI-log.md)
 - [Retrospective](docs/iterations/0/retrospective.md)
 - [CLAIM](docs/iterations/0/CLAIM.md)
+
+### Iteration 1
+
+- [Snapshot](docs/iterations/1/snapshot.md)
+- [AI log](docs/iterations/1/AI-log.md)
+- [Retrospective](docs/iterations/1/retrospective.md)
+- [CLAIM](docs/iterations/1/CLAIM.md)
+- [Snapshot](docs/iterations/1/snapshot.md)
