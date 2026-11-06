@@ -1,11 +1,18 @@
 import { useEffect, useRef, useState } from 'react';
-import type { FormEvent } from 'react';
+import type { FormEvent, ReactNode } from 'react';
 import { io } from 'socket.io-client';
 import { AuctionPage } from './AuctionPage';
-import { EmailGate } from '../components/EmailGate';
+//import { EmailGate } from '../components/EmailGate';
 import { MIN_INCREMENT } from './data';
-import type { AuctionState, Bid, WinnerData } from './types';
+import type { AccountNav, AuctionState, Bid, WinnerData } from './types';
+import type { ProfileUser } from '../profile/api';
 import { formatEuro } from './utils';
+import { RegisterForm } from '../components/RegisterForm';
+import { LoginForm } from '../components/LoginForm';
+import { ForgotPassword } from '../components/ForgotPassword';   
+import { ResetPassword } from '../components/ResetPassword';
+import { Button } from '../components/ui/button';
+
 
 // Register event listeners before connecting so the initial state is not missed.
 const socketUrl =
@@ -14,7 +21,19 @@ const socketUrl =
 const socket = io(socketUrl, { autoConnect: false });
 const INITIAL_NOW = Date.now();
 
-function AuctionApp() {
+//Props for the AuctionApp component
+interface AuctionAppProps {
+  // Which live auction to join. Defaults to the Sprint 0 prototype auction.
+  auctionId?: string;
+  // Extra content rendered below the auction page (used by the catalogue item page).
+  children?: ReactNode;
+  // Renders a page without a live auction (home and club pages), with the account actions for the navigation bar.
+  renderPage?: (account: AccountNav) => ReactNode;
+}
+
+function AuctionApp({ auctionId = 'demo', children, renderPage }: AuctionAppProps) {
+  const isLive = !renderPage;
+
   const [auction, setAuction] = useState<AuctionState | null>(null);
   const [bidAmount, setBidAmount] = useState('');
   const [winnerData, setWinnerData] = useState<WinnerData | null>(null);
@@ -24,14 +43,44 @@ function AuctionApp() {
   const [error, setError] = useState('');
   const [resetError, setResetError] = useState('');
   const [isResetting, setIsResetting] = useState(false);
-  const [myId, setMyId] = useState(socket.id ?? '');
   const lastBidRef = useRef<number | null>(null);
   const [paymentUrl, setPaymentUrl] = useState('');
-  const [email, setEmail] = useState('');
-  const [emailInput, setEmailInput] = useState(() => localStorage.getItem('bidderEmail') ?? '');
+  //const [] = useState('');
+  const [email, setEmail] = useState(() => localStorage.getItem('bidderEmail') ?? '');
+  const [username, setUsername] = useState(() => localStorage.getItem('bidderUsername') ?? '');
+  const [country, setCountry] = useState(() => localStorage.getItem('bidderCountry') ?? '');
+  const [token, setToken] = useState(() => localStorage.getItem('bidderToken') ?? '');
+
+  //Register
+  const [showRegisterForm, setShowRegisterForm] = useState(false);
+  const [registerEmail, setRegisterEmail] = useState('');
+  const [registerUsername, setRegisterUsername] = useState('');
+  const [registerPassword, setRegisterPassword] = useState('');
+  const [registerCountry, setRegisterCountry] = useState('');
+  const [registerLoading, setRegisterLoading] = useState(false);
+  const [registerError, setRegisterError] = useState<string | null>(null);
+  const [registerSuccessMessage, setRegisterSuccessMessage] = useState<string | null>(null);
+
+  //Login
+  const [showLoginForm, setShowLoginForm] = useState(false);
+  const [loginEmail, setLoginEmail] = useState('');
+  const [loginPassword, setLoginPassword] = useState('');
+  const [loginLoading, setLoginLoading] = useState(false);
+  const [loginError, setLoginError] = useState<string | null>(null);
+
+  //Login vs Register
+  const [showAuthChoice, setShowAuthChoice] = useState(false);
+  const [authView, setAuthView] = useState<'register' | 'login' | null>(null);
+
+  //Forgot password
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
+  const queryParams = new URLSearchParams(window.location.search);
+  const resetTokenParam = queryParams.get('token');
+  const [showResetPassword, setShowResetPassword] = useState(Boolean(resetTokenParam));
 
   useEffect(() => {
-    if (!email) return;
+
+    if (!isLive) return;
 
     socket.on('auction_state', (state: AuctionState) => {
       setAuction(state);
@@ -63,14 +112,18 @@ function AuctionApp() {
 
     const requestState = () => socket.emit('get_auction_state');
     const onConnect = () => {
-      setMyId(socket.id ?? '');
       requestState();
     };
     const onError = (socketError: Error) => console.error('Socket connection error:', socketError.message);
     socket.on('connect', onConnect);
     socket.on('connect_error', onError);
 
-    socket.auth = { email };
+    if (email) {
+      socket.auth = {email, username, auctionId};
+    } else {
+      socket.auth = {auctionId};
+    }
+
     if (socket.connected) onConnect();
     else socket.connect();
 
@@ -83,7 +136,7 @@ function AuctionApp() {
       socket.off('payment_link');
       socket.disconnect();
     };
-  }, [email]);
+  }, [email, username, auctionId, isLive]);
 
   useEffect(() => {
     if (!auction?.isActive) return;
@@ -93,6 +146,12 @@ function AuctionApp() {
 
   const handleBid = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+
+    if(!email){ // If email is not set, show the register form
+      setShowAuthChoice(true);
+      return;
+    }
+
     if (!auction) return;
     if (!auction.isActive || Date.now() >= auction.endTime) {
       setError('The auction has ended.');
@@ -109,12 +168,106 @@ function AuctionApp() {
     }
   };
 
-  const handleEmailSubmit = (event: FormEvent<HTMLFormElement>) => {
+  // Register form submission handler
+  const handleRegisterSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    const value = emailInput.trim();
-    if (!value) return;
-    localStorage.setItem('bidderEmail', value);
-    setEmail(value);
+    const valueUsername = registerUsername.trim();
+    const value = registerEmail.trim();
+    if (!valueUsername ||!value || !registerPassword) return;
+
+    setRegisterLoading(true);
+    setRegisterError(null);
+    setRegisterSuccessMessage(null);
+
+    try {
+      const backendUrl = socketUrl.replace(/\/+$/, '');
+      const response = await fetch(`${backendUrl}/api/auth/register`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username: valueUsername,email: value, password: registerPassword, country: registerCountry }),
+      });
+
+      const data = (await response.json()) as { error?: string; token?: string };
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Error registering user. Please try again.');
+      }
+
+      setRegisterSuccessMessage('Account created successfully! You can now place bids.');
+
+      setTimeout(() => {
+        if (data.token) {
+          localStorage.setItem('bidderToken', data.token);
+          setToken(data.token);
+        }
+        localStorage.setItem('bidderUsername', valueUsername);
+        localStorage.setItem('bidderEmail', value);
+        localStorage.setItem('bidderCountry', registerCountry);
+        setUsername(valueUsername);
+        setCountry(registerCountry);
+        setEmail(value);
+        setShowRegisterForm(false);
+        setAuthView(null);
+        setRegisterSuccessMessage(null);
+        setRegisterPassword('');
+        setRegisterEmail('');
+      }, 1200);
+
+    } catch (err: any) {
+      setRegisterError(err.message);
+    } finally {
+      setRegisterLoading(false);
+    }
+  };
+
+  //Login form submission handler
+  const handleLoginSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const valueEmail = loginEmail.trim();
+    if (!valueEmail || !loginPassword) return;
+
+    setLoginLoading(true);
+    setLoginError(null);
+
+    try {
+      const backendUrl = socketUrl.replace(/\/+$/, '');
+      const response = await fetch(`${backendUrl}/api/auth/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: valueEmail, password: loginPassword }),
+      });
+
+      const data = (await response.json()) as { error?: string; token?: string; user?: { username: string; email: string, country?: string } };
+      if (!response.ok) throw new Error(data.error || 'Error logging in. Please try again.');
+
+      if (data.token) {
+        localStorage.setItem('bidderToken', data.token);
+        setToken(data.token);
+      }
+
+
+      const loggedUsername = data.user?.username || '';
+      localStorage.setItem('bidderEmail', data.user?.email || valueEmail);
+      if (loggedUsername) {
+        localStorage.setItem('bidderUsername', loggedUsername);
+        setUsername(loggedUsername);
+      }
+      
+      const loggedCountry = data.user?.country || '';
+      if (loggedCountry) {
+        localStorage.setItem('bidderCountry', loggedCountry);
+        setCountry(loggedCountry);
+      }
+      
+      setEmail(data.user?.email || valueEmail);
+      setShowLoginForm(false);
+      setAuthView(null);
+      setLoginPassword('');
+    } catch (err: any) {
+      setLoginError(err.message);
+    } finally {
+      setLoginLoading(false);
+    }
   };
 
   const handleReset = async () => {
@@ -122,7 +275,7 @@ function AuctionApp() {
     setResetError('');
     try {
       const backendUrl = socketUrl.replace(/\/+$/, '');
-      const response = await fetch(`${backendUrl}/api/auction/reset`, { method: 'POST' });
+      const response = await fetch(`${backendUrl}/api/auction/reset?auctionId=${encodeURIComponent(auctionId)}`, { method: 'POST' },);
       if (!response.ok) throw new Error(`Reset failed with status ${response.status}`);
     } catch {
       setResetError('Reset failed. Please try again.');
@@ -131,39 +284,251 @@ function AuctionApp() {
     }
   };
 
-  if (!email) {
+  // Logout handler
+  const handleLogout =  async () => {
+    try {
+      const backendUrl = socketUrl.replace(/\/+$/, '');
+      const response = await fetch(`${backendUrl}/api/auth/logout`, {
+        method: 'POST',
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      }); // Call the logout endpoint
+      if (!response.ok) throw new Error(`Logout failed with status ${response.status}`);
+    } catch (err: any) {
+      console.error('Error logging out:', err.message);
+    } finally {
+      // Clear user data and local storage on logout
+      setEmail('');
+      setUsername('');
+      localStorage.removeItem('bidderEmail');
+      localStorage.removeItem('bidderUsername');
+      localStorage.removeItem('bidderCountry');
+      localStorage.removeItem('bidderToken');
+      setCountry('');
+      setToken('');
+      setShowAuthChoice(true);
+    }
+  };
+
+  const handleProfileSaved = (user: ProfileUser) => {
+    if (user.email !== email) {
+      void handleLogout();
+      return;
+    }
+    localStorage.setItem('bidderUsername', user.username);
+    localStorage.setItem('bidderCountry', user.country);
+    setUsername(user.username);
+    setCountry(user.country);
+  };
+
+    // Account actions for the navigation bar (also used by the catalogue pages)
+  const account: AccountNav = {
+    isLoggedIn: Boolean(email),
+    email,
+    username,
+    country,
+    token,
+    onProfileSaved: handleProfileSaved,
+    onLogout: handleLogout,
+    onSignUpClick: () => {
+      setRegisterUsername('');
+      setRegisterEmail('');
+      setRegisterPassword('');
+      setRegisterCountry('');
+      setRegisterError(null);
+      setRegisterSuccessMessage(null);
+      setAuthView('register');
+    },
+    onLoginClick: () => {
+      setLoginEmail('');
+      setLoginPassword('');
+      setLoginError(null);
+      setAuthView('login');
+    },
+  };
+
+  //Login vs Register choice 
+  if (showAuthChoice) {
     return (
-      <EmailGate
-        emailInput={emailInput}
-        onEmailInputChange={setEmailInput}
-        onSubmit={handleEmailSubmit}
-      />
+      <div className="flex min-h-screen flex-col items-center justify-center bg-chalk px-4 py-12">
+        <div className="w-full max-w-md space-y-5 rounded-[22px] border-2 border-ink-strong bg-white p-8 text-center max-mobile:p-5">
+          <h3 className="text-2xl font-black text-ink-strong uppercase">Authentication needed</h3>
+          <p className="text-base font-semibold text-slate-strong">
+            To place a bid, you need to have an account and log in.
+          </p>
+
+          <div className="flex flex-col gap-3 pt-2">
+            <Button
+              type="button"
+              variant="solid"
+              size="form"
+              className="w-full"
+              onClick={() => {
+                setShowAuthChoice(false);
+                setShowLoginForm(true);
+              }}
+            >
+              LOGIN
+            </Button>
+
+            <Button
+              type="button"
+              variant="outline"
+              size="form"
+              className="w-full border-2 border-ink-strong bg-white font-bold text-ink-strong uppercase hover:bg-surface"
+              onClick={() => {
+                setShowAuthChoice(false);
+                setShowRegisterForm(true);
+              }}
+            >
+              CREATE ACCOUNT
+            </Button>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => setShowAuthChoice(false)}
+            className="inline-block cursor-pointer pt-2 text-sm font-bold text-ink-soft hover:underline"
+          >
+            ← Back to auction
+          </button>
+        </div>
+      </div>
     );
   }
+
+  //Register form
+  if (showRegisterForm || authView === 'register') {
+    return (
+      <div className="flex min-h-screen flex-col items-center justify-center bg-chalk px-4 py-12">
+        <div className="w-full max-w-md">
+          <RegisterForm
+            username={registerUsername}
+            email={registerEmail}
+            password={registerPassword}
+            country={registerCountry}
+            onUsernameChange={setRegisterUsername}
+            onEmailChange={setRegisterEmail}
+            onPasswordChange={setRegisterPassword}
+            onCountryChange={setRegisterCountry}
+            onSubmit={handleRegisterSubmit}
+            loading={registerLoading}
+            error={registerError}
+            successMessage={registerSuccessMessage}
+          />
+
+          <div className="text-center mt-4">
+            <button
+              type="button"
+              onClick={() => {
+                setShowRegisterForm(false);
+                setAuthView(null);
+              }}
+              className="cursor-pointer text-sm font-bold text-ink-soft hover:underline"
+            >
+              ← Back to auction
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  //Login form
+  if (showLoginForm || authView === 'login') {
+    return (
+      <div className="flex min-h-screen flex-col items-center justify-center bg-chalk px-4 py-12">
+        <div className="w-full max-w-md">
+          <LoginForm
+            email={loginEmail}
+            password={loginPassword}
+            onEmailChange={setLoginEmail}
+            onPasswordChange={setLoginPassword}
+            onSubmit={handleLoginSubmit}
+            loading={loginLoading}
+            error={loginError}
+            onSwitchToRegister={() => {
+              setShowLoginForm(false);
+              setShowRegisterForm(true);
+            }}
+            onBackToAuction={() => {
+              setShowLoginForm(false);
+              setAuthView(null);
+            }}
+            onSwitchToForgotPassword={() => {
+              setShowLoginForm(false);
+              setShowForgotPassword(true);
+            }}
+          />
+        </div>
+      </div>
+    );
+  }
+
+  //Forgot Password 
+  if (showForgotPassword) {
+    return (
+      <div className="flex min-h-screen flex-col items-center justify-center bg-chalk px-4 py-12">
+        <div className="w-full max-w-md">
+          <ForgotPassword
+            onBackToLogin={() => {
+              setShowForgotPassword(false);
+              setShowLoginForm(true);
+            }}
+          />
+        </div>
+      </div>
+    );
+  }
+
+  //Reset Passowrd
+  if (showResetPassword) {
+    return (
+      <div className="flex min-h-screen flex-col items-center justify-center bg-chalk px-4 py-12">
+        <div className="w-full max-w-md">
+          <ResetPassword
+            onSuccessfulReset={() => {
+              window.history.replaceState({}, document.title, window.location.pathname);
+              setShowResetPassword(false);
+              setShowLoginForm(true);
+            }}
+          />
+        </div>
+      </div>
+    );
+  }
+
+  // Pages without a live auction (home and club pages), rendered with the same account actions
+  if (renderPage) return <>{renderPage(account)}</>;
 
   if (!auction) return <div className="p-8">Connecting to live bid…</div>;
 
   return (
-    <AuctionPage
-      auction={auction}
-      bids={auction.bids ?? localBids}
-      bidAmount={bidAmount}
-      onBidAmountChange={setBidAmount}
-      onBid={handleBid}
-      error={error}
-      winnerData={winnerData}
-      paymentUrl={paymentUrl}
-      myId={myId}
-      socketId={socket.id}
-      activeImage={activeImage}
-      onImageChange={setActiveImage}
-      now={now}
-      onChangeEmail={() => setEmail('')}
-      onReset={handleReset}
-      isResetting={isResetting}
-      resetError={resetError}
-    />
+    <>
+      <AuctionPage
+        auction={auction}
+        bids={auction.bids ?? localBids}
+        bidAmount={bidAmount}
+        onBidAmountChange={setBidAmount}
+        onBid={handleBid}
+        error={error}
+        winnerData={winnerData}
+        paymentUrl={paymentUrl}
+        myId={email ? username : ''}
+        activeImage={activeImage}
+        onImageChange={setActiveImage}
+        now={now}
+        onChangeEmail={() => {setEmail(''); setUsername(''); setCountry(''); setToken(''); localStorage.removeItem('bidderEmail'); localStorage.removeItem('bidderUsername'); localStorage.removeItem('bidderCountry'); localStorage.removeItem('bidderToken'); setShowAuthChoice(true);}}
+        onReset={handleReset}
+        isResetting={isResetting}
+        resetError={resetError}
+        onSignUpClick={account.onSignUpClick}
+        onLoginClick={account.onLoginClick}
+        isLoggedIn={account.isLoggedIn}
+        onLogout={account.onLogout}
+      />
+      {children}
+    </>
   );
-}
+  }
 
-export default AuctionApp;
+  export default AuctionApp;

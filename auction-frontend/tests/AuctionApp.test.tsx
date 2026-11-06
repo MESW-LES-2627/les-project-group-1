@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, mock } from 'bun:test';
-import { act, fireEvent, render, screen } from '@testing-library/react';
+import { act, fireEvent, screen } from '@testing-library/react';
+import { renderWithRouter } from './setup/render';
 import userEvent from '@testing-library/user-event';
 
 // ---------------------------------------------------------------------------
@@ -49,10 +50,11 @@ const makeAuction = (overrides = {}) => ({
 // Renders the app already past the email screen and with an auction loaded.
 async function renderLoggedIn(auctionOverrides = {}) {
   localStorage.setItem('bidderEmail', 'me@test.com'); // pre-fills the email box
-  render(<AuctionApp />);
+  renderWithRouter(<AuctionApp />);
   const user = userEvent.setup();
-  await user.type(screen.getByRole('textbox'), '{Enter}'); // submit the gate
+  act(() => { handlers['connect']?.();});
   serverSends('auction_state', makeAuction(auctionOverrides));
+  
   return user;
 }
 
@@ -78,24 +80,6 @@ afterEach(() => {
 // ---------------------------------------------------------------------------
 // 3. TESTS
 // ---------------------------------------------------------------------------
-describe('email gate', () => {
-  it('shows the email form first, not the auction', () => {
-    render(<AuctionApp />);
-    expect(screen.getByRole('textbox')).toBeInTheDocument();
-    expect(screen.queryByText('Connecting to live bid…')).not.toBeInTheDocument();
-  });
-
-  it('saves the email and moves on to "connecting"', async () => {
-    const user = userEvent.setup();
-    render(<AuctionApp />);
-
-    await user.type(screen.getByRole('textbox'), 'me@test.com{Enter}');
-
-    expect(localStorage.getItem('bidderEmail')).toBe('me@test.com');
-    expect(screen.getByText('Connecting to live bid…')).toBeInTheDocument();
-    expect(socket.connect).toHaveBeenCalled();
-  });
-});
 
 describe('server events', () => {
   it('shows the auction when auction_state arrives', async () => {

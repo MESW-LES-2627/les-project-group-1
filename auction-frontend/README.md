@@ -22,15 +22,35 @@ bun preview
 
 ```text
 src/
-  App.tsx                    # Application entry component
+  App.tsx                    # Route definitions
   main.tsx                   # React root and global stylesheet
   styles/global.css          # Tailwind import, theme tokens, and global defaults
-  auction/
-    AuctionApp.tsx           # Auction state and Socket.IO lifecycle
-    AuctionPage.tsx          # Auction page composition
-    data.ts                  # Static auction item content and constants
-    types.ts                 # Auction and bid data types
-    utils.ts                 # Formatting helpers
-    components/              # Focused auction UI components
-public/                      # Auction imagery and icons served as static files
+  auction/                   # Auction state, Socket.IO lifecycle and /demo page
+  catalogue/                 # Public catalogue, club and item pages, API client
+  live/                      # Live auctions page
+  profile/                   # Account page, API client and image helpers
+  sports/                    # Sports browsing page
+  charities/                 # Charities browsing page
+  about/                     # About page
+  support/                   # Support page
+  components/                # Shared UI components (cards, forms, navbar, ...)
+  components/ui/             # shadcn/ui primitives
+  lib/utils.ts               # Shared utility helpers
+public/                      # Auction imagery, icons and static assets
 ```
+
+## Routes
+
+| Path | Page |
+| --- | --- |
+| `/` | Public catalogue |
+| `/auction/:id` | Item page with its live auction |
+| `/club/:slug` | Club page |
+| `/live` | Live auctions |
+| `/sports` | Sports browsing |
+| `/charities` | Charities browsing |
+| `/about` | About |
+| `/support` | Support |
+| `/profile` | User account |
+| `/reset-password` | Password reset |
+| `/demo` | Auction prototype from iteration 0 |

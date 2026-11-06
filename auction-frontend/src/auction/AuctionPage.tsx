@@ -1,11 +1,21 @@
 import type { FormEventHandler } from 'react';
-import { BidPanel } from '../components/BidPanel';
-import { CausesList } from '../components/CausesList';
-import { LatestBids } from '../components/LatestBids';
-import { PlayerDetails } from '../components/PlayerDetails';
-import { ITEM } from './data';
+import { Separator } from '@/components/ui/separator';
+import { AuctionItemHeading } from '@/components/AuctionItemHeading';
+import { BidderControls } from '@/components/BidderControls';
+import { BidPanel } from '@/components/BidPanel';
+import { CausesList } from '@/components/CausesList';
+import { LatestBids } from '@/components/LatestBids';
+import { Navbar } from '@/components/Navbar';
+import { PlayerGallery, PlayerProfile } from '@/components/PlayerDetails';
 import type { AuctionState, Bid, WinnerData } from './types';
-import { shortId } from './utils';
+
+const styles = {
+  main:
+    'mx-auto grid w-[calc(100%_-_112px)] max-w-[1888px] grid-cols-1 items-start gap-x-[clamp(60px,10vw,200px)] gap-y-0 py-[60px] pb-[70px] tablet:grid-cols-[minmax(0,0.8fr)_minmax(0,1fr)] max-tablet:w-[calc(100%_-_64px)] max-tablet:max-w-[900px] max-tablet:gap-x-0 max-tablet:gap-y-11 max-tablet:pt-[38px] max-mobile:w-[calc(100%_-_36px)] max-mobile:gap-y-[34px] max-mobile:py-6 max-mobile:pb-[42px]',
+  info: 'min-w-0 max-tablet:order-2 tablet:col-start-2 tablet:row-start-1',
+  media: 'relative min-w-0 max-tablet:contents tablet:col-start-1 tablet:row-start-1 tablet:row-span-2',
+  bids: 'min-w-0 max-tablet:order-5 tablet:col-start-2 tablet:row-start-2',
+};
 
 /**
  * Props for the AuctionPage component.
@@ -24,12 +34,15 @@ interface AuctionPageProps {
   winnerData: WinnerData | null;
   paymentUrl: string;
   myId: string;
-  socketId?: string;
   activeImage: number;
   onImageChange: (index: number) => void;
   now: number;
   onChangeEmail: () => void;
   onReset: () => void;
+  onSignUpClick?: () => void;
+  onLoginClick?: () => void;
+  onLogout?: () => void;
+  isLoggedIn?: boolean;
   isResetting: boolean;
   resetError: string;
 }
@@ -45,7 +58,6 @@ export function AuctionPage({
   winnerData,
   paymentUrl,
   myId,
-  socketId,
   activeImage,
   onImageChange,
   now,
@@ -53,60 +65,58 @@ export function AuctionPage({
   onReset,
   isResetting,
   resetError,
+  onSignUpClick,
+  onLoginClick,
+  onLogout,
+  isLoggedIn
 }: AuctionPageProps) {
   return (
-    <main className="mx-auto grid max-w-[1200px] grid-cols-2 gap-10 px-6 py-8 max-[960px]:grid-cols-1 max-[960px]:gap-8 max-[960px]:px-4 max-[960px]:py-6">
-      <PlayerDetails itemName={auction.itemName} activeImage={activeImage} onImageChange={onImageChange} />
+    <>
+      <Navbar onSignUpClick={onSignUpClick} onLoginClick={onLoginClick} onLogout={onLogout} isLoggedIn={isLoggedIn} />
 
-      <section>
-        <div className="mb-[14px] inline-flex items-center gap-2 rounded-full bg-card px-[14px] py-1.5 text-[0.95rem] font-semibold shadow-[0_2px_8px_rgba(0,0,0,0.06)]">
-          <span className="size-[9px] rounded-full bg-[#2e9d57]" />
-          You are bidder <strong>{shortId(myId)}</strong>
-          <button type="button" className="ml-2 cursor-pointer border-0 bg-transparent text-inherit underline" onClick={onChangeEmail}>
-            change email
-          </button>
-          <button
-            type="button"
-            className="ml-1 cursor-pointer rounded-full border border-[#bbb] bg-transparent px-2 py-0.5 text-xs font-bold text-[#555] hover:bg-[#f0f0f0] disabled:cursor-wait disabled:opacity-50"
-            onClick={onReset}
-            disabled={isResetting}
-            aria-label="Reset auction"
-            title="Reset auction for demo"
-          >
-            {isResetting ? 'Resetting…' : 'Reset'}
-          </button>
+      <main id="top" className={styles.main}>
+        <section className={styles.info}>
+          <AuctionItemHeading itemName={auction.itemName} />
+
+          <BidPanel
+            auction={auction}
+            bidCount={auction.bidCount ?? bids.length}
+            winnerData={winnerData}
+            paymentUrl={paymentUrl}
+            bidAmount={bidAmount}
+            onBidAmountChange={onBidAmountChange}
+            onBid={onBid}
+            error={error}
+            myId={myId}
+            now={now}
+          />
+
+          <CausesList />
+          <Separator className="my-7 h-[3px] bg-panel-strong" />
+        </section>
+
+        <div className={styles.media}>
+          <BidderControls
+            bidderId={myId}
+            onChangeEmail={onChangeEmail}
+            onReset={onReset}
+            isResetting={isResetting}
+            resetError={resetError}
+            className="max-tablet:order-3"
+          />
+          <PlayerGallery
+            itemName={auction.itemName}
+            activeImage={activeImage}
+            onImageChange={onImageChange}
+            className="max-tablet:order-1"
+          />
+          <PlayerProfile className="max-tablet:order-4" />
         </div>
-        {resetError && <p role="alert" className="-mt-2 mb-3 text-sm text-red-700">{resetError}</p>}
-        <div className="flex flex-wrap items-center gap-4">
-          <h1 className="m-0 text-[2rem] leading-none font-black text-black uppercase max-[960px]:text-5xl">{auction.itemName}</h1>
-          {ITEM.tags.map((tag) => (
-            <span
-              key={tag}
-              className={`rounded-xl px-4 py-[5px] text-xl font-extrabold text-white max-[960px]:px-4 max-[960px]:py-1.5 max-[960px]:text-[1.3rem] ${tag === 'worn' ? 'bg-ink' : 'bg-purple'}`}
-            >
-              {tag}
-            </span>
-          ))}
+
+        <div className={styles.bids}>
+          <LatestBids bids={bids} myId={myId} />
         </div>
-        <p className="mt-1.5 mb-5 ml-2 font-bold text-[#555]">{ITEM.subtitle}</p>
-
-        <BidPanel
-          auction={auction}
-          bidCount={auction.bidCount ?? bids.length}
-          winnerData={winnerData}
-          paymentUrl={paymentUrl}
-          bidAmount={bidAmount}
-          onBidAmountChange={onBidAmountChange}
-          onBid={onBid}
-          error={error}
-          socketId={socketId}
-          now={now}
-        />
-
-        <CausesList />
-        <hr className="mt-7 mb-[18px] border-0 border-t-[3px] border-[#d9d9d9]" />
-        <LatestBids bids={bids} myId={myId} />
-      </section>
-    </main>
+      </main>
+    </>
   );
 }

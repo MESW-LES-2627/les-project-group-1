@@ -11,7 +11,8 @@ permissions:
 
 concurrency:
   group: ci-${{ github.ref }}
-  cancel-in-progress: true
+  # never kill a push run that may be mid-deploy
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   frontend:
@@ -59,6 +60,8 @@ jobs:
           --health-retries 5
     env:
       DATABASE_URL: postgres://auction:auction@localhost:5432/auction
+      JWT_SECRET: 8106f316709d3ec378b3242c0155ab2c9ca4c1d0beaf8de82c863e0bcacb4137
+      RESEND_API_KEY: re_dummy_key_for_tests
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
@@ -66,18 +69,45 @@ jobs:
       - name: Set up Bun
         uses: oven-sh/setup-bun@v2
 
+      # Also runs `prisma generate` through the postinstall script
       - name: Install dependencies
         working-directory: auction-backend
         run: bun install --frozen-lockfile
 
       - name: Compile backend
         working-directory: auction-backend
-        run: bun build index.ts --target=bun --outdir=/tmp/assist-club-backend-build
+        run: bun build src/server.ts --target=bun --outdir=/tmp/assist-club-backend-build
+
+      # Builds a fresh database from prisma/migrations (0_init)
+      - name: Apply database migrations
+        working-directory: auction-backend
+        run: bun --bun run migrate
 
       - name: Run tests
         working-directory: auction-backend
         run: bun run test
 
-      - name: Apply database schema
-        working-directory: auction-backend
-        run: bun run src/migrate.ts
+  deploy:
+    name: Deploy
+    needs: [frontend, backend]
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Configure SSH
+        env:
+          SSH_KEY: ${{ secrets.VPS_SSH_KEY }}
+          KNOWN_HOSTS: ${{ secrets.VPS_KNOWN_HOSTS }}
+        run: |
+          mkdir -p ~/.ssh
+          echo "$SSH_KEY" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          echo "$KNOWN_HOSTS" > ~/.ssh/known_hosts
+
+      # Build the new image, run migrations with it, then start the new containers.
+      - name: Deploy on VPS
+        env:
+          VPS_HOST: ${{ secrets.VPS_HOST }}
+          VPS_USER: ${{ secrets.VPS_USER }}
+          DEPLOY_PATH: ${{ github.ref_name == 'main' && '/home/ubuntu/assistclub-prod' || '/home/ubuntu/assistclub-dev' }}
+        run: |
+          ssh "$VPS_USER@$VPS_HOST" "cd '$DEPLOY_PATH' && git pull --ff-only && docker compose -f docker-compose.prod.yml build && docker compose -f docker-compose.prod.yml run --rm backend bun --bun run migrate && docker compose -f docker-compose.prod.yml run --rm backend bun --bun run seed:admin && docker compose -f docker-compose.prod.yml up -d"

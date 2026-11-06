@@ -1,3 +1,5 @@
+import type { ProfileUser } from '../profile/api';
+
 //Represents a bid made by a user in the auction.
 export interface Bid {
   bidder: string;
@@ -21,4 +23,46 @@ export interface AuctionState {
 export interface WinnerData {
   winner: string | null;
   winningBid: number;
+}
+
+//Player profile shown on the player card.
+export interface PlayerInfo {
+  name: string;
+  nickname: string;
+  age: number;
+  position: string;
+  number: number;
+  size: string;
+  nationality: string;
+  placeOfBirth: string;
+  preferredFoot: string;
+}
+
+//Charitable cause supported by an auction.
+export interface Cause {
+  name: string;
+  description: string;
+  logo: string;
+}
+
+//Item data shown on the auction page (tags, subtitle, images, player and causes).
+export interface AuctionItem {
+  subtitle: string;
+  tags: string[];
+  images: string[];
+  player: PlayerInfo | null;
+  causes: Cause[];
+}
+
+//Account actions and data shown in the navigation bar and on the profile page.
+export interface AccountNav {
+  isLoggedIn: boolean;
+  email: string;
+  username: string;
+  country: string;
+  token: string;
+  onProfileSaved: (user: ProfileUser) => void;
+  onSignUpClick: () => void;
+  onLoginClick: () => void;
+  onLogout: () => void;
 }
