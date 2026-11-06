@@ -1,16 +1,12 @@
 import { useEffect, useState } from 'react';
+import { API_URL } from '../lib/api';
 
 /**
  * Catalogue API helpers
  *
- * Builds the backend URL (same rule used by AuctionApp) and provides a small hook
- * to fetch JSON data with loading and error state.
+ * Uses the shared backend URL and provides a small hook to fetch JSON data
+ * with loading and error state.
  */
-
-const API_URL = (
-  import.meta.env.VITE_SOCKET_URL ||
-  (import.meta.env.DEV ? 'http://localhost:3000' : window.location.origin)
-).replace(/\/+$/, '');
 
 interface ApiState<T> {
   data: T | null;

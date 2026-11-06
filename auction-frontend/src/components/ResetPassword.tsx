@@ -1,6 +1,7 @@
 import React, {useState} from 'react';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
+import { API_URL } from '../lib/api';
 
 interface ResetPasswordProps {
     onSuccessfulReset: () => void;
@@ -37,7 +38,7 @@ export function ResetPassword({ onSuccessfulReset }: ResetPasswordProps) {
     setLoading(true);
 
     try {
-      const response = await fetch('http://localhost:3000/api/auth/reset-password', {
+      const response = await fetch(`${API_URL}/api/auth/reset-password`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ token, newPassword }),

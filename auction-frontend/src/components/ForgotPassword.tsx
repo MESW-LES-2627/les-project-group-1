@@ -1,6 +1,7 @@
 import React, {useState} from 'react';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
+import { API_URL } from '../lib/api';
 
 interface ForgotPasswordProps {
     onBackToLogin: () => void;
@@ -22,7 +23,7 @@ export function ForgotPassword({ onBackToLogin }: ForgotPasswordProps) {
     setLoading(true);
 
     try {
-      const response = await fetch('http://localhost:3000/api/auth/forgot-password', {
+      const response = await fetch(`${API_URL}/api/auth/forgot-password`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email }),

@@ -12,13 +12,11 @@ import { LoginForm } from '../components/LoginForm';
 import { ForgotPassword } from '../components/ForgotPassword';   
 import { ResetPassword } from '../components/ResetPassword';
 import { Button } from '../components/ui/button';
+import { API_URL } from '../lib/api';
 
 
 // Register event listeners before connecting so the initial state is not missed.
-const socketUrl =
-  import.meta.env.VITE_SOCKET_URL ||
-  (import.meta.env.DEV ? 'http://localhost:3000' : window.location.origin);
-const socket = io(socketUrl, { autoConnect: false });
+const socket = io(API_URL, { autoConnect: false });
 const INITIAL_NOW = Date.now();
 
 //Props for the AuctionApp component
@@ -180,7 +178,7 @@ function AuctionApp({ auctionId = 'demo', children, renderPage }: AuctionAppProp
     setRegisterSuccessMessage(null);
 
     try {
-      const backendUrl = socketUrl.replace(/\/+$/, '');
+      const backendUrl = API_URL;
       const response = await fetch(`${backendUrl}/api/auth/register`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -230,7 +228,7 @@ function AuctionApp({ auctionId = 'demo', children, renderPage }: AuctionAppProp
     setLoginError(null);
 
     try {
-      const backendUrl = socketUrl.replace(/\/+$/, '');
+      const backendUrl = API_URL;
       const response = await fetch(`${backendUrl}/api/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -274,7 +272,7 @@ function AuctionApp({ auctionId = 'demo', children, renderPage }: AuctionAppProp
     setIsResetting(true);
     setResetError('');
     try {
-      const backendUrl = socketUrl.replace(/\/+$/, '');
+      const backendUrl = API_URL;
       const response = await fetch(`${backendUrl}/api/auction/reset?auctionId=${encodeURIComponent(auctionId)}`, { method: 'POST' },);
       if (!response.ok) throw new Error(`Reset failed with status ${response.status}`);
     } catch {
@@ -287,7 +285,7 @@ function AuctionApp({ auctionId = 'demo', children, renderPage }: AuctionAppProp
   // Logout handler
   const handleLogout =  async () => {
     try {
-      const backendUrl = socketUrl.replace(/\/+$/, '');
+      const backendUrl = API_URL;
       const response = await fetch(`${backendUrl}/api/auth/logout`, {
         method: 'POST',
         headers: token ? { Authorization: `Bearer ${token}` } : {},

@@ -1,7 +1,4 @@
-const baseUrl = (
-  import.meta.env.VITE_SOCKET_URL ||
-  (import.meta.env.DEV ? 'http://localhost:3000' : window.location.origin)
-).replace(/\/+$/, '');
+import { API_URL } from '../lib/api';
 
 export type ProfileUser = {
   username: string;
@@ -38,7 +35,7 @@ export class ApiError extends Error {
 }
 
 async function request(path: string, token: string, init?: RequestInit) {
-  const response = await fetch(`${baseUrl}${path}`, {
+  const response = await fetch(`${API_URL}${path}`, {
     ...init,
     headers: {
       'Content-Type': 'application/json',
