@@ -52,14 +52,14 @@ Adopted output was reviewed by at least one team member and checked with tests, 
 | 2026-11-05 | Gemini | Support test patterns and validation logic for frontend components | Suggested assertions and mock structures for verifying component states and user interactions | Adapted. Added assertions and mocks with no external network dependencies |
 | 2026-11-05 | Claude | Understand why the backend CI job failed while the tests passed locally | The email service creates the Resend client when it is loaded and fails because the CI had no `RESEND_API_KEY` | Adopted. Added `RESEND_API_KEY` to `ci.yml` as a repository secret instead of hardcoding it |
 
-## Critical reasoning: suggestions we rejected or adapted
+## Critical reasoning
 
-- **Tailwind rewrite** We adapted instead of accepting a full rewrite of every class. We grouped classes where it improved readability but avoided churn in files that were otherwise not changing, because a large cosmetic diff makes review harder and adds no behaviour.
-- **Duplicated functionality** Several initial suggestions created new files or repeated existing code. We rejected those parts and reused the existing components, routes and helpers instead. The check was whether the suggestion fitted the current project structure without introducing a parallel implementation.
-- **Profile persistence** AI first proposed a dedicated sessions table for the buyer profile. We rejected it: the team already used JWT authentication, and keeping both would create two token systems, two expiry policies and two logout paths. We kept only the `avatar` column, its migration and the profile/purchases queries.
-- **Cascade deletes and default addresses** We reviewed the proposed cascades because an incorrect cascade can silently delete user data. We kept the constraints that preserve relational integrity and avoided making address deletion ambiguous.
-- **Logout after email change** We adopted this because the email is part of the login and recovery identity; forcing re-authentication after changing it reduces the risk of a stale session. We accepted the limitation that the current logout only clears the browser session.
-  
+- **Tailwind rewrite**: We adapted instead of accepting a full rewrite of every class. We grouped classes where it improved readability but avoided churn in files that were otherwise not changing, because a large cosmetic diff makes review harder and adds no behaviour.
+- **Duplicated functionality**: Several initial suggestions created new files or repeated existing code. We rejected those parts and reused the existing components, routes and helpers instead. The check was whether the suggestion fitted the current project structure without introducing a parallel implementation.
+- **Profile persistence**: AI first proposed a dedicated sessions table for the buyer profile. We rejected it: the team already used JWT authentication, and keeping both would create two token systems, two expiry policies and two logout paths. We kept only the `avatar` column, its migration and the profile/purchases queries.
+- **Cascade deletes and default addresses**: We reviewed the proposed cascades because an incorrect cascade can silently delete user data. We kept the constraints that preserve relational integrity and avoided making address deletion ambiguous.
+- **Logout after email change**: We adopted this because the email is part of the login and recovery identity; forcing re-authentication after changing it reduces the risk of a stale session. We accepted the limitation that the current logout only clears the browser session.
+
 ## Outcome
 
 AI accelerated scaffolding and several tasks: catalogue search and filtering, the buyer profile, the barebones of charities/sports/about/support pages, address CRUD, the Prisma migration and the CI deploy workflow.
