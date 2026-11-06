@@ -12,6 +12,7 @@ Every suggestion was reviewed by team members and verified with tests before bei
 | Date | Tool | Why we used it | What AI produced | What we decided |
 |---|---|---|---|---|
 
+
 ## UX/UI
 
 | Date | Tool | Why we used it | What AI produced | What we decided |
@@ -19,6 +20,7 @@ Every suggestion was reviewed by team members and verified with tests before bei
 | 2026-11-04 | Deepseek | Make the Tailwind classes readable and consistent | Reordered utilities into style maps and suggested shadcn primitives | Adopted, no visual design or behavioural change |
 | 2026-11-04 | Deepseek | Make the navbar usable on mobile | Proposed breakpoints and a collapsible menu | Adopted, after adding a Navbar test and checking desktop, tablet and mobile widths |
 | 2026-11-05 | Claude | Improve the catalogue UI/UX based on the group's existing prototypes and agreed layout | Suggestions for improving the layout, component organisation, visual consistency and responsiveness | Reviewed and adapted the scripts to the project's requirements |
+| 2026-11-05 | Gemini | Structure React components for registration, password recovery, and address management | Proposed layout patterns and code structures using Tailwind CSS and TypeScript | Adapted to ensure strict typing, responsive design, and immediate user feedback |
 
 ## Architecture and data
 
@@ -26,6 +28,7 @@ Every suggestion was reviewed by team members and verified with tests before bei
 |---|---|---|---|---|
 | 2026-11-05 | Claude | Get assistance with the database SQL scripts | Suggestions and adjustments for the database schema, queries and migration scripts | Reviewed and adapted the scripts to match the project's data model and requirements |
 | 2026-11-05 | Claude | Populate the database with fictional data for development and testing | Sample data for clubs, categories, memorabilia listings and related information | Reviewed and adapted the data to match the database schema |
+| 2026-11-05 | Gemini | Design relational schema constraints and default address logic | Suggestions for ORM cascade deletions and uniqueness enforcement for user shipping addresses | Reviewed to ensure relational integrity and data safety |
 
 ## Implementation
 
@@ -33,18 +36,21 @@ Every suggestion was reviewed by team members and verified with tests before bei
 |---|---|---|---|---|
 | 2026-11-05 | Claude | Get assistance with implementing catalogue search and category filtering | Suggestions for the search and filtering logic in the frontend and backend | Reviewed and adapted the suggestions to the existing implementation |
 | 2026-11-05 | Claude | Support the implementation of independent auctions for each jersey | Suggestions for adapting the auction logic to handle multiple auctions using each listing's ID | Reviewed and adapted the changes while preserving the existing auction functionality |
+| 2026-11-05 | Gemini | Assistance on frontend logic for address CRUD operations and JWT authentication | Suggested implementation patterns for asynchronous HTTP requests with JWT tokens and local state management | Reviewed and adapted to integrate seamlessly with backend REST endpoints |
 
 ## Debugging
 
 | Date | Tool | Why we used it | What AI produced | What we decided |
 |---|---|---|---|---|
 | 2026-11-05 | Deepseek | Understand why the pipeline failed after the Prisma merge | A series of commands to run manually on the VPS | Checked and worked, fixed the error |
+| 2026-11-05 | Gemini | Diagnose and resolve asynchronous state synchronization and token handling issues | Analysis of client-server communication boundaries and suggested payload adjustments for protected requests | Reviewed, verified through test runs, and successfully merged to ensure stable API communication |
 
 ## Testing and CI
 
 | Date | Tool | Why we used it | What AI produced | What we decided |
 |---|---|---|---|---|
 | 2026-11-04 | Deepseek | To help make the deploy via CI | Changes to the workflow in order to support automatic deploy on the VPS | Adopted, after testing running the pipeline |
+| 2026-11-05 | Gemini | Support test patterns and validation logic for frontend components | Suggested assertions and mock structures for verifying component states and user interactions | Adapted to ensure robust test coverage without external network dependencies |
 
 ## Documentation
 
