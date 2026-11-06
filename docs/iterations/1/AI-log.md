@@ -69,7 +69,7 @@ Every suggestion was reviewed by team members and verified with tests before bei
 
 - **A full rewrite of every Tailwind class:** adapted instead of accepted, we grouped classes where it improved readability but avoided churn in files that where otherwise not changing.
 - **Creating unnecessary files and duplicating existing functionality:** Some initial suggestions did not reuse the group's existing code. We adapted the approach to avoid duplication and keep the implementation consistent with the project structure.
-- **Invalidating the old token when the email changes:** this needs a token version stored in the database. We decided it was not worth the extra work for this iteration and only log the user out in the browser.
+
 
 ## Outcome
 
