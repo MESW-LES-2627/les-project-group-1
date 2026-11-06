@@ -26,6 +26,8 @@ Every suggestion was reviewed by team members and verified with tests before bei
 |---|---|---|---|---|
 | 2026-11-05 | Claude | Get assistance with the database SQL scripts | Suggestions and adjustments for the database schema, queries and migration scripts | Reviewed and adapted the scripts to match the project's data model and requirements |
 | 2026-11-05 | Claude | Populate the database with fictional data for development and testing | Sample data for clubs, categories, memorabilia listings and related information | Reviewed and adapted the data to match the database schema |
+| 2026-11-06 | Claude | asked to use Prisma ORM instead if SQL scripts | migrations and Models | Reviewed and adapted it |
+| 2026-11-06 | Claude | asked to generate simple crud based on provided Models | new Controllers and routes | Reviewed and adapted it |
 
 ## Implementation
 
