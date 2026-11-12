@@ -81,6 +81,7 @@ model Listing {
   playerDetails     Json?     @map("player_details")
   season            String?
   competition       String?
+  match             String?
   tags              String[]  @default([])
   description       String
   images            String[]  @default([])

@@ -8,6 +8,7 @@ export interface ListingRow {
   player_details: Record<string, string | number> | null;
   season: string | null;
   competition: string | null;
+  match: string | null;
   tags: string[];
   description: string;
   images: string[];
@@ -19,6 +20,7 @@ export interface ListingRow {
   auction_ends_at: Date | null;
   club_slug: string;
   club_name: string;
+  club_logo_url: string | null;
   category_slug: string;
   category_name: string;
 }
@@ -29,7 +31,8 @@ export async function findPublicListings(pattern: string | null, categorySlug: s
     where (${pattern}::text is null
         or title ilike ${pattern}
         or club_name ilike ${pattern}
-        or player_name ilike ${pattern})
+        or player_name ilike ${pattern}
+        or match ilike ${pattern})
       and (${categorySlug}::text is null or category_slug = ${categorySlug})
     order by id
   `;

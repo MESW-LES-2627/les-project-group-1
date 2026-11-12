@@ -13,9 +13,10 @@ export interface ListingSummary {
   playerName: string | null;
   season: string | null;
   competition: string | null;
+  match: string | null;
   tags: string[];
   images: string[];
-  club: { slug: string; name: string };
+  club: { slug: string; name: string; logoUrl: string | null };
   category: Category;
   currentBid: number | null;
   auctionEndsAt: string | null;
