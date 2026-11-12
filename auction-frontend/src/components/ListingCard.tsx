@@ -22,8 +22,8 @@ const styles = {
 /**
  * ListingCard Component
  *
- * Card shown in the catalogue grid: tags, image, name, club, competition and season,
- * current bid and time left. Links to the item page and to the club page.
+ * Card shown in the catalogue grid: tags, image, name, club, competition, match and
+ * season, current bid and time left. Links to the item page and to the club page.
  */
 
 interface ListingCardProps {
@@ -59,6 +59,7 @@ export function ListingCard({ listing, now }: ListingCardProps) {
           {listing.club.name}
         </Link>
         <p className={cn(styles.meta, 'm-0')}>{competition}</p>
+        {listing.match && <p className={cn(styles.meta, 'm-0')}>{listing.match}</p>}
 
         {hasAuction && (
           <div className={styles.priceRow}>

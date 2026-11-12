@@ -45,12 +45,13 @@ export interface Cause {
   logo: string;
 }
 
-//Item data shown on the auction page (tags, subtitle, images, player and causes).
+//Item data shown on the auction page (tags, subtitle, images, player, team and causes).
 export interface AuctionItem {
   subtitle: string;
   tags: string[];
   images: string[];
   player: PlayerInfo | null;
+  club: { name: string; logoUrl: string | null };
   causes: Cause[];
 }
 

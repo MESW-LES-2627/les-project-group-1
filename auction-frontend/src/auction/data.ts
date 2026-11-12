@@ -17,6 +17,12 @@ export const ITEM = {
     preferredFoot: 'Right',
   },
 
+  //Team that provided the item.
+  club: {
+    name: 'Nexus Gaming',
+    logoUrl: null,
+  },
+
   //Charities supported by the auction.
   causes: [
     {
