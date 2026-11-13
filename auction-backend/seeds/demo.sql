@@ -1,4 +1,5 @@
--- Demo data: esports jerseys. Safe to run many times (conflicts are ignored).
+-- Demo data: football jerseys. Safe to run many times: existing rows are updated
+-- from this file, so `bun run seed` also refreshes an already-seeded database.
 
 insert into clubs (slug, name, description, logo_url) values
   ('sl-benfica', 'SL Benfica', 'Portuguese football club based in Lisbon, with a record number of league titles and a passionate worldwide following.', '/images/clubs/sl-benfica.svg'),
@@ -11,14 +12,18 @@ insert into clubs (slug, name, description, logo_url) values
   ('portugal', 'Portugal', 'National team representing Portugal, with a growing collection of international honours and special-edition shirts.', '/images/clubs/portugal.svg'),
   ('sc-braga', 'SC Braga', 'Portuguese football club based in Braga, known for its strong home support and regular European appearances.', '/images/clubs/sc-braga.svg'),
   ('celtic', 'Celtic', 'Scottish football club based in Glasgow, with a long record of league titles and a famous home atmosphere.', '/images/clubs/celtic.svg')
-on conflict (slug) do nothing;
+on conflict (slug) do update set
+  name = excluded.name,
+  description = excluded.description,
+  logo_url = excluded.logo_url;
 
 -- Categories follow the jersey type. Tags (worn, signed, final, limited) describe each item.
 insert into categories (slug, name) values
   ('player-jerseys', 'Player jerseys'),
   ('team-jerseys', 'Team jerseys'),
   ('special-editions', 'Special editions')
-on conflict (slug) do nothing;
+on conflict (slug) do update set
+  name = excluded.name;
 
 insert into listings
   (club_id, category_id, title, player_name, player_details, season, competition, match, tags,
@@ -118,4 +123,20 @@ values
    array['/images/items/celtic/tierney-front.png', '/images/items/celtic/tierney-back.png'],
    'verified', 'Signing witnessed by team staff. Matched against official broadcast footage.', 'AC-2026-0010', now(),
    520, now() + interval '4 days')
-on conflict do nothing;
+on conflict (certificate_code) do update set
+  club_id = excluded.club_id,
+  category_id = excluded.category_id,
+  title = excluded.title,
+  player_name = excluded.player_name,
+  player_details = excluded.player_details,
+  season = excluded.season,
+  competition = excluded.competition,
+  match = excluded.match,
+  tags = excluded.tags,
+  description = excluded.description,
+  images = excluded.images,
+  status = excluded.status,
+  authenticity_notes = excluded.authenticity_notes,
+  verified_at = excluded.verified_at,
+  starting_price = excluded.starting_price,
+  auction_ends_at = excluded.auction_ends_at;
