@@ -72,8 +72,8 @@
 
 body {
   margin: 0;
-  background: #fff;
-  color: var(--color-ink);
+  /*background: #fff;*/
+  /*color: var(--color-ink);*/
   font-family: var(--font-auction);
 }
 
