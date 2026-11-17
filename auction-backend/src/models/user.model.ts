@@ -26,7 +26,7 @@ export async function createUser(username: string, email: string, passwordHash: 
 export async function findForLogin(email: string) {
   return prisma.user.findUnique({
     where: { email },
-    select: { id: true, username: true, email: true, passwordHash: true, country: true, role: true },
+    select: { id: true, username: true, email: true, passwordHash: true, country: true, role: true, club: true },
   });
 }
 
@@ -106,7 +106,7 @@ export async function updatePassword(userId: number, passwordHash: string) {
 }
 
 export async function findAuthById(id: number) {
-  return prisma.user.findUnique({ where: { id }, select: { id: true, role: true } });
+  return prisma.user.findUnique({ where: { id }, select: { id: true, role: true, club: true } });
 }
 
 export async function listUsers(opts: { role?: Role; search?: string; skip: number; take: number }) {
@@ -141,4 +141,17 @@ export async function updateUser(
 
 export async function deleteUser(id: number) {
   await prisma.user.delete({ where: { id } });
+}
+
+export async function createClubForUser(userId: number, name: string, slug: string) {
+  return await prisma.club.create({
+    data: {
+      name,
+      slug,
+      status: "pending", 
+      user: {
+        connect: {id: userId},
+      }
+    },
+  });
 }

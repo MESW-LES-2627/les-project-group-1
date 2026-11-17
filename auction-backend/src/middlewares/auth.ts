@@ -6,7 +6,7 @@ import type { Role } from "../models/user.model";
 declare global {
     namespace Express {
         interface Request {
-            user?: { id: number; role: Role };
+            user?: { id: number; role: Role, clubId: number | null};
         }
     }
 }
@@ -22,7 +22,7 @@ export async function requireAuth(req: Request, res: Response, next: NextFunctio
     const user = await User.findAuthById(userId);
     if (!user) return res.status(401).json({ error: "Authentication required." });
 
-    req.user = { id: user.id, role: user.role };
+    req.user = { id: user.id, role: user.role, clubId: user.club?.id ?? null};
     next();
 }
 

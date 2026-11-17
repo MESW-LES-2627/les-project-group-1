@@ -55,6 +55,9 @@ function AuctionApp({ auctionId = 'demo', children, renderPage }: AuctionAppProp
   const [registerUsername, setRegisterUsername] = useState('');
   const [registerPassword, setRegisterPassword] = useState('');
   const [registerCountry, setRegisterCountry] = useState('');
+  const [registerAccountType, setRegisterAccountType] = useState<'BUYER' | 'CLUB'>('BUYER');
+  const [registerClubName, setRegisterClubName] = useState('');
+  const [registerClubSlug, setRegisterClubSlug] = useState('');
   const [registerLoading, setRegisterLoading] = useState(false);
   const [registerError, setRegisterError] = useState<string | null>(null);
   const [registerSuccessMessage, setRegisterSuccessMessage] = useState<string | null>(null);
@@ -173,6 +176,11 @@ function AuctionApp({ auctionId = 'demo', children, renderPage }: AuctionAppProp
     const value = registerEmail.trim();
     if (!valueUsername ||!value || !registerPassword) return;
 
+    if (registerAccountType === 'CLUB' && (!registerClubName.trim() || !registerClubSlug.trim())) {
+      setRegisterError('Club name and slug are required for club accounts.');
+      return;
+    }
+
     setRegisterLoading(true);
     setRegisterError(null);
     setRegisterSuccessMessage(null);
@@ -182,7 +190,15 @@ function AuctionApp({ auctionId = 'demo', children, renderPage }: AuctionAppProp
       const response = await fetch(`${backendUrl}/api/auth/register`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username: valueUsername,email: value, password: registerPassword, country: registerCountry }),
+        body: JSON.stringify({ 
+          username: valueUsername, 
+          email: value, 
+          password: registerPassword, 
+          country: registerCountry, 
+          accountType: registerAccountType,
+          clubName: registerAccountType === 'CLUB' ? registerClubName.trim() : undefined,
+          clubSlug: registerAccountType === 'CLUB' ? registerClubSlug.trim() : undefined, 
+        }),
       });
 
       const data = (await response.json()) as { error?: string; token?: string };
@@ -209,6 +225,9 @@ function AuctionApp({ auctionId = 'demo', children, renderPage }: AuctionAppProp
         setRegisterSuccessMessage(null);
         setRegisterPassword('');
         setRegisterEmail('');
+        setRegisterClubName('');
+        setRegisterClubSlug('');
+        setRegisterAccountType('BUYER');
       }, 1200);
 
     } catch (err: any) {
@@ -332,6 +351,9 @@ function AuctionApp({ auctionId = 'demo', children, renderPage }: AuctionAppProp
       setRegisterEmail('');
       setRegisterPassword('');
       setRegisterCountry('');
+      setRegisterAccountType('BUYER');
+      setRegisterClubName('');
+      setRegisterClubSlug('');
       setRegisterError(null);
       setRegisterSuccessMessage(null);
       setAuthView('register');
@@ -404,10 +426,16 @@ function AuctionApp({ auctionId = 'demo', children, renderPage }: AuctionAppProp
             email={registerEmail}
             password={registerPassword}
             country={registerCountry}
+            accountType={registerAccountType}
+            clubName={registerClubName}
+            clubSlug={registerClubSlug}
             onUsernameChange={setRegisterUsername}
             onEmailChange={setRegisterEmail}
             onPasswordChange={setRegisterPassword}
             onCountryChange={setRegisterCountry}
+            onAccountTypeChange={setRegisterAccountType}
+            onClubNameChange={setRegisterClubName}
+            onClubSlugChange={setRegisterClubSlug}
             onSubmit={handleRegisterSubmit}
             loading={registerLoading}
             error={registerError}

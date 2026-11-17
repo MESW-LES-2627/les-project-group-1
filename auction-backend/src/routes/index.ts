@@ -5,6 +5,7 @@ import listingsRoutes from "./listings.routes";
 import usersRoutes from "./users.routes";
 import adminRoutes from "./admin.routes";
 import addressRoutes from "./address.routes";
+import clubRoutes from "./club.routes";
 
 /** JSON routes, mounted under /api. (The Stripe webhook is mounted separately in app.ts.) */
 const router = Router();
@@ -15,5 +16,6 @@ router.use("/users", usersRoutes);
 router.use("/", listingsRoutes); // /categories, /listings, /clubs
 router.use("/admin", adminRoutes);
 router.use("/addresses", addressRoutes);
+router.use("/clubs", clubRoutes);
 
 export default router;
