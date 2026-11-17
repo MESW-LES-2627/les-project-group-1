@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Zalando+Sans+Expanded:ital,wght@0,200..900;1,200..900&display=swap');
+/*@import url('https://fonts.googleapis.com/css2?family=Zalando+Sans+Expanded:ital,wght@0,200..900;1,200..900&display=swap');*/
 @import 'tailwindcss';
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
@@ -60,7 +60,7 @@
   --breakpoint-tablet: 1100px;
   --breakpoint-wide: 1450px;
 
-  --font-auction: 'Zalando Sans Expanded', system-ui, sans-serif;
+  /*--font-auction: 'Zalando Sans Expanded', system-ui, sans-serif;*/
 }
 
 * {
@@ -74,7 +74,7 @@ body {
   margin: 0;
   /*background: #fff;*/
   /*color: var(--color-ink);*/
-  font-family: var(--font-auction);
+  /*font-family: var(--font-auction);*/
 }
 
 img {
