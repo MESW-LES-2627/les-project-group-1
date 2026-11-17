@@ -9,6 +9,7 @@ import { SportsPage } from './sports/SportsPage';
 import { AboutPage } from './about/AboutPage';
 import { SupportPage } from './support/SupportPage';
 import { LivePage } from './live/LivePage';
+import DashboardRoutes from "@/dashboard/DashboardRoutes.tsx";
 
 /**
  * Root Application Component
@@ -36,6 +37,7 @@ function App() {
         <Route path="/profile" element={<ProfilePage />} />
         <Route path="/reset-password" element={<CataloguePage />} />
         <Route path="/demo" element={<AuctionApp />} />
+        <Route path="/dashboard/*" element={<DashboardRoutes />} />
         <Route
           path="*"
           element={
@@ -45,6 +47,8 @@ function App() {
             </main>
           }
         />
+
+
       </Routes>
     </BrowserRouter>
   );
