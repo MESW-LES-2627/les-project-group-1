@@ -143,6 +143,8 @@ export async function deleteUser(id: number) {
   await prisma.user.delete({ where: { id } });
 }
 
+// CLUBS
+
 export async function createClubForUser(userId: number, name: string, slug: string) {
   return await prisma.club.create({
     data: {
@@ -153,5 +155,28 @@ export async function createClubForUser(userId: number, name: string, slug: stri
         connect: {id: userId},
       }
     },
+  });
+}
+
+export async function findClubByUserId(userId: number) {
+  return await prisma.club.findFirst({
+    where: { userId: Number(userId) },
+    include: { user: true, listings: true },
+  });
+}
+
+export async function updateClubProfile(userId: number, data: { name?: string; description?: string; logoUrl?: string }) {
+  const club = await prisma.club.findFirst({ where: { userId: Number(userId) } });
+  if (!club) throw new Error("Club profile not found");
+  return await prisma.club.update({
+    where: { id: club.id },
+    data,
+  });
+}
+
+export async function findClubBySlug(slug: string) {
+  return await prisma.club.findUnique({
+    where: { slug },
+    include: { listings: true },
   });
 }

@@ -13,9 +13,10 @@ const router = Router();
 router.use("/auth", authRoutes);
 router.use("/auction", auctionRoutes);
 router.use("/users", usersRoutes);
+router.use("/clubs", clubRoutes);
 router.use("/", listingsRoutes); // /categories, /listings, /clubs
 router.use("/admin", adminRoutes);
 router.use("/addresses", addressRoutes);
-router.use("/clubs", clubRoutes);
+
 
 export default router;

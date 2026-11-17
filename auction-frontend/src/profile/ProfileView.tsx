@@ -1,13 +1,18 @@
 import type { AccountNav } from '../auction/types';
 import { AccountProfile } from '../components/AccountProfile';
+import { ClubProfile } from '../components/ClubProfile';
 import { Navbar } from '../components/Navbar';
 import { Button } from '../components/ui/button';
 
 export function ProfileView({ account }: { account: AccountNav }) {
+  const isClub = (account as any).role === 'CLUB';
   return (
     <>
       <Navbar {...account} />
       {account.isLoggedIn ? (
+        isClub ? (
+          <ClubProfile token={account.token} />
+        ) :
         <AccountProfile
           token={account.token}
           username={account.username}

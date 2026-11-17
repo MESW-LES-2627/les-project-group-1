@@ -62,6 +62,7 @@ export interface AccountNav {
   username: string;
   country: string;
   token: string;
+  role?: string;
   onProfileSaved: (user: ProfileUser) => void;
   onSignUpClick: () => void;
   onLoginClick: () => void;
