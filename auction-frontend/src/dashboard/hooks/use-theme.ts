@@ -16,12 +16,13 @@ export function useTheme() {
   const [theme, setTheme] = useState<Theme>(getInitialTheme)
 
   useEffect(() => {
-    document.documentElement.classList.toggle("dark", theme === "dark")
+    document.body.classList.toggle("dark", theme === "dark")
     try {
       localStorage.setItem("theme", theme)
     } catch {
       /* storage unavailable */
     }
+    return () => document.body.classList.remove("dark")
   }, [theme])
 
   const toggle = useCallback(() => setTheme((t) => (t === "dark" ? "light" : "dark")), [])

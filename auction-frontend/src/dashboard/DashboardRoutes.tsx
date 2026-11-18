@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Route, Routes } from "react-router-dom";
 import { AuthProvider } from "@/context/auth-context.tsx";
@@ -7,10 +8,16 @@ import { AppLayout } from "@/dashboard/components/layout/app-layout.tsx";
 import Overview from "@/dashboard/pages/overview.tsx";
 import Users from "@/dashboard/pages/users.tsx";
 import Placeholder from "@/dashboard/pages/placeholder.tsx";
+import "@/dashboard/index.css";
 const queryClient = new QueryClient();
 
 
 export default function DashboardRoutes() {
+    useEffect(() => {
+        document.body.classList.add("dashboard-theme");
+        return () => document.body.classList.remove("dashboard-theme");
+    }, []);
+
     return (
 
         <QueryClientProvider client={queryClient}>
