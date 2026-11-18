@@ -28,6 +28,7 @@ model User {
   createdAt         DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
   role              Role @default(BUYER)
   addresses         Address[]
+  club              Club?
 
   @@map("users")
 }
@@ -51,9 +52,12 @@ model Winner {
 
 model Club {
   id          Int       @id @default(autoincrement())
+  userId      Int?      @unique @map("user_id")
+  user        User?     @relation(fields: [userId], references: [id], onDelete: Cascade)
   slug        String    @unique
   name        String    @unique
   description String    @default("")
+  status      String    @default("pending") 
   logoUrl     String?   @map("logo_url")
   createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
   listings    Listing[]

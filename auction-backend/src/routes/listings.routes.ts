@@ -6,6 +6,6 @@ const router = Router();
 router.get("/categories", listings.getCategories);
 router.get("/listings", listings.getListings);
 router.get("/listings/:id", listings.getListing);
-router.get("/clubs/:slug", listings.getClub);
+router.get("/clubs/:slug", listings.getClub); 
 
 export default router;

@@ -48,6 +48,7 @@ function AuctionApp({ auctionId = 'demo', children, renderPage }: AuctionAppProp
   const [username, setUsername] = useState(() => localStorage.getItem('bidderUsername') ?? '');
   const [country, setCountry] = useState(() => localStorage.getItem('bidderCountry') ?? '');
   const [token, setToken] = useState(() => localStorage.getItem('bidderToken') ?? '');
+  const [role, setRole] = useState(() => localStorage.getItem('bidderRole') ?? '');
 
   //Register
   const [showRegisterForm, setShowRegisterForm] = useState(false);
@@ -55,6 +56,9 @@ function AuctionApp({ auctionId = 'demo', children, renderPage }: AuctionAppProp
   const [registerUsername, setRegisterUsername] = useState('');
   const [registerPassword, setRegisterPassword] = useState('');
   const [registerCountry, setRegisterCountry] = useState('');
+  const [registerAccountType, setRegisterAccountType] = useState<'BUYER' | 'CLUB'>('BUYER');
+  const [registerClubName, setRegisterClubName] = useState('');
+  const [registerClubSlug, setRegisterClubSlug] = useState('');
   const [registerLoading, setRegisterLoading] = useState(false);
   const [registerError, setRegisterError] = useState<string | null>(null);
   const [registerSuccessMessage, setRegisterSuccessMessage] = useState<string | null>(null);
@@ -173,6 +177,11 @@ function AuctionApp({ auctionId = 'demo', children, renderPage }: AuctionAppProp
     const value = registerEmail.trim();
     if (!valueUsername ||!value || !registerPassword) return;
 
+    if (registerAccountType === 'CLUB' && (!registerClubName.trim() || !registerClubSlug.trim())) {
+      setRegisterError('Club name and slug are required for club accounts.');
+      return;
+    }
+
     setRegisterLoading(true);
     setRegisterError(null);
     setRegisterSuccessMessage(null);
@@ -182,10 +191,18 @@ function AuctionApp({ auctionId = 'demo', children, renderPage }: AuctionAppProp
       const response = await fetch(`${backendUrl}/api/auth/register`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username: valueUsername,email: value, password: registerPassword, country: registerCountry }),
+        body: JSON.stringify({ 
+          username: valueUsername, 
+          email: value, 
+          password: registerPassword, 
+          country: registerCountry, 
+          accountType: registerAccountType,
+          clubName: registerAccountType === 'CLUB' ? registerClubName.trim() : undefined,
+          clubSlug: registerAccountType === 'CLUB' ? registerClubSlug.trim() : undefined, 
+        }),
       });
 
-      const data = (await response.json()) as { error?: string; token?: string };
+      const data = (await response.json()) as { error?: string; token?: string, user?: { role?: string; club?: { name?: string; slug?: string } } };
 
       if (!response.ok) {
         throw new Error(data.error || 'Error registering user. Please try again.');
@@ -198,9 +215,16 @@ function AuctionApp({ auctionId = 'demo', children, renderPage }: AuctionAppProp
           localStorage.setItem('bidderToken', data.token);
           setToken(data.token);
         }
+        const assignedRole = data.user?.role || registerAccountType;
+        localStorage.setItem('bidderRole', assignedRole);
+        setRole(assignedRole);
         localStorage.setItem('bidderUsername', valueUsername);
         localStorage.setItem('bidderEmail', value);
         localStorage.setItem('bidderCountry', registerCountry);
+        if (registerAccountType === 'CLUB') {
+          localStorage.setItem('bidderClubName', data.user?.club?.name || registerClubName.trim());
+          localStorage.setItem('bidderClubSlug', data.user?.club?.slug || registerClubSlug.trim());
+        }
         setUsername(valueUsername);
         setCountry(registerCountry);
         setEmail(value);
@@ -209,6 +233,9 @@ function AuctionApp({ auctionId = 'demo', children, renderPage }: AuctionAppProp
         setRegisterSuccessMessage(null);
         setRegisterPassword('');
         setRegisterEmail('');
+        setRegisterClubName('');
+        setRegisterClubSlug('');
+        setRegisterAccountType('BUYER');
       }, 1200);
 
     } catch (err: any) {
@@ -235,7 +262,7 @@ function AuctionApp({ auctionId = 'demo', children, renderPage }: AuctionAppProp
         body: JSON.stringify({ email: valueEmail, password: loginPassword }),
       });
 
-      const data = (await response.json()) as { error?: string; token?: string; user?: { username: string; email: string, country?: string } };
+      const data = (await response.json()) as { error?: string; token?: string; user?: { username: string; email: string, country?: string, role?: string; club?: { name?: string; slug?: string } } };
       if (!response.ok) throw new Error(data.error || 'Error logging in. Please try again.');
 
       if (data.token) {
@@ -255,6 +282,17 @@ function AuctionApp({ auctionId = 'demo', children, renderPage }: AuctionAppProp
       if (loggedCountry) {
         localStorage.setItem('bidderCountry', loggedCountry);
         setCountry(loggedCountry);
+      }
+
+      const loggedRole = data.user?.role || '';
+      if (loggedRole) {
+        localStorage.setItem('bidderRole', loggedRole);
+        setRole(loggedRole);
+      }
+
+      if (data.user?.club) {
+        if (data.user.club.name) localStorage.setItem('bidderClubName', data.user.club.name);
+        if (data.user.club.slug) localStorage.setItem('bidderClubSlug', data.user.club.slug);
       }
       
       setEmail(data.user?.email || valueEmail);
@@ -301,8 +339,12 @@ function AuctionApp({ auctionId = 'demo', children, renderPage }: AuctionAppProp
       localStorage.removeItem('bidderUsername');
       localStorage.removeItem('bidderCountry');
       localStorage.removeItem('bidderToken');
+      localStorage.removeItem('bidderClubName');
+      localStorage.removeItem('bidderClubSlug');
+      localStorage.removeItem('bidderRole');
       setCountry('');
       setToken('');
+      setRole('');
       setShowAuthChoice(true);
     }
   };
@@ -325,6 +367,7 @@ function AuctionApp({ auctionId = 'demo', children, renderPage }: AuctionAppProp
     username,
     country,
     token,
+    role,
     onProfileSaved: handleProfileSaved,
     onLogout: handleLogout,
     onSignUpClick: () => {
@@ -332,6 +375,9 @@ function AuctionApp({ auctionId = 'demo', children, renderPage }: AuctionAppProp
       setRegisterEmail('');
       setRegisterPassword('');
       setRegisterCountry('');
+      setRegisterAccountType('BUYER');
+      setRegisterClubName('');
+      setRegisterClubSlug('');
       setRegisterError(null);
       setRegisterSuccessMessage(null);
       setAuthView('register');
@@ -404,10 +450,16 @@ function AuctionApp({ auctionId = 'demo', children, renderPage }: AuctionAppProp
             email={registerEmail}
             password={registerPassword}
             country={registerCountry}
+            accountType={registerAccountType}
+            clubName={registerClubName}
+            clubSlug={registerClubSlug}
             onUsernameChange={setRegisterUsername}
             onEmailChange={setRegisterEmail}
             onPasswordChange={setRegisterPassword}
             onCountryChange={setRegisterCountry}
+            onAccountTypeChange={setRegisterAccountType}
+            onClubNameChange={setRegisterClubName}
+            onClubSlugChange={setRegisterClubSlug}
             onSubmit={handleRegisterSubmit}
             loading={registerLoading}
             error={registerError}
@@ -515,7 +567,7 @@ function AuctionApp({ auctionId = 'demo', children, renderPage }: AuctionAppProp
         activeImage={activeImage}
         onImageChange={setActiveImage}
         now={now}
-        onChangeEmail={() => {setEmail(''); setUsername(''); setCountry(''); setToken(''); localStorage.removeItem('bidderEmail'); localStorage.removeItem('bidderUsername'); localStorage.removeItem('bidderCountry'); localStorage.removeItem('bidderToken'); setShowAuthChoice(true);}}
+        onChangeEmail={() => {setEmail(''); setUsername(''); setCountry(''); setToken(''); localStorage.removeItem('bidderEmail'); localStorage.removeItem('bidderUsername'); localStorage.removeItem('bidderCountry'); localStorage.removeItem('bidderToken'); localStorage.removeItem('bidderRole'); localStorage.removeItem('bidderClubName'); localStorage.removeItem('bidderClubSlug'); setShowAuthChoice(true);}}
         onReset={handleReset}
         isResetting={isResetting}
         resetError={resetError}
