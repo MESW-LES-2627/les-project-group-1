@@ -12,6 +12,8 @@ router.post("/users", admin.createUser);
 router.get("/users/:id", admin.getUser);
 router.patch("/users/:id", admin.updateUser);
 router.delete("/users/:id", admin.deleteUser);
+router.get("/clubs", admin.listClubs);
+router.patch("/clubs/:id", admin.updateClubStatus);
 router.get("/charitable-organizations", charity.listCharitableOrganizations);
 router.post("/charitable-organizations", charity.createCharitableOrganization);
 router.get("/charitable-organizations/:id", charity.getCharitableOrganization);
