@@ -61,7 +61,7 @@ export async function findPublicListingsByClub(slug: string) {
 }
 
 /** Data needed to open a live auction for a verified listing, or null if it has no auction data. */
-export async function findListingAuction(id: number) {
+/*export async function findListingAuction(id: number) {
   if (!Number.isInteger(id)) return null;
 
   const rows = await prisma.$queryRaw<
@@ -74,6 +74,33 @@ export async function findListingAuction(id: number) {
     title: row.title,
     startingPrice: Number(row.starting_price),
     endsAt: new Date(row.auction_ends_at),
+  };
+}*/
+
+export async function findListingAuction(id: number) {
+  if (!Number.isInteger(id)) return null;
+
+  const listing = await prisma.listing.findUnique({
+    where: { id },
+    select: {
+      id: true,
+      title: true,
+      status: true,
+      startingPrice: true,
+      auctionEndsAt: true,
+      verifiedAt: true,
+    },
+  });
+
+  if (!listing || listing.startingPrice === null || !listing.auctionEndsAt) return null;
+
+  return {
+    id: listing.id,
+    title: listing.title,
+    status: listing.status,
+    startingPrice: Number(listing.startingPrice),
+    startsAt: listing.verifiedAt ? new Date(listing.verifiedAt) : null,
+    endsAt: new Date(listing.auctionEndsAt),
   };
 }
 
