@@ -1,7 +1,7 @@
 import type { Request, Response } from "express";
 import * as Club from "../models/club.model";
 import * as Listings from "../models/listing.model";
-import { EDITABLE_STATUSES } from "../models/listing.model";
+import { EDITABLE_STATUSES_CLUB } from "../models/listing.model";
 import { detectImageType, removeUploadedFiles, saveImage, saveImages } from "../utils/imageFiles.ts";
 import {
   missingForSubmission,
@@ -118,7 +118,7 @@ export async function removeMyLogo(req: Request, res: Response) {
 // A listing of another club is answered with 404, the same as a listing that doesn't exist.
 // ---------------------------------------------------------------------------
 
-const STATUSES = ["draft", "pending_verification", "verified", "rejected"];
+export const STATUSES = ["draft", "pending_verification", "verified", "rejected"];
 
 // P2003 = foreign key (unknown category)
 
@@ -245,7 +245,7 @@ export async function updateMyListing(req: Request, res: Response) {
 
     const existing = await Listings.findOwn(id, clubId);
     if (!existing) return res.status(404).json({ error: "not_found" });
-    if (!EDITABLE_STATUSES.includes(existing.status)) return res.status(409).json({ error: "listing_locked" });
+    if (!EDITABLE_STATUSES_CLUB.includes(existing.status)) return res.status(409).json({ error: "listing_locked" });
 
     // Images to delete: they must be images of this listing
     const removeImages = parseStringList(req.body?.removeImages);

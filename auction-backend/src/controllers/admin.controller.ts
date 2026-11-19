@@ -3,6 +3,9 @@ import * as User from "../models/user.model";
 import * as Club from "../models/club.model";
 import { CLUB_STATUSES, type ClubStatus } from "../models/club.model";
 import type { Role } from "../models/user.model";
+import {STATUSES} from "./club.controller.ts";
+import * as Listings from "../models/listing.model";
+import {adminListing} from "../models/listing.model";
 
 const ROLES: Role[] = ["ADMIN", "CLUB", "BUYER"];
 const CREATABLE_ROLES: Role[] = ["ADMIN", "CLUB"]; // buyers register themselves
@@ -14,6 +17,18 @@ const hasCode = (e: unknown, code: string) => typeof e === "object" && e !== nul
 function parseId(req: Request) {
     const id = Number(req.params.id);
     return Number.isInteger(id) && id > 0 ? id : null;
+}
+
+/** Prisma returns prices as Decimal; the API returns plain numbers. */
+function present<T extends { startingPrice: { toNumber(): number } | null }>(row: T) {
+    return { ...row, startingPrice: row.startingPrice ? row.startingPrice.toNumber() : null };
+}
+
+function writeError(res: Response, error: unknown, label: string) {
+    if (hasCode(error, "P2002")) return res.status(409).json({ error: "title_taken" });
+    if (hasCode(error, "P2003")) return res.status(400).json({ error: "unknown_category" });
+    console.error(`${label} error:`, (error as Error).message);
+    return res.status(500).json({ error: "Internal server error." });
 }
 
 /** GET /api/admin/users?role=&search=&page=&limit= */
@@ -190,4 +205,42 @@ export async function updateClubStatus(req: Request, res: Response) {
         console.error("Update club status error:", (error as Error).message);
         return res.status(500).json({ error: "Internal server error." });
     }
+}
+
+/** GET /api/admin/listings?status=&page=&limit= */
+export async function getAllListings(req: Request, res: Response) {
+    try {
+        const page = Math.max(1, Number(req.query.page) || 1);
+        const limit = Math.min(100, Math.max(1, Number(req.query.limit) || 20));
+
+        let status: string | undefined;
+        if (req.query.status !== undefined) {
+            if (typeof req.query.status !== "string" || !STATUSES.includes(req.query.status))
+                return res.status(400).json({ error: "invalid_status" });
+            status = req.query.status;
+        }
+
+        const { items, total } = await Listings.adminListing({ status, skip: (page - 1) * limit, take: limit });
+        return res.json({ items: items.map(present), page, limit, total });
+    } catch (error) {
+        return writeError(res, error, "List my listings");
+    }
+}
+
+/** PATCH /api/admin//listings/:id/status : approve, reject or reset a listing to pending. */
+export async function updateListingStatus(req: Request, res: Response) {
+    const id = Number(req.params.id);
+    const { status } = req.body;
+
+    if (!Number.isInteger(id) || id <= 0) {
+        return res.status(400).json({ error: "Invalid listing ID" });
+    }
+
+    if (!["pending_verification", "verified"].includes(status)) {
+        return res.status(400).json({ error: "Invalid listing status" });
+    }
+
+    const listing = await Listings.updateListingStatus(id, status);
+
+    res.json(listing);
 }
