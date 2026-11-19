@@ -101,7 +101,8 @@ model Listing {
   club                     Club                    @relation(fields: [clubId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   category                 Category                @relation(fields: [categoryId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   charitableOrganization   CharitableOrganization? @relation(fields: [charitableOrganizationId], references: [id], onDelete: SetNull, onUpdate: NoAction)
-
+  bids                     Bid[]
+  
   @@map("listings")
 }
 
