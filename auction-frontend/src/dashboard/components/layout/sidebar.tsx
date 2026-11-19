@@ -2,10 +2,12 @@ import { NavLink } from "react-router-dom"
 import { LayoutDashboard, Users, BarChart3, Settings, X } from "lucide-react"
 import { cn } from "@/lib/utils.ts"
 import { Button } from "@/dashboard/components/ui/button.tsx"
+import { HeartHandshake } from "lucide-react"
 
 const links = [
   { to: "/dashboard", label: "Overview", icon: LayoutDashboard },
   { to: "/dashboard/users", label: "Users", icon: Users },
+  { to: "/dashboard/charitable-organizations", label: "Charities", icon: HeartHandshake }, 
   { to: "/dashboard/analytics", label: "Analytics", icon: BarChart3 },
   { to: "/dashboard/settings", label: "Settings", icon: Settings },
 ]
