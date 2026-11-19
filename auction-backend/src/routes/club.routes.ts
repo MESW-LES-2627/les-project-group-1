@@ -1,46 +1,38 @@
-import { Router } from "express";
-import { requireAuth, requireRole } from "../middlewares/auth";
-import { findClubByUserId, findClubBySlug, updateClubProfile } from "../models/user.model";
+import express, { Router } from "express";
+import multer from "multer";
+import { requireAuth, requireApprovedClub, requireRole } from "../middlewares/auth";
+import * as club from "../controllers/club.controller";
+import * as listings from "../controllers/listings.controller";
 
 const router = Router();
 
-router.get("/me", requireAuth, requireRole("CLUB", "ADMIN"), async (req: any, res) => {
-  try {
-    const userId = req.user?.userId || req.user?.id;
-    const club = await findClubByUserId(userId);
-    
-    if (!club) return res.status(404).json({ error: "Club profile not found for this user" });
-    return res.json(club);
-  } catch (err: any) {
-    return res.status(500).json({ error: err.message });
-  }
-});
+// The logo body is the raw image file. Auth runs first, so nothing is read from anonymous requests.
+const rawImage = express.raw({ type: ["image/png", "image/jpeg", "image/webp"], limit: "2mb" });
+// Listing images come in the same request as the listing fields (multipart/form-data), kept in memory until saved.
+const listingUpload = multer({
+    storage: multer.memoryStorage(),
+    limits: { fileSize: 2 * 1024 * 1024, files: 20 }, // 2 MB per image
+}).fields([
+    { name: "images", maxCount: 10 },
+    { name: "evidenceImages", maxCount: 10 },
+]);
+const clubOwner = [requireAuth, requireRole("CLUB", "ADMIN")];
 
-router.put("/me", requireAuth, requireRole("CLUB", "ADMIN"), async (req: any, res) => {
-  try {
-    const userId = req.user?.id || req.user?.userId;
-    const { name, description, logoUrl } = req.body;
-    
-    const updatedClub = await updateClubProfile(userId, { name, description, logoUrl });
-        return res.json({ 
-      message: "Club profile updated successfully", 
-      club: updatedClub 
-    });
-  } catch (err: any) {
-    return res.status(500).json({ error: err.message });
-  }
-});
+// Club owner area (mounted at /api/clubs)
+router.get("/me", ...clubOwner, club.getMyClub);
+router.put("/me", ...clubOwner, club.updateMyClub);
+router.put("/me/logo", ...clubOwner, rawImage, club.uploadMyLogo);
+router.delete("/me/logo", ...clubOwner, club.removeMyLogo);
 
-// 2. ROTA PÚBLICA (Fica completamente livre de autenticação)
-router.get("/profile/:slug", async (req, res) => {
-  try {
-    const slug = String(req.params.slug)
-    const club = await findClubBySlug(slug);
-    if (!club) return res.status(404).json({ error: "Club not found" });
-    return res.json(club);
-  } catch (err: any) {
-    return res.status(500).json({ error: err.message });
-  }
-});
+// A club's own listings. Only CLUB users whose club is approved; every query is scoped to that club.
+const clubListingsAuth = [requireAuth, requireRole("CLUB"), requireApprovedClub];
+router.get("/me/listings", ...clubListingsAuth, club.listMyListings);
+router.post("/me/listings", ...clubListingsAuth, listingUpload, club.createMyListing);
+router.get("/me/listings/:id", ...clubListingsAuth, club.getMyListing);
+router.patch("/me/listings/:id", ...clubListingsAuth, listingUpload, club.updateMyListing);
+router.delete("/me/listings/:id", ...clubListingsAuth, club.deleteMyListing);
+
+// Public: GET /api/clubs/:slug (club + verified listings only)
+router.get("/profile/:slug", listings.getClub);
 
 export default router;

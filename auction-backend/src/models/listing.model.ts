@@ -1,4 +1,6 @@
 import { prisma } from "../config/prisma";
+import { Prisma } from "../../generated/prisma/client";
+import type { ListingInput, NewListingInput } from "../utils/listingValidation";
 
 // Row shape returned by the public_listings view.
 export interface ListingRow {
@@ -73,4 +75,78 @@ export async function findListingAuction(id: number) {
     startingPrice: Number(row.starting_price),
     endsAt: new Date(row.auction_ends_at),
   };
+}
+
+// CLUB-OWNED LISTINGS
+
+/** Every query here is scoped by clubId, so a club can never read or change another club's listings. */
+
+/** Clubs can only edit or send for verification listings in these states. */
+export const EDITABLE_STATUSES = ["draft", "rejected"];
+
+export const listingSelect = {
+  id: true,
+  categoryId: true,
+  category: { select: { slug: true, name: true } },
+  title: true,
+  playerName: true,
+  playerDetails: true,
+  season: true,
+  competition: true,
+  match: true,
+  tags: true,
+  description: true,
+  images: true,
+  status: true,
+  authenticityNotes: true,
+  evidenceImages: true,
+  certificateCode: true,
+  startingPrice: true,
+  auctionEndsAt: true,
+  createdAt: true,
+  verifiedAt: true,
+} as const;
+
+// A nullable JSON column needs Prisma.DbNull to be set to NULL. Returns what to spread into the data.
+function playerDetailsData(value: ListingInput["playerDetails"]) {
+  if (value === undefined) return {};
+  return { playerDetails: value === null ? Prisma.DbNull : value };
+}
+
+export async function listOwn(clubId: number, opts: { status?: string; skip: number; take: number }) {
+  const where = { clubId, ...(opts.status ? { status: opts.status } : {}) };
+  const [items, total] = await prisma.$transaction([
+    prisma.listing.findMany({ where, select: listingSelect, orderBy: { id: "desc" }, skip: opts.skip, take: opts.take }),
+    prisma.listing.count({ where }),
+  ]);
+  return { items, total };
+}
+
+export async function findOwn(id: number, clubId: number) {
+  return prisma.listing.findFirst({ where: { id, clubId }, select: listingSelect });
+}
+
+export async function createOwn(clubId: number, input: NewListingInput) {
+  // Throws Prisma P2002 if the title is taken, P2003 if the category doesn't exist.
+  const { playerDetails, ...rest } = input;
+  return prisma.listing.create({
+    data: { ...rest, ...playerDetailsData(playerDetails), clubId },
+    select: listingSelect,
+  });
+}
+
+/** Returns how many rows changed: 0 means not found, not yours, or no longer editable. */
+export async function updateOwn(id: number, clubId: number, input: ListingInput) {
+  const { playerDetails, ...rest } = input;
+  const result = await prisma.listing.updateMany({
+    where: { id, clubId, status: { in: EDITABLE_STATUSES } },
+    data: { ...rest, ...playerDetailsData(playerDetails) },
+  });
+  return result.count;
+}
+
+/** Returns how many rows were deleted. Verified listings can't be deleted. */
+export async function deleteOwn(id: number, clubId: number) {
+  const result = await prisma.listing.deleteMany({ where: { id, clubId, status: { not: "verified" } } });
+  return result.count;
 }
