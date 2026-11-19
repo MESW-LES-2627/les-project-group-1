@@ -111,6 +111,7 @@ function AuctionApp({ auctionId = 'demo', children, renderPage }: AuctionAppProp
       lastBidRef.current = 50;
     });
     socket.on('payment_link', (url: string) => setPaymentUrl(url));
+    socket.on('bid_error', (message: string) => setError(message));
 
     const requestState = () => socket.emit('get_auction_state');
     const onConnect = () => {
@@ -120,10 +121,10 @@ function AuctionApp({ auctionId = 'demo', children, renderPage }: AuctionAppProp
     socket.on('connect', onConnect);
     socket.on('connect_error', onError);
 
-    if (email) {
-      socket.auth = {email, username, auctionId};
+    if (email || token) {
+      socket.auth = { token, email, username, auctionId };
     } else {
-      socket.auth = {auctionId};
+      socket.auth = { auctionId };
     }
 
     if (socket.connected) onConnect();
@@ -133,12 +134,13 @@ function AuctionApp({ auctionId = 'demo', children, renderPage }: AuctionAppProp
       socket.off('auction_state');
       socket.off('auction_end');
       socket.off('auction_reset');
+      socket.off('bid_error');
       socket.off('connect', onConnect);
       socket.off('connect_error', onError);
       socket.off('payment_link');
       socket.disconnect();
     };
-  }, [email, username, auctionId, isLive]);
+  }, [email, username, token, auctionId, isLive]);
 
   useEffect(() => {
     if (!auction?.isActive) return;
@@ -154,6 +156,11 @@ function AuctionApp({ auctionId = 'demo', children, renderPage }: AuctionAppProp
       return;
     }
 
+    if (role && role !== 'BUYER') {
+      setError('Only buyer accounts can place bids.');
+      return;
+    }
+
     if (!auction) return;
     if (!auction.isActive || Date.now() >= auction.endTime) {
       setError('The auction has ended.');
@@ -161,12 +168,13 @@ function AuctionApp({ auctionId = 'demo', children, renderPage }: AuctionAppProp
     }
 
     const amount = Number(bidAmount);
-    if (amount >= auction.currentBid + MIN_INCREMENT) {
+    const minRequired = auction.bidCount === 0 ? auction.currentBid : auction.currentBid + MIN_INCREMENT;
+    if (amount >= minRequired) {
       socket.emit('place_bid', amount);
       setBidAmount('');
       setError('');
     } else {
-      setError(`Your bid must be at least ${formatEuro(auction.currentBid + MIN_INCREMENT)}`);
+      setError(`Your bid must be at least ${formatEuro(minRequired)}`);
     }
   };
 
@@ -567,7 +575,7 @@ function AuctionApp({ auctionId = 'demo', children, renderPage }: AuctionAppProp
         activeImage={activeImage}
         onImageChange={setActiveImage}
         now={now}
-        onChangeEmail={() => {setEmail(''); setUsername(''); setCountry(''); setToken(''); localStorage.removeItem('bidderEmail'); localStorage.removeItem('bidderUsername'); localStorage.removeItem('bidderCountry'); localStorage.removeItem('bidderToken'); localStorage.removeItem('bidderRole'); localStorage.removeItem('bidderClubName'); localStorage.removeItem('bidderClubSlug'); setShowAuthChoice(true);}}
+        onChangeEmail={() => {setEmail(''); setUsername(''); setCountry(''); setToken(''); setRole(''); localStorage.removeItem('bidderEmail'); localStorage.removeItem('bidderUsername'); localStorage.removeItem('bidderCountry'); localStorage.removeItem('bidderToken'); localStorage.removeItem('bidderRole'); localStorage.removeItem('bidderClubName'); localStorage.removeItem('bidderClubSlug'); setShowAuthChoice(true);}}
         onReset={handleReset}
         isResetting={isResetting}
         resetError={resetError}
