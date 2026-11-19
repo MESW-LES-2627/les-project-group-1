@@ -1,6 +1,7 @@
 import type { Request, Response } from "express";
 import type { Server } from "socket.io";
 import { DEMO_ID, getRoom, resetRoom, roomName } from "../services/auction.service";
+import { deleteBidsByListingId } from "../models/bid.model";
 
 /**
  * Demo endpoint: restart an auction without redeploying.
@@ -14,6 +15,9 @@ export async function reset(req: Request, res: Response) {
   if (!room) return res.status(404).json({ error: "auction not found" });
 
   resetRoom(room);
+  if (auctionId !== DEMO_ID && /^\d+$/.test(auctionId)) {
+    await deleteBidsByListingId(Number(auctionId));
+  }
   io.to(roomName(auctionId)).emit("auction_state", room.state);
   io.to(roomName(auctionId)).emit("auction_reset");
   res.json({ success: true, auction: room.state });

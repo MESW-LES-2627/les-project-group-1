@@ -105,6 +105,19 @@ model Listing {
   @@map("listings")
 }
 
+model Bid {
+  id        Int      @id @default(autoincrement())
+  listingId Int      @map("listing_id")
+  bidder    String
+  country   String?
+  amount    Decimal  @db.Decimal(10, 2)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  listing   Listing  @relation(fields: [listingId], references: [id], onDelete: Cascade)
+
+  @@index([listingId, createdAt])
+  @@map("bids")
+}
+
 model Address {
   id         Int      @id @default(autoincrement())
   userId     Int      @map("user_id")

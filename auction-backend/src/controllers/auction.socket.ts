@@ -1,5 +1,5 @@
 import type { Server } from "socket.io";
-import { DEMO_ID, getRoom, placeBid, roomName } from "../services/auction.service";
+import { DEMO_ID, discardBid, getRoom, persistBid, placeBid, roomName } from "../services/auction.service";
 import { findProfileByEmail } from "../models/user.model";
 
 /** Socket.IO event handlers for live bidding (one room per auction). */
@@ -46,13 +46,29 @@ export function registerAuctionSocket(io: Server) {
       }
     });
 
-    socket.on("place_bid", (bidAmount: number) => {
+    socket.on("place_bid", async (bidAmount: number) => {
       const accepted = placeBid(room, bidAmount, {
         name: socket.data.username || socket.id,
         email: socket.data.email,
         country: socket.data.country,
       });
-      if (accepted) io.to(roomName(auctionId)).emit("auction_state", room.state);
+      if (!accepted) return;
+
+      const bid = room.state.bids[0];
+      if (!bid) return;
+
+      if (auctionId === DEMO_ID) {
+        io.to(roomName(auctionId)).emit("auction_state", room.state);
+        return;
+      }
+
+      try {
+        await persistBid(auctionId, bid);
+        io.to(roomName(auctionId)).emit("auction_state", room.state);
+      } catch (err) {
+        discardBid(room, bid);
+        console.error("Could not persist bid:", err);
+      }
     });
 
     socket.on("disconnect", () => {
