@@ -61,6 +61,59 @@ export async function deleteUser(id: number): Promise<void> {
   await http.delete(`/admin/users/${id}`)
 }
 
+// Clubs
+
+export const CLUB_STATUSES = ["pending", "approved", "rejected"] as const
+export type ClubStatus = (typeof CLUB_STATUSES)[number]
+
+export interface Club {
+  id: number
+  slug: string
+  name: string
+  description: string
+  status: ClubStatus
+  logoUrl: string | null
+  createdAt: string
+  user: {
+    id: number
+    username: string
+    email: string
+    country: string
+  } | null
+  _count: {
+    listings: number
+  }
+}
+
+export interface ClubsParams {
+  page: number
+  limit: number
+  search?: string
+  status?: ClubStatus
+}
+
+export interface ClubsPage {
+  clubs: Club[]
+  total: number
+}
+
+interface ClubsResponse {
+  items: Club[]
+  page: number
+  limit: number
+  total: number
+}
+
+export async function fetchClubs(params: ClubsParams): Promise<ClubsPage> {
+  const { data } = await http.get<ClubsResponse>("/admin/clubs", { params })
+  return { clubs: data.items, total: data.total }
+}
+
+export async function updateClubStatus(id: number, status: ClubStatus): Promise<Club> {
+  const { data } = await http.patch(`/admin/clubs/${id}`, { status })
+  return data.club
+}
+
 // Charitable Organizations
 
 export interface CharitableOrganization {

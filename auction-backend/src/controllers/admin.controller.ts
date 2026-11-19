@@ -1,5 +1,7 @@
 import type { Request, Response } from "express";
 import * as User from "../models/user.model";
+import * as Club from "../models/club.model";
+import { CLUB_STATUSES, type ClubStatus } from "../models/club.model";
 import type { Role } from "../models/user.model";
 
 const ROLES: Role[] = ["ADMIN", "CLUB", "BUYER"];
@@ -138,6 +140,54 @@ export async function deleteUser(req: Request, res: Response) {
     } catch (error) {
         if (hasCode(error, "P2025")) return res.status(404).json({ error: "User not found." });
         console.error("Delete user error:", (error as Error).message);
+        return res.status(500).json({ error: "Internal server error." });
+    }
+}
+
+const isClubStatus = (v: unknown): v is ClubStatus =>
+    typeof v === "string" && (CLUB_STATUSES as readonly string[]).includes(v);
+
+/** GET /api/admin/clubs?status=&search=&page=&limit= */
+export async function listClubs(req: Request, res: Response) {
+    try {
+        const page = Math.max(1, Number(req.query.page) || 1);
+        const limit = Math.min(100, Math.max(1, Number(req.query.limit) || 20));
+        const search = String(req.query.search ?? "").trim() || undefined;
+
+        let status: ClubStatus | undefined;
+        if (req.query.status !== undefined) {
+            if (!isClubStatus(req.query.status)) return res.status(400).json({ error: "Invalid club status." });
+            status = req.query.status;
+        }
+
+        const { items, total } = await Club.listClubs({
+            status,
+            search,
+            skip: (page - 1) * limit,
+            take: limit,
+        });
+        return res.json({ items, page, limit, total });
+    } catch (error) {
+        console.error("List clubs error:", (error as Error).message);
+        return res.status(500).json({ error: "Internal server error." });
+    }
+}
+
+/** PATCH /api/admin/clubs/:id: approve, reject or reset a club to pending. */
+export async function updateClubStatus(req: Request, res: Response) {
+    try {
+        const id = parseId(req);
+        if (!id) return res.status(400).json({ error: "Invalid id." });
+
+        const { status } = req.body ?? {};
+        if (!isClubStatus(status))
+            return res.status(400).json({ error: "Status must be pending, approved or rejected." });
+
+        const club = await Club.updateClubStatus(id, status);
+        return res.json({ message: `Club status changed to ${status}.`, club });
+    } catch (error) {
+        if (hasCode(error, "P2025")) return res.status(404).json({ error: "Club not found." });
+        console.error("Update club status error:", (error as Error).message);
         return res.status(500).json({ error: "Internal server error." });
     }
 }

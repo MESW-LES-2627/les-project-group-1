@@ -7,6 +7,7 @@ import { ProtectedRoute } from "@/dashboard/components/layout/protected-route.ts
 import { AppLayout } from "@/dashboard/components/layout/app-layout.tsx";
 import Overview from "@/dashboard/pages/overview.tsx";
 import Users from "@/dashboard/pages/users.tsx";
+import Clubs from "@/dashboard/pages/clubs.tsx";
 import Placeholder from "@/dashboard/pages/placeholder.tsx";
 import "@/dashboard/index.css";
 import CharitableOrganizations from "@/dashboard/pages/charitable-organizations.tsx";
@@ -29,6 +30,7 @@ export default function DashboardRoutes() {
                         <Route element={<AppLayout />}>
                             <Route index element={<Overview />} />
                             <Route path="users" element={<Users />} />
+                            <Route path="clubs" element={<Clubs />} />
                             <Route path="charitable-organizations" element={<CharitableOrganizations />} />
                             <Route path="analytics" element={<Placeholder title="Analytics" />} />
                             <Route path="settings" element={<Placeholder title="Settings" />} />
