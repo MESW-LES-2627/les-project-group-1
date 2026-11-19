@@ -3,6 +3,7 @@ import { sendEmail } from "./email.service";
 import { createPaymentLink } from "./stripe.service";
 import { saveWinner } from "../models/winner.model";
 import { findListingAuction } from "../models/listing.model";
+import { createBid, findBidsByListingId } from "../models/bid.model";
 
 /**
  * Auction logic: one in-memory room per auction, bidding rules, and the timer
@@ -64,6 +65,13 @@ export async function getRoom(auctionId: string): Promise<AuctionRoom | null> {
     if (created) return created;
 
     const room = createRoom(listing.title, listing.startingPrice, listing.endsAt.getTime());
+    const bids = await findBidsByListingId(Number(auctionId));
+    room.state.bids = bids;
+    room.state.bidCount = bids.length;
+    if (bids[0]) {
+      room.state.currentBid = bids[0].amount;
+      room.state.highestBidder = bids[0].bidder;
+    }
     rooms.set(auctionId, room);
     return room;
   } catch (err) {
@@ -100,6 +108,25 @@ export function placeBid(
   auction.bidCount += 1;
   auction.bids.unshift({ bidder: bidder.name, country: bidder.country, amount, timestamp: Date.now() });
   return true;
+}
+
+/** Persists an accepted bid for catalogue auctions. The demo auction has no listing row. */
+export async function persistBid(auctionId: string, bid: AuctionState["bids"][number]) {
+  if (auctionId === DEMO_ID || !/^\d+$/.test(auctionId)) return;
+  await createBid(Number(auctionId), bid);
+}
+
+/** Removes a bid when its database write fails, keeping the live room consistent. */
+export function discardBid(room: AuctionRoom, bid: AuctionState["bids"][number]) {
+  const index = room.state.bids.indexOf(bid);
+  if (index === -1) return;
+
+  room.state.bids.splice(index, 1);
+  room.state.bidCount -= 1;
+  const latestBid = room.state.bids[0];
+  room.state.currentBid = latestBid?.amount ?? room.startingPrice;
+  room.state.highestBidder = latestBid?.bidder ?? null;
+  room.highestBidderEmail = null;
 }
 
 function endAuction(io: Server, auctionId: string, room: AuctionRoom) {

@@ -37,6 +37,10 @@ describe('POST /api/auction/reset', () => {
 
     const address = httpServer.address() as AddressInfo;
     baseUrl = `http://127.0.0.1:${address.port}`;
+
+    const reset = await fetch(`${baseUrl}/api/auction/reset`, { method: 'POST' });
+    expect(reset.status).toBe(200);
+
     socket = io(baseUrl, {
       autoConnect: false,
       reconnection: false,
