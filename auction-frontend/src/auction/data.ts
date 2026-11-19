@@ -41,4 +41,4 @@ export const ITEM = {
 //Minimum bid increment
 export const MIN_INCREMENT = 1;
 //Number of recent bids to display in the latest bids panel.
-export const LATEST_BIDS_SHOWN = 5;
+export const LATEST_BIDS_SHOWN = 3;
