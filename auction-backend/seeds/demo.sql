@@ -140,3 +140,15 @@ on conflict (certificate_code) do update set
   verified_at = excluded.verified_at,
   starting_price = excluded.starting_price,
   auction_ends_at = excluded.auction_ends_at;
+
+insert into charitable_organizations (name, description, logo_url, updated_at) values
+  ('Goal for Kids', 'Free coaching and kit for children from low-income neighbourhoods.', '/images/charities/goal-for-kids.svg', now()),
+  ('Second Half Foundation', 'Helps retired athletes recover from injury and return to everyday life.', '/images/charities/second-half-foundation.svg', now()),
+  ('Pitch Perfect Community', 'Builds and repairs public football pitches in small towns.', '/images/charities/pitch-perfect-community.svg', now()),
+  ('Her Game', 'Funds girls'' teams, referees and coaches across the country.', '/images/charities/her-game.svg', now()),
+  ('Open Stand', 'Makes stadiums welcoming for fans with disabilities.', '/images/charities/open-stand.svg', now()),
+  ('Green Kick', 'Plants a tree for every match played by partner clubs.', '/images/charities/green-kick.svg', now())
+on conflict (name) do update set
+  description = excluded.description,
+  logo_url = excluded.logo_url,
+  updated_at = now();

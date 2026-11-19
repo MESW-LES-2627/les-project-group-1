@@ -60,3 +60,73 @@ export async function updateUser(id: number, values: UpdateUser): Promise<User> 
 export async function deleteUser(id: number): Promise<void> {
   await http.delete(`/admin/users/${id}`)
 }
+
+// Charitable Organizations
+
+export interface CharitableOrganization {
+  id: number
+  name: string
+  description: string
+  logoUrl: string | null
+  createdAt: string
+  updatedAt: string
+}
+
+export interface CharitableOrganizationsParams {
+  page: number
+  limit: number
+  search?: string
+}
+
+export interface CharitableOrganizationsPage {
+  organizations: CharitableOrganization[]
+  total: number
+}
+
+export interface NewCharitableOrganization {
+  name: string
+  description?: string
+  logoUrl?: string | null
+}
+
+// Allows partial updates when editing an existing organization
+export type UpdateCharitableOrganization = Partial<NewCharitableOrganization>
+
+interface CharitableOrganizationsResponse {
+  items: CharitableOrganization[]
+  page: number
+  limit: number
+  total: number
+}
+
+export async function fetchCharitableOrganizations(
+  params: CharitableOrganizationsParams
+): Promise<CharitableOrganizationsPage> {
+  const { data } = await http.get<CharitableOrganizationsResponse>(
+    "/admin/charitable-organizations",
+    { params }
+  )
+  return { organizations: data.items, total: data.total }
+}
+
+//Refister
+export async function createCharitableOrganization(
+  values: NewCharitableOrganization
+): Promise<CharitableOrganization> {
+  const { data } = await http.post("/admin/charitable-organizations", values)
+  return data.organization
+}
+
+//Update
+export async function updateCharitableOrganization(
+  id: number,
+  values: UpdateCharitableOrganization
+): Promise<CharitableOrganization> {
+  const { data } = await http.patch(`/admin/charitable-organizations/${id}`, values)
+  return data.organization
+}
+
+//Delete
+export async function deleteCharitableOrganization(id: number): Promise<void> {
+  await http.delete(`/admin/charitable-organizations/${id}`)
+}

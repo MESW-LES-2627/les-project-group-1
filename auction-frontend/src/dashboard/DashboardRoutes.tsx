@@ -9,6 +9,7 @@ import Overview from "@/dashboard/pages/overview.tsx";
 import Users from "@/dashboard/pages/users.tsx";
 import Placeholder from "@/dashboard/pages/placeholder.tsx";
 import "@/dashboard/index.css";
+import CharitableOrganizations from "@/dashboard/pages/charitable-organizations.tsx";
 const queryClient = new QueryClient();
 
 
@@ -28,6 +29,7 @@ export default function DashboardRoutes() {
                         <Route element={<AppLayout />}>
                             <Route index element={<Overview />} />
                             <Route path="users" element={<Users />} />
+                            <Route path="charitable-organizations" element={<CharitableOrganizations />} />
                             <Route path="analytics" element={<Placeholder title="Analytics" />} />
                             <Route path="settings" element={<Placeholder title="Settings" />} />
                         </Route>
