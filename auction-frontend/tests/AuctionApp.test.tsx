@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, mock } from 'bun:test';
 import { act, fireEvent, screen } from '@testing-library/react';
 import { renderWithRouter } from './setup/render';
 import userEvent from '@testing-library/user-event';
+import { formatEuroSuffix } from '../src/auction/utils';
 
 // ---------------------------------------------------------------------------
 // 1. FAKE SOCKET
@@ -149,5 +150,69 @@ describe('reset button', () => {
     await user.click(screen.getByRole('button', { name: 'Reset auction' }));
 
     expect(fetchMock).toHaveBeenCalledWith(expect.stringContaining('/api/auction/reset'), { method: 'POST' });
+  });
+});
+
+describe('highest bid', () => {
+  // The price is rendered in the element right after the "Current bid" label.
+  const getDisplayedBid = () => screen.getByText('Current bid').nextElementSibling;
+
+  it('shows the starting bid when nobody has bid yet', async () => {
+    await renderLoggedIn({ currentBid: 50, highestBidder: null });
+
+    expect(getDisplayedBid()).toHaveTextContent('50');
+    expect(screen.getByText(/be the first/)).toBeInTheDocument();
+  });
+
+  it('shows the current highest bid and who made it', async () => {
+    await renderLoggedIn({ currentBid: 120, highestBidder: 'someone' });
+
+    expect(getDisplayedBid()).toHaveTextContent('120');
+    expect(screen.getByText('Highest bidder: someone')).toBeInTheDocument();
+  });
+
+  it('updates the highest bid when a new auction_state arrives', async () => {
+    await renderLoggedIn({ currentBid: 100 });
+
+    serverSends('auction_state', makeAuction({ currentBid: 175, highestBidder: 'someone' }));
+
+    expect(getDisplayedBid()).toHaveTextContent('175');
+    expect(screen.getByText('Highest bidder: someone')).toBeInTheDocument();
+  });
+
+  it('suggests the next minimum bid based on the current highest bid', async () => {
+    await renderLoggedIn({ currentBid: 100 });
+    expect(getBidInput()).toHaveAttribute('placeholder', '101€');
+
+    serverSends('auction_state', makeAuction({ currentBid: 175 }));
+    expect(getBidInput()).toHaveAttribute('placeholder', '176€');
+  });
+});
+
+describe('bidding history', () => {
+  it('shows an empty history when there are no bids', async () => {
+    await renderLoggedIn({ bids: [] });
+
+    expect(screen.getByText('No bids yet')).toBeInTheDocument();
+  });
+
+  it('adds new bids to the history when auction_state arrives', async () => {
+    await renderLoggedIn({ bids: [] });
+
+    serverSends(
+      'auction_state',
+      makeAuction({
+        currentBid: 150,
+        highestBidder: 'someone',
+        bids: [
+          { bidder: 'someone', amount: 150, timestamp: Date.now() },
+          { bidder: 'other', amount: 120, timestamp: Date.now() - 5000 },
+        ],
+      }),
+    );
+
+    expect(screen.getByText(formatEuroSuffix(150))).toBeInTheDocument();
+    expect(screen.getByText(formatEuroSuffix(120))).toBeInTheDocument();
+    expect(screen.queryByText('No bids yet')).not.toBeInTheDocument();
   });
 });
