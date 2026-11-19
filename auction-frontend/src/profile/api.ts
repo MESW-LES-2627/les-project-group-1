@@ -83,5 +83,5 @@ export async function removeAvatar(token: string): Promise<void> {
 
 export async function fetchActiveBids(token: string): Promise<ActiveBid[]> {
   const data = await request('/api/users/me/active-bids', token);
-  return data.activeBids as ActiveBid[];
+  return Array.isArray(data.activeBids) ? (data.activeBids as ActiveBid[]) : [];
 }

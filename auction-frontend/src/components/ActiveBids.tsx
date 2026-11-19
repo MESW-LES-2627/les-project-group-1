@@ -28,7 +28,7 @@ export function ActiveBids({ token }: ActiveBidsProps) {
     let active = true;
     fetchActiveBids(token)
       .then((activeBids) => {
-        if (active) setState({ status: 'ready', activeBids });
+        if (active) setState({ status: 'ready', activeBids: Array.isArray(activeBids) ? activeBids : [] });
       })
       .catch(() => {
         if (active) setState({ status: 'error' });
@@ -38,14 +38,16 @@ export function ActiveBids({ token }: ActiveBidsProps) {
     };
   }, [token]);
 
+  const rawBids = state.status === 'ready' && Array.isArray(state.activeBids) ? state.activeBids : [];
+
   // Update countdown every second while there are active bids on screen
   useEffect(() => {
-    if (state.status !== 'ready' || state.activeBids.length === 0) return;
+    if (rawBids.length === 0) return;
     const interval = setInterval(() => setNow(Date.now()), 1000);
     return () => clearInterval(interval);
-  }, [state]);
+  }, [rawBids.length]);
 
-  const activeBids = state.status === 'ready' ? state.activeBids.filter((item) => new Date(item.auctionEndsAt).getTime() > now) : [];
+  const activeBids = rawBids.filter((item) => new Date(item.auctionEndsAt).getTime() > now);
 
   return (
     <section className="mt-12 border-t-4 border-ink-line pt-8">
