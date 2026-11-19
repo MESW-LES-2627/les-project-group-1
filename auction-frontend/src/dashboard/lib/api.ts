@@ -183,3 +183,52 @@ export async function updateCharitableOrganization(
 export async function deleteCharitableOrganization(id: number): Promise<void> {
   await http.delete(`/admin/charitable-organizations/${id}`)
 }
+
+
+// Admin listings
+
+export type AdminListingStatus = "pending_verification" | "verified"
+export interface AdminListingsParams {
+  page: number
+  limit: number
+  status?: AdminListingStatus
+}
+export interface AdminListing {
+  id: number
+  categoryId: number
+  category: { slug: string; name: string }
+  title: string
+  playerName: string | null
+  playerDetails: Record<string, string | number> | null
+  season: string | null
+  competition: string | null
+  match: string | null
+  tags: string[]
+  description: string
+  images: string[]
+  status: AdminListingStatus
+  authenticityNotes: string | null
+  evidenceImages: string[]
+  certificateCode: string | null
+  startingPrice: number | null
+  auctionEndsAt: string | null
+  createdAt: string
+  verifiedAt: string | null
+}
+export interface AdminListingsPage {
+  items: AdminListing[]
+  total: number
+}
+
+export async function fetchAdminListings(params: AdminListingsParams): Promise<AdminListingsPage> {
+  const { data } = await http.get<{ items: AdminListing[]; total: number }>("/admin/listings", { params })
+  return { items: data.items, total: data.total }
+}
+
+export async function updateAdminListingStatus(
+    id: number,
+    status: AdminListingStatus
+): Promise<AdminListing> {
+  const { data } = await http.patch<AdminListing>(`/admin/listings/${id}/status`, { status })
+  return data
+}
