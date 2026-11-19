@@ -1,12 +1,12 @@
 import type { Request, Response } from "express";
 import type { Server } from "socket.io";
-import { DEMO_ID, discardBid, evaluateAndPlaceBid, getRoom, persistBid, resetRoom, roomName } from "../services/auction.service";
+import { DEMO_ID, discardBid, evaluateAndPlaceBid, getRoom, persistBid, resetRoom, roomName, withAuctionLock } from "../services/auction.service";
 import { deleteBidsByListingId } from "../models/bid.model";
 import { prisma } from "../config/prisma";
 
 /**
- * Demo endpoint: restart an auction without redeploying.
- * Use ?auctionId=<id> for a catalogue auction; no parameter resets the prototype auction.
+* Demo endpoint: restart an auction without redeploying.
+* Use ?auctionId=<id> for a catalogue auction; no parameter resets the prototype auction.
  */
 export async function reset(req: Request, res: Response) {
   const io: Server = req.app.get("io");
@@ -45,11 +45,6 @@ export async function submitBid(req: Request, res: Response) {
     return res.status(400).json({ error: "Bid amount must be a valid number." });
   }
 
-  const room = await getRoom(auctionId);
-  if (!room) {
-    return res.status(404).json({ error: "Auction not found." });
-  }
-
   const bidderProfile = await prisma.user.findUnique({
     where: { id: req.user.id },
     select: { username: true, email: true, country: true, role: true },
@@ -61,30 +56,37 @@ export async function submitBid(req: Request, res: Response) {
     return res.status(403).json({ error: "Only buyers can place bids." });
   }
 
-  const result = evaluateAndPlaceBid(room, amount, {
-    name: bidderProfile.username,
-    email: bidderProfile.email,
-    country: bidderProfile.country,
-  });
+  return withAuctionLock(auctionId, async () => {
+    const room = await getRoom(auctionId);
+    if (!room) {
+      return res.status(404).json({ error: "Auction not found." });
+    }
 
-  if (!result.ok) {
-    return res.status(result.status).json({ error: result.error });
-  }
+    const result = evaluateAndPlaceBid(room, amount, {
+      name: bidderProfile.username,
+      email: bidderProfile.email,
+      country: bidderProfile.country,
+    });
 
-  try {
-    await persistBid(auctionId, result.bid);
-  } catch (err) {
-    discardBid(room, result.bid);
-    console.error("Could not persist bid:", err);
-    return res.status(500).json({ error: "Could not persist bid." });
-  }
+    if (!result.ok) {
+      return res.status(result.status).json({ error: result.error });
+    }
 
-  const io: Server | undefined = req.app.get("io");
-  io?.to(roomName(auctionId)).emit("auction_state", room.state);
+    try {
+      await persistBid(auctionId, result.bid);
+    } catch (err) {
+      discardBid(room, result.bid);
+      console.error("Could not persist bid:", err);
+      return res.status(500).json({ error: "Could not persist bid." });
+    }
 
-  return res.status(201).json({
-    message: "Bid placed successfully.",
-    bid: result.bid,
-    auction: room.state,
+    const io: Server | undefined = req.app.get("io");
+    io?.to(roomName(auctionId)).emit("auction_state", room.state);
+
+    return res.status(201).json({
+      message: "Bid placed successfully.",
+      bid: result.bid,
+      auction: room.state,
+    });
   });
 }

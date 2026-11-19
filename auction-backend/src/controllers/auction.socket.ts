@@ -1,5 +1,5 @@
 import type { Server } from "socket.io";
-import { DEMO_ID, discardBid, evaluateAndPlaceBid, getRoom, persistBid, roomName } from "../services/auction.service";
+import { DEMO_ID, discardBid, evaluateAndPlaceBid, getRoom, persistBid, roomName, withAuctionLock } from "../services/auction.service";
 import { verifyToken } from "../services/token.service";
 import { prisma } from "../config/prisma";
 
@@ -110,30 +110,32 @@ export function registerAuctionSocket(io: Server) {
         return;
       }
 
-      const result = evaluateAndPlaceBid(room, bidAmount, {
-        name: socket.data.username || socket.id,
-        email: socket.data.email,
-        country: socket.data.country,
+      await withAuctionLock(auctionId, async () => {
+        const result = evaluateAndPlaceBid(room, bidAmount, {
+          name: socket.data.username || socket.id,
+          email: socket.data.email,
+          country: socket.data.country || undefined,
+        });
+
+        if (!result.ok) {
+          socket.emit("bid_error", result.error);
+          return;
+        }
+
+        if (auctionId === DEMO_ID) {
+          io.to(roomName(auctionId)).emit("auction_state", room.state);
+          return;
+        }
+
+        try {
+          await persistBid(auctionId, result.bid);
+          io.to(roomName(auctionId)).emit("auction_state", room.state);
+        } catch (err) {
+          discardBid(room, result.bid);
+          socket.emit("bid_error", "Could not persist bid.");
+          console.error("Could not persist bid:", err);
+        }
       });
-
-      if (!result.ok) {
-        socket.emit("bid_error", result.error);
-        return;
-      }
-
-      if (auctionId === DEMO_ID) {
-        io.to(roomName(auctionId)).emit("auction_state", room.state);
-        return;
-      }
-
-      try {
-        await persistBid(auctionId, result.bid);
-        io.to(roomName(auctionId)).emit("auction_state", room.state);
-      } catch (err) {
-        discardBid(room, result.bid);
-        socket.emit("bid_error", "Could not persist bid.");
-        console.error("Could not persist bid:", err);
-      }
     });
 
     socket.on("disconnect", () => {
