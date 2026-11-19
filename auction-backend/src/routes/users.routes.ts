@@ -11,5 +11,6 @@ router.put("/me", users.updateMe);
 router.get("/me/purchases", users.getMyPurchases);
 router.put("/me/avatar", users.setMyAvatar);
 router.delete("/me/avatar", users.removeMyAvatar);
+router.get("/me/active-bids", users.getMyActiveBids);
 
 export default router;
