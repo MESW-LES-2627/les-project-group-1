@@ -37,3 +37,47 @@ export async function createBid(listingId: number, bid: PersistedBid) {
 export async function deleteBidsByListingId(listingId: number) {
   await prisma.bid.deleteMany({ where: { listingId } });
 }
+
+/** Finds all active auctions where the given bidder has placed at least one bid. */
+export async function findActiveBidsByBidder(bidder: string) {
+  const now = new Date();
+
+  const listings = await prisma.listing.findMany({
+    where: {
+      status: "verified",
+      auctionEndsAt: { gt: now },
+      bids: { some: { bidder } },
+    },
+    select: {
+      id: true,
+      title: true,
+      images: true,
+      startingPrice: true,
+      auctionEndsAt: true,
+      club: { select: { name: true } },
+      bids: {
+        orderBy: [{ amount: "desc" }, { createdAt: "desc" }, { id: "desc" }],
+        select: { bidder: true, amount: true },
+      },
+    },
+    orderBy: { auctionEndsAt: "asc" },
+  });
+
+  return listings.map((listing) => {
+    const highest = listing.bids[0];
+    const currentHighestBid = highest ? Number(highest.amount) : Number(listing.startingPrice ?? 0);
+    const userBids = listing.bids.filter((b) => b.bidder === bidder);
+    const userHighestBid = userBids[0] ? Number(userBids[0].amount) : 0;
+
+    return {
+      listingId: listing.id,
+      title: listing.title,
+      clubName: listing.club.name,
+      image: listing.images[0] ?? null,
+      currentHighestBid,
+      userHighestBid,
+      isHighestBidder: highest?.bidder === bidder,
+      auctionEndsAt: listing.auctionEndsAt!.toISOString(),
+    };
+  });
+}
