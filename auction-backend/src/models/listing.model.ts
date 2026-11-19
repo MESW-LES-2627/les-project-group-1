@@ -46,7 +46,7 @@ export async function findPublicListingById(id: number) {
 }
 
 export async function findCategories() {
-  return prisma.category.findMany({ select: { slug: true, name: true }, orderBy: { name: "asc" } });
+  return prisma.category.findMany({ select: { id: true, slug: true, name: true }, orderBy: { name: "asc" } });
 }
 
 export async function findClubBySlug(slug: string) {
@@ -81,7 +81,7 @@ export async function findListingAuction(id: number) {
 
 /** Every query here is scoped by clubId, so a club can never read or change another club's listings. */
 
-/** Clubs can only edit or send for verification listings in these states. */
+/** Clubs can only edit listings in these states. Pending and verified listings are locked. */
 export const EDITABLE_STATUSES = ["draft", "rejected"];
 
 export const listingSelect = {
