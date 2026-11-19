@@ -99,8 +99,22 @@ model Listing {
   verifiedAt        DateTime? @map("verified_at") @db.Timestamptz(6)
   club              Club      @relation(fields: [clubId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   category          Category  @relation(fields: [categoryId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  bids              Bid[]
 
   @@map("listings")
+}
+
+model Bid {
+  id        Int      @id @default(autoincrement())
+  listingId Int      @map("listing_id")
+  bidder    String
+  country   String?
+  amount    Decimal  @db.Decimal(10, 2)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  listing   Listing  @relation(fields: [listingId], references: [id], onDelete: Cascade)
+
+  @@index([listingId, createdAt])
+  @@map("bids")
 }
 
 model Address {
