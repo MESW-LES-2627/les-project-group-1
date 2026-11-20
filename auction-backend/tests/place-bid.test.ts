@@ -286,4 +286,36 @@ describe("Place a bid on an active auction", () => {
     socket.disconnect();
     expect(errMsg).toBe("Only buyers can place bids.");
   });
+
+  it("handles concurrent bids consistently so only valid higher bids succeed", async () => {
+    // Current highest bid from previous test is 120
+    const amounts = [130, 125, 150, 140, 150];
+    const responses = await Promise.all(
+      amounts.map((amount, idx) =>
+        fetch(`${baseUrl}/api/auction/${activeListingId}/bids`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${idx % 2 === 0 ? buyer1Token : buyer2Token}`,
+          },
+          body: JSON.stringify({ amount }),
+        }),
+      ),
+    );
+
+    const statuses = responses.map((r) => r.status);
+    // 130 succeeds (120 -> 130), 125 fails, 150 succeeds (130 -> 150), 140 fails, duplicate 150 fails
+    expect(statuses).toEqual([201, 400, 201, 400, 400]);
+
+    const finalRes = await fetch(`${baseUrl}/api/auction/${activeListingId}/bids`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${buyer2Token}`,
+      },
+      body: JSON.stringify({ amount: 150 }),
+    });
+    expect(finalRes.status).toBe(400);
+  });
+
 });

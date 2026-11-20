@@ -281,3 +281,28 @@ export function startAuctionTimer(io: Server) {
     }
   }, 1000);
 }
+
+//Tracks the active promise queue per auction so bids on the same item run sequentially
+const roomLocks = new Map<string, Promise<unknown>>();
+
+export async function withAuctionLock<T>(auctionId: string, fn: () => Promise<T>): Promise<T> {
+  //Get the tail of the current queue for this auction
+  const previous = roomLocks.get(auctionId) ?? Promise.resolve();
+  let release!: () => void;
+  //Create a gate for the current operation that will unblock the next caller when done
+  const current = new Promise<void>((resolve) => {
+    release = resolve;
+  });
+  const queued = previous.then(() => current);
+  roomLocks.set(auctionId, queued);
+  //Wait for all earlier operations on this auction to finish
+  await previous;
+  try {
+    return await fn();
+  } finally {
+    release();
+    if (roomLocks.get(auctionId) === queued) {
+      roomLocks.delete(auctionId);
+    }
+  }
+}
