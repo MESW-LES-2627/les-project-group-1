@@ -1,5 +1,5 @@
 import type { Server } from "socket.io";
-import { DEMO_ID, discardBid, evaluateAndPlaceBid, getRoom, persistBid, roomName, withAuctionLock } from "../services/auction.service";
+import { DEMO_ID, discardBid, evaluateAndPlaceBid, getRoom, persistBid, roomName, syncRoom, withAuctionLock } from "../services/auction.service";
 import { verifyToken } from "../services/token.service";
 import { prisma } from "../config/prisma";
 
@@ -85,13 +85,15 @@ export function registerAuctionSocket(io: Server) {
     // Personal room, so the winner can receive their payment link by username
     if (socket.data.username) socket.join(socket.data.username);
 
+    syncRoom(room);
     socket.emit("auction_state", room.state);
 
     // Clients can ask for the state again
     socket.on("get_auction_state", () => {
+      syncRoom(room);
       socket.emit("auction_state", room.state);
-      // Late users after the auction ended should see the result too
-      if (!room.state.isActive) {
+      // Late users after the auction ended should see the result too (not for scheduled or cancelled ones)
+      if (room.state.status === "completed") {
         socket.emit("auction_end", {
           winner: room.state.highestBidder,
           winningBid: room.state.currentBid,

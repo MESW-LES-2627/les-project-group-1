@@ -40,6 +40,8 @@ const ERROR_MESSAGES: Record<string, string> = {
   invalid_tags: 'Use up to 10 tags, each up to 30 characters.',
   invalid_starting_price: 'The starting price must be between €0.01 and €1,000,000.',
   invalid_auction_ends_at: 'The auction end must be in the future.',
+  invalid_auction_starts_at: 'The auction start must be in the future.',
+  auction_starts_after_end: 'The auction must start before it ends.',
   invalid_image: 'Images must be PNG, JPEG or WebP files.',
   unknown_category: 'This category no longer exists.',
   club_not_approved: 'Your club has not been approved yet, so it cannot create auctions.',
@@ -76,6 +78,7 @@ function NewListingForm({ token }: { token: string }) {
   const [match, setMatch] = useState('');
   const [tags, setTags] = useState('');
   const [startingPrice, setStartingPrice] = useState('');
+  const [auctionStartsAt, setAuctionStartsAt] = useState('');
   const [auctionEndsAt, setAuctionEndsAt] = useState('');
   const [authenticityNotes, setAuthenticityNotes] = useState('');
   const [images, setImages] = useState<File[]>([]);
@@ -114,6 +117,7 @@ function NewListingForm({ token }: { token: string }) {
     form.append('tags', tags);
     form.append('startingPrice', startingPrice);
     // datetime-local has no timezone; convert it to an ISO date in the user's timezone.
+    form.append('auctionStartsAt', auctionStartsAt ? new Date(auctionStartsAt).toISOString() : '');
     form.append('auctionEndsAt', auctionEndsAt ? new Date(auctionEndsAt).toISOString() : '');
     form.append('status', status);
     images.forEach((file) => form.append('images', file));
@@ -164,6 +168,7 @@ function NewListingForm({ token }: { token: string }) {
     setMatch('');
     setTags('');
     setStartingPrice('');
+    setAuctionStartsAt('');
     setAuctionEndsAt('');
     setAuthenticityNotes('');
     setImages([]);
@@ -345,11 +350,24 @@ function NewListingForm({ token }: { token: string }) {
             />
           </div>
           <div>
+            <label htmlFor="listing-starts" className={labelClass}>Auction starts</label>
+            <Input
+              id="listing-starts"
+              type="datetime-local"
+              min={minEnd}
+              max={auctionEndsAt || undefined}
+              className={inputClass}
+              value={auctionStartsAt}
+              onChange={(event) => setAuctionStartsAt(event.target.value)}
+            />
+            <p className={hintClass}>Optional. Leave it empty to open the auction as soon as it is verified. Until then, the catalogue shows a countdown.</p>
+          </div>
+          <div>
             <label htmlFor="listing-ends" className={labelClass}>Auction ends</label>
             <Input
               id="listing-ends"
               type="datetime-local"
-              min={minEnd}
+              min={auctionStartsAt || minEnd}
               className={inputClass}
               value={auctionEndsAt}
               onChange={(event) => setAuctionEndsAt(event.target.value)}

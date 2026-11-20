@@ -217,6 +217,14 @@ function ListingForm({ listing, onDone }: { listing?: MyListing | null; onDone: 
             onChange={(e) => set("startingPrice", e.target.value)}
           />
         </Field>
+        <Field label="Auction starts (optional)" htmlFor="listing-starts">
+          <Input
+            id="listing-starts"
+            type="datetime-local"
+            value={values.auctionStartsAt}
+            onChange={(e) => set("auctionStartsAt", e.target.value)}
+          />
+        </Field>
         <Field label="Auction ends" htmlFor="listing-ends">
           <Input
             id="listing-ends"
@@ -226,6 +234,10 @@ function ListingForm({ listing, onDone }: { listing?: MyListing | null; onDone: 
           />
         </Field>
       </div>
+      <p className="-mt-2 text-xs text-muted-foreground">
+        Leave the start empty to open the auction as soon as an administrator verifies it. Until it opens, the
+        catalogue shows a countdown.
+      </p>
 
       <div className="grid gap-4 sm:grid-cols-2">
         <Field label="Support a charity (verified only)" htmlFor="listing-charity">

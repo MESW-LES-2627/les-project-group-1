@@ -25,6 +25,7 @@ function savedListing(overrides: Partial<MyListing> = {}): MyListing {
     tags: [],
     authenticityNotes: null,
     startingPrice: null,
+    auctionStartsAt: null,
     auctionEndsAt: null,
     ...overrides,
   } as MyListing;
@@ -62,7 +63,8 @@ describe('categoryHasPlayer', () => {
 
 describe('withoutPlayerFields', () => {
   it('empties the player name and keeps only the size', () => {
-    const values = { ...emptyForm(), playerName: 'Test Player', playerDetails: { size: 'M', age: '30', position: 'GK' } };
+    const playerDetails: Record<string, string> = { size: 'M', age: '30', position: 'GK' };
+    const values = { ...emptyForm(), playerName: 'Test Player', playerDetails };
 
     const result = withoutPlayerFields(values);
 
@@ -155,5 +157,27 @@ describe('formToFields when editing', () => {
     const initial = formFromListing(listing);
 
     expect(formToFields({ ...initial, season: '' }, initial, listing)).toEqual({ season: '' });
+  });
+});
+
+describe('auction start date', () => {
+  it('is sent as an ISO date when filled in', () => {
+    const fields = formToFields({ ...emptyForm(), auctionStartsAt: '2030-05-01T18:30' }, emptyForm());
+
+    expect(fields.auctionStartsAt).toBe(new Date('2030-05-01T18:30').toISOString());
+  });
+
+  it('is left out when creating without one, so the auction opens when verified', () => {
+    const fields = formToFields({ ...emptyForm(), title: 'No start date' }, emptyForm());
+
+    expect(fields.auctionStartsAt).toBeUndefined();
+  });
+
+  it('is loaded from a saved listing and cleared with an empty value', () => {
+    const listing = savedListing({ auctionStartsAt: '2030-05-01T17:30:00.000Z' });
+    const initial = formFromListing(listing);
+    expect(initial.auctionStartsAt).not.toBe('');
+
+    expect(formToFields({ ...initial, auctionStartsAt: '' }, initial, listing)).toEqual({ auctionStartsAt: '' });
   });
 });

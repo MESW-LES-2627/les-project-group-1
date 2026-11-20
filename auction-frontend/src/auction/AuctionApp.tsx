@@ -142,11 +142,13 @@ function AuctionApp({ auctionId = 'demo', children, renderPage }: AuctionAppProp
     };
   }, [email, username, token, auctionId, isLive]);
 
+  // The clock ticks while the auction is open, and while it counts down to opening
+  const clockRunning = Boolean(auction?.isActive || auction?.status === 'scheduled');
   useEffect(() => {
-    if (!auction?.isActive) return;
+    if (!clockRunning) return;
     const interval = setInterval(() => setNow(Date.now()), 1000);
     return () => clearInterval(interval);
-  }, [auction?.isActive]);
+  }, [clockRunning]);
 
   const handleBid = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -162,6 +164,14 @@ function AuctionApp({ auctionId = 'demo', children, renderPage }: AuctionAppProp
     }
 
     if (!auction) return;
+    if (auction.status === 'scheduled') {
+      setError('This auction has not opened yet.');
+      return;
+    }
+    if (auction.status === 'cancelled') {
+      setError('This auction was cancelled.');
+      return;
+    }
     if (!auction.isActive || Date.now() >= auction.endTime) {
       setError('The auction has ended.');
       return;

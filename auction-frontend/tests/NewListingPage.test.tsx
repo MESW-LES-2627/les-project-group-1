@@ -248,3 +248,36 @@ describe('NewListingView: errors from the server', () => {
     expect(await screen.findByRole('alert')).toHaveTextContent('Your session has expired. Log in again.');
   });
 });
+
+describe('NewListingView: auction start date', () => {
+  it('sends the start date chosen by the club', async () => {
+    const user = await renderForm();
+    await fillRequired(user, 'Player jerseys');
+    await user.type(screen.getByLabelText('Auction starts'), '2030-05-01T18:30');
+
+    await user.click(screen.getByRole('button', { name: 'SAVE AS DRAFT' }));
+
+    await waitFor(() => expect(posts).toHaveLength(1));
+    expect(lastForm().get('auctionStartsAt')).toBe(new Date('2030-05-01T18:30').toISOString());
+  });
+
+  it('sends an empty start date when none is chosen', async () => {
+    const user = await renderForm();
+    await fillRequired(user, 'Player jerseys');
+
+    await user.click(screen.getByRole('button', { name: 'SAVE AS DRAFT' }));
+
+    await waitFor(() => expect(posts).toHaveLength(1));
+    expect(lastForm().get('auctionStartsAt')).toBe('');
+  });
+
+  it('explains when the start date is after the end date', async () => {
+    createResponse = { status: 400, body: { error: 'auction_starts_after_end' } };
+    const user = await renderForm();
+    await fillRequired(user, 'Player jerseys');
+
+    await user.click(screen.getByRole('button', { name: 'SAVE AS DRAFT' }));
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('The auction must start before it ends.');
+  });
+});

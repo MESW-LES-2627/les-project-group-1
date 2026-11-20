@@ -4,7 +4,10 @@ import * as Listings from "../models/listing.model";
 import * as CharitableOrganization from "../models/charitableOrganization.model";
 import { EDITABLE_STATUSES_CLUB } from "../models/listing.model";
 import { detectImageType, removeUploadedFiles, saveImage, saveImages } from "../utils/imageFiles.ts";
+import { auctionStatus, clubCanCancel } from "../services/auctionStatus";
+import { refreshRoom } from "../services/auction.service";
 import {
+  auctionDatesInOrder,
   missingForSubmission,
   normalizeFormBody,
   parseStringList,
@@ -129,8 +132,30 @@ function parseId(req: Request) {
 }
 
 /** Prisma returns prices as Decimal; the API returns plain numbers. */
-function present<T extends { startingPrice: { toNumber(): number } | null }>(row: T) {
-  return { ...row, startingPrice: row.startingPrice ? row.startingPrice.toNumber() : null };
+type PresentableListing = {
+  startingPrice: { toNumber(): number } | null;
+  status: string;
+  auctionStartsAt: Date | null;
+  auctionEndsAt: Date | null;
+  cancelledAt: Date | null;
+};
+
+/**
+ * Prisma returns prices as Decimal; the API returns plain numbers. Also adds the auction status
+ * (null while the listing isn't verified and not cancelled, because its auction hasn't been approved)
+ * and whether the club may still cancel it.
+ */
+export function present<T extends PresentableListing>(row: T) {
+  const status =
+    row.status === "verified" || row.cancelledAt
+      ? auctionStatus({ startsAt: row.auctionStartsAt, endsAt: row.auctionEndsAt, cancelledAt: row.cancelledAt })
+      : null;
+  return {
+    ...row,
+    startingPrice: row.startingPrice ? row.startingPrice.toNumber() : null,
+    auctionStatus: status,
+    canCancel: clubCanCancel(row),
+  };
 }
 
 function writeError(res: Response, error: unknown, label: string) {
@@ -254,6 +279,7 @@ export async function updateMyListing(req: Request, res: Response) {
 
     const existing = await Listings.findOwn(id, clubId);
     if (!existing) return res.status(404).json({ error: "not_found" });
+    if (existing.cancelledAt) return res.status(409).json({ error: "listing_cancelled" });
     if (!EDITABLE_STATUSES_CLUB.includes(existing.status)) return res.status(409).json({ error: "listing_locked" });
 
     // Images to delete: they must be images of this listing
@@ -281,6 +307,11 @@ export async function updateMyListing(req: Request, res: Response) {
 
     if (!(await charityIsSelectable(input.charitableOrganizationId)))
       return res.status(400).json({ error: "invalid_charitable_organization" });
+
+    // Only one of the two dates may have been sent: compare with the saved one
+    const startsAt = input.auctionStartsAt !== undefined ? input.auctionStartsAt : existing.auctionStartsAt;
+    const endsAt = input.auctionEndsAt !== undefined ? input.auctionEndsAt : existing.auctionEndsAt;
+    if (!auctionDatesInOrder(startsAt, endsAt)) return res.status(400).json({ error: "auction_starts_after_end" });
 
     const keptImages = existing.images.filter((p) => !removeImages.includes(p));
     const keptEvidence = existing.evidenceImages.filter((p) => !removeEvidence.includes(p));
@@ -320,6 +351,31 @@ export async function updateMyListing(req: Request, res: Response) {
 }
 
 /** DELETE /api/clubs/me/listings/:id. Verified listings can't be deleted. Its image files are deleted too. */
+/**
+ * POST /api/clubs/me/listings/:id/cancel
+ * A club can cancel its auction while it hasn't been verified yet, or while it is still scheduled.
+ * Once it has opened, only an admin can cancel it.
+ */
+export async function cancelMyListing(req: Request, res: Response) {
+  try {
+    const id = parseId(req);
+    if (!id) return res.status(400).json({ error: "invalid_id" });
+
+    const existing = await Listings.findOwn(id, req.user!.clubId!);
+    if (!existing) return res.status(404).json({ error: "not_found" });
+    if (existing.cancelledAt) return res.status(409).json({ error: "already_cancelled" });
+    if (!clubCanCancel(existing)) return res.status(409).json({ error: "auction_already_open" });
+
+    const listing = await Listings.cancelListing(id);
+    if (!listing) return res.status(409).json({ error: "already_cancelled" });
+
+    await refreshRoom(req.app.get("io"), id);
+    return res.json(present(listing));
+  } catch (error) {
+    return writeError(res, error, "Cancel listing");
+  }
+}
+
 export async function deleteMyListing(req: Request, res: Response) {
   try {
     const id = parseId(req);

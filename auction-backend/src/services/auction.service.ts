@@ -4,6 +4,7 @@ import { createPaymentLink } from "./stripe.service";
 import { saveWinner } from "../models/winner.model";
 import { findListingAuction } from "../models/listing.model";
 import { createBid, findBidsByListingId } from "../models/bid.model";
+import { auctionStatus, type AuctionStatus } from "./auctionStatus";
 
 /**
  * Auction logic: one in-memory room per auction, bidding rules, and the timer
@@ -21,12 +22,18 @@ export interface AuctionState {
   isActive: boolean;
   bidCount: number;
   bids: Array<{ bidder: string; country?: string; amount: number; timestamp: number }>;
+  /** scheduled, active, completed or cancelled. Kept up to date by syncRoom. */
+  status?: AuctionStatus;
+  /** When the auction opens (ms), or null if it opens as soon as it is verified. */
+  startTime?: number | null;
 }
 
 export interface AuctionRoom {
   startingPrice: number;
+  /** Listing status (draft, pending_verification, verified, rejected). Only verified auctions accept bids. */
   status: string;
   startsAt: number | null;
+  cancelledAt?: number | null;
   state: AuctionState;
   highestBidderEmail: string | null;
 }
@@ -39,25 +46,67 @@ const rooms = new Map<string, AuctionRoom>();
 
 export const roomName = (auctionId: string) => `auction:${auctionId}`;
 
-function createRoom(itemName: string, startingPrice: number, endTime: number, status = "verified", startsAt: number | null = null ): 
-AuctionRoom {
-  const now = Date.now();
-  const isScheduled = status !== "verified" || (startsAt !== null && startsAt > now);
-  return {
+function createRoom(
+  itemName: string,
+  startingPrice: number,
+  endTime: number,
+  status = "verified",
+  startsAt: number | null = null,
+  cancelledAt: number | null = null
+): AuctionRoom {
+  const room: AuctionRoom = {
     startingPrice,
     status,
     startsAt,
+    cancelledAt,
     highestBidderEmail: null,
     state: {
       itemName,
       currentBid: startingPrice,
       highestBidder: null,
       endTime,
-      isActive: !isScheduled && endTime > now,
+      isActive: false,
       bidCount: 0,
       bids: [],
     },
   };
+  openIfDue(room);
+  return room;
+}
+
+function datesStatus(room: AuctionRoom, now: number) {
+  return auctionStatus({ startsAt: room.startsAt, endsAt: room.state.endTime, cancelledAt: room.cancelledAt }, now);
+}
+
+/** Sets status and isActive from scratch, for a new room or after its dates changed. */
+function openIfDue(room: AuctionRoom, now = Date.now()) {
+  const status = datesStatus(room, now);
+  room.state.status = status;
+  room.state.startTime = room.startsAt;
+  room.state.isActive = status === "active" && room.status === "verified";
+}
+
+/**
+ * Brings the room's status up to date with the clock and returns the status before and after.
+ * A scheduled auction opens when its start date is reached; an open one closes at its end date or when
+ * cancelled. A room that was closed early stays closed (it is shown as completed).
+ */
+export function syncRoom(room: AuctionRoom, now = Date.now()): { previous: AuctionStatus | undefined; status: AuctionStatus } {
+  const previous = room.state.status;
+  let status = datesStatus(room, now);
+
+  if (room.status !== "verified") {
+    room.state.isActive = false; // not approved yet: never open, whatever the dates say
+  } else if (status === "active") {
+    if (previous === "scheduled") room.state.isActive = true;
+    else if (!room.state.isActive) status = "completed";
+  } else {
+    room.state.isActive = false;
+  }
+
+  room.state.status = status;
+  room.state.startTime = room.startsAt;
+  return { previous, status };
 }
 
 // Sprint 0 prototype auction
@@ -75,7 +124,14 @@ export async function getRoom(auctionId: string): Promise<AuctionRoom | null> {
     const created = rooms.get(auctionId);
     if (created) return created;
 
-    const room = createRoom(listing.title, listing.startingPrice, listing.endsAt.getTime(), listing.status, listing.startsAt ? listing.startsAt.getTime() : null);
+    const room = createRoom(
+      listing.title,
+      listing.startingPrice,
+      listing.endsAt.getTime(),
+      listing.status,
+      listing.startsAt ? listing.startsAt.getTime() : null,
+      listing.cancelledAt ? listing.cancelledAt.getTime() : null
+    );
     const bids = await findBidsByListingId(Number(auctionId));
     room.state.bids = bids;
     room.state.bidCount = bids.length;
@@ -94,12 +150,41 @@ export async function getRoom(auctionId: string): Promise<AuctionRoom | null> {
 /** Live values of an open auction, so catalogue cards match the auction page. */
 export function getLiveAuction(listingId: number) {
   const room = rooms.get(String(listingId));
-  return room ? { currentBid: room.state.currentBid, endTime: room.state.endTime } : undefined;
+  if (!room) return undefined;
+  syncRoom(room);
+  return { currentBid: room.state.currentBid, endTime: room.state.endTime, status: room.state.status! };
+}
+
+/**
+ * Reloads an auction's dates and listing status after they changed (verified, cancelled...) and tells
+ * everyone watching it. The room object is updated in place, because open sockets keep a reference to it.
+ */
+export async function refreshRoom(io: Server | undefined, listingId: number) {
+  const room = rooms.get(String(listingId));
+  if (!room) return;
+
+  const listing = await findListingAuction(listingId);
+  if (!listing) {
+    rooms.delete(String(listingId));
+    return;
+  }
+
+  const wasActive = room.state.isActive;
+  room.status = listing.status;
+  room.startsAt = listing.startsAt ? listing.startsAt.getTime() : null;
+  room.cancelledAt = listing.cancelledAt ? listing.cancelledAt.getTime() : null;
+  room.state.endTime = listing.endsAt.getTime();
+  openIfDue(room);
+  if (wasActive && room.state.status === "active") room.state.isActive = true;
+
+  io?.to(roomName(String(listingId))).emit("auction_state", room.state);
+  if (room.state.status === "cancelled") io?.to(roomName(String(listingId))).emit("auction_cancelled");
 }
 
 export function resetRoom(room: AuctionRoom) {
   room.status = "verified";
   room.startsAt = null;
+  room.cancelledAt = null;
   room.state = createRoom(room.state.itemName, room.startingPrice, Date.now() + AUCTION_DURATION).state;
   room.highestBidderEmail = null;
 }
@@ -137,26 +222,27 @@ export function evaluateAndPlaceBid(
   const now = Date.now();
   const auction = room.state;
 
-  // Reject scheduled, cancelled, or non-active listings
-  if (room.status === "cancelled" || room.status === "rejected") {
+  // Listings an admin hasn't approved never accept bids
+  if (room.status === "rejected") {
     return { ok: false, status: 400, error: "Cannot place a bid on a cancelled auction." };
   }
-  if (room.status === "completed" || !auction.isActive) {
-    return { ok: false, status: 400, error: "Cannot place a bid on a completed or inactive auction." };
-  }
-  if (
-    room.status === "scheduled" ||
-    room.status === "draft" ||
-    room.status === "pending_verification" ||
-    (room.startsAt !== null && now < room.startsAt)
-  ) {
+  if (room.status !== "verified") {
     return { ok: false, status: 400, error: "Cannot place a bid on a scheduled auction that has not started yet." };
   }
 
-  // Reject bids placed at or after the auction end time
+  // Then the auction status, brought up to date with the clock
+  const { status } = syncRoom(room, now);
+  if (status === "cancelled") {
+    return { ok: false, status: 400, error: "Cannot place a bid on a cancelled auction." };
+  }
+  if (status === "scheduled") {
+    return { ok: false, status: 400, error: "Cannot place a bid on a scheduled auction that has not started yet." };
+  }
   if (now >= auction.endTime) {
-    auction.isActive = false;
     return { ok: false, status: 400, error: "The auction has already ended." };
+  }
+  if (status === "completed" || !auction.isActive) {
+    return { ok: false, status: 400, error: "Cannot place a bid on a completed or inactive auction." };
   }
 
   // Validate bid amount presence and numeric type
@@ -272,14 +358,28 @@ function endAuction(io: Server, auctionId: string, room: AuctionRoom) {
   });
 }
 
-export function startAuctionTimer(io: Server) {
-  setInterval(() => {
-    for (const [auctionId, room] of rooms) {
-      if (room.state.isActive && Date.now() >= room.state.endTime) {
-        endAuction(io, auctionId, room);
-      }
+/**
+ * One pass over the open auctions: scheduled ones whose start date arrived become active, and active
+ * ones whose end date arrived are completed (winner, payment link, email). Exported for the tests.
+ */
+export function tickAuctions(io: Server, now = Date.now(), only?: string[]) {
+  for (const [auctionId, room] of rooms) {
+    if (only && !only.includes(auctionId)) continue;
+    const wasActive = room.state.isActive;
+    const { previous, status } = syncRoom(room, now);
+
+    if (wasActive && now >= room.state.endTime) {
+      endAuction(io, auctionId, room);
+      io.to(roomName(auctionId)).emit("auction_state", room.state);
+    } else if (previous === "scheduled" && status === "active") {
+      io.to(roomName(auctionId)).emit("auction_state", room.state);
+      io.to(roomName(auctionId)).emit("auction_started");
     }
-  }, 1000);
+  }
+}
+
+export function startAuctionTimer(io: Server) {
+  setInterval(() => tickAuctions(io), 1000);
 }
 
 //Tracks the active promise queue per auction so bids on the same item run sequentially

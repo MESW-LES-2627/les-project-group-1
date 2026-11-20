@@ -23,5 +23,6 @@ router.delete("/charitable-organizations/:id", charity.deleteCharitableOrganizat
 
 router.get("/listings", admin.getAllListings);
 router.patch("/listings/:id/status", admin.updateListingStatus);
+router.post("/listings/:id/cancel", admin.cancelListing);
 
 export default router;

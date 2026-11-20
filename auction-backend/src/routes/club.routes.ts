@@ -31,6 +31,7 @@ router.post("/me/listings", ...clubListingsAuth, listingUpload, club.createMyLis
 router.get("/me/listings/:id", ...clubListingsAuth, club.getMyListing);
 router.patch("/me/listings/:id", ...clubListingsAuth, listingUpload, club.updateMyListing);
 router.delete("/me/listings/:id", ...clubListingsAuth, club.deleteMyListing);
+router.post("/me/listings/:id/cancel", ...clubListingsAuth, club.cancelMyListing);
 
 // Public: GET /api/clubs/:slug (club + verified listings only)
 router.get("/profile/:slug", listings.getClub);

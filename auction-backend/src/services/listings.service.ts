@@ -1,5 +1,6 @@
 import type { ListingRow } from "../models/listing.model";
 import { getLiveAuction } from "./auction.service";
+import { auctionStatus } from "./auctionStatus";
 
 /** Maps database rows to the JSON the catalogue API returns. */
 
@@ -28,7 +29,16 @@ export function toSummary(row: ListingRow) {
       : null,
     donationPercentage: row.donation_percentage,
     currentBid: live?.currentBid ?? row.starting_price,
+    auctionStartsAt: row.auction_starts_at ?? row.verified_at,
     auctionEndsAt: live ? new Date(live.endTime) : row.auction_ends_at,
+    // The open room knows if the auction was closed early; otherwise the dates decide
+    auctionStatus:
+      live?.status ??
+      auctionStatus({
+        startsAt: row.auction_starts_at ?? row.verified_at,
+        endsAt: row.auction_ends_at,
+        cancelledAt: row.cancelled_at,
+      }),
   };
 }
 

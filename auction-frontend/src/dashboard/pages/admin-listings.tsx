@@ -2,6 +2,7 @@ import { useState } from "react"
 import type { AdminListing, AdminListingStatus } from "@/dashboard/lib/api"
 import {
   useAdminListings,
+  useCancelAdminListing,
   useUpdateAdminListingStatus,
 } from "@/dashboard/hooks/use-admin-listings"
 import { AdminListingsTable } from "@/dashboard/components/dashboard/admin-listings-table"
@@ -25,6 +26,14 @@ export default function AdminListings() {
   })
 
   const updateStatus = useUpdateAdminListingStatus()
+  const cancel = useCancelAdminListing()
+
+  const cancelAuction = (listing: AdminListing) => {
+    if (!window.confirm(`Cancel the auction for "${listing.title}"? Nobody will be able to bid on it. This can't be undone.`)) {
+      return
+    }
+    cancel.mutate(listing.id)
+  }
 
   const changeStatus = (
       listing: AdminListing,
@@ -100,9 +109,12 @@ export default function AdminListings() {
                   busyId={
                     updateStatus.isPending
                         ? (updateStatus.variables?.id ?? null)
-                        : null
+                        : cancel.isPending
+                            ? (cancel.variables ?? null)
+                            : null
                   }
                   onChangeStatus={changeStatus}
+                  onCancel={cancelAuction}
                   onView={(listing) => setSelectedListing(listing)}
               />
 
@@ -140,6 +152,12 @@ export default function AdminListings() {
         {updateStatus.isError && (
             <p className="text-sm text-destructive">
               Could not update the listing status. Please try again.
+            </p>
+        )}
+
+        {cancel.isError && (
+            <p className="text-sm text-destructive">
+              Could not cancel the auction. Please try again.
             </p>
         )}
 

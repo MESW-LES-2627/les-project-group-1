@@ -6,7 +6,7 @@ import {
   useReactTable,
   type ColumnDef,
 } from "@tanstack/react-table"
-import { Check, RotateCcw, Eye } from "lucide-react"
+import { Ban, Check, RotateCcw, Eye } from "lucide-react"
 import { assetUrl } from "@/lib/assets"
 import type {
   AdminListing,
@@ -22,6 +22,7 @@ import {
   TableRow,
 } from "@/dashboard/components/ui/table"
 import { ListingStatusBadge } from "@/dashboard/components/dashboard/listing-status-badge"
+import { AuctionStatusBadge } from "@/dashboard/components/dashboard/auction-status-badge"
 
 const euro = new Intl.NumberFormat("en-IE", {
   style: "currency",
@@ -36,6 +37,7 @@ interface Props {
       status: AdminListingStatus
   ) => void
   onView: (listing: AdminListing) => void
+  onCancel: (listing: AdminListing) => void
 }
 
 export function AdminListingsTable({
@@ -43,6 +45,7 @@ export function AdminListingsTable({
                                      busyId,
                                      onChangeStatus,
                                      onView,
+                                     onCancel,
                                    }: Props) {
   const columns = useMemo<ColumnDef<AdminListing>[]>(
       () => [
@@ -90,6 +93,20 @@ export function AdminListingsTable({
           ),
         },
         {
+          id: "auction",
+          header: "Auction",
+          cell: ({ row }) => (
+              <div className="space-y-1">
+                <AuctionStatusBadge status={row.original.auctionStatus} />
+                {row.original.auctionStatus === "scheduled" && row.original.auctionStartsAt && (
+                    <p className="text-xs text-muted-foreground">
+                      Opens {new Date(row.original.auctionStartsAt).toLocaleString()}
+                    </p>
+                )}
+              </div>
+          ),
+        },
+        {
           accessorKey: "startingPrice",
           header: "Starting price",
           cell: ({ row }) =>
@@ -120,7 +137,18 @@ export function AdminListingsTable({
                     <Eye /> View
                   </Button>
 
-                  {listing.status === "pending_verification" ? (
+                  {listing.canCancel && (
+                      <Button
+                          size="sm"
+                          variant="destructive"
+                          disabled={busy}
+                          onClick={() => onCancel(listing)}
+                      >
+                        <Ban /> Cancel
+                      </Button>
+                  )}
+
+                  {listing.cancelledAt ? null : listing.status === "pending_verification" ? (
                       <Button
                           size="sm"
                           disabled={busy}
@@ -145,7 +173,7 @@ export function AdminListingsTable({
           },
         },
       ],
-      [busyId, onChangeStatus, onView]
+      [busyId, onChangeStatus, onView, onCancel]
   )
 
   const table = useReactTable({

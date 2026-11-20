@@ -50,6 +50,7 @@ export interface ListingFormValues {
   tags: string // separated by commas
   authenticityNotes: string
   startingPrice: string
+  auctionStartsAt: string // value of <input type="datetime-local">; empty = opens when verified
   auctionEndsAt: string // value of <input type="datetime-local">, in the user's time zone
   charitableOrganizationId: string
   donationPercentage: string
@@ -82,6 +83,7 @@ export function emptyForm(): ListingFormValues {
     tags: "",
     authenticityNotes: "",
     startingPrice: "",
+    auctionStartsAt: "",
     auctionEndsAt: "",
     charitableOrganizationId: "",
     donationPercentage: "",
@@ -116,6 +118,7 @@ export function formFromListing(listing: MyListing): ListingFormValues {
     tags: listing.tags.join(", "),
     authenticityNotes: listing.authenticityNotes ?? "",
     startingPrice: listing.startingPrice === null ? "" : String(listing.startingPrice),
+    auctionStartsAt: toLocalInput(listing.auctionStartsAt),
     auctionEndsAt: toLocalInput(listing.auctionEndsAt),
     charitableOrganizationId:
       listing.charitableOrganizationId === null ? "" : String(listing.charitableOrganizationId),
@@ -167,6 +170,10 @@ export function formToFields(
   for (const key of SIMPLE_KEYS) {
     const next = values[key].trim()
     if (next !== initial[key].trim()) fields[key] = next
+  }
+
+  if (values.auctionStartsAt !== initial.auctionStartsAt) {
+    fields.auctionStartsAt = values.auctionStartsAt ? new Date(values.auctionStartsAt).toISOString() : ""
   }
 
   if (values.auctionEndsAt !== initial.auctionEndsAt) {

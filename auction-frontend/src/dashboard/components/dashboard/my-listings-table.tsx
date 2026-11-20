@@ -1,12 +1,13 @@
 import { useMemo } from "react"
 import { flexRender, getCoreRowModel, useReactTable, type ColumnDef } from "@tanstack/react-table"
-import { Pencil, Send, Trash2 } from "lucide-react"
+import { Ban, Pencil, Send, Trash2 } from "lucide-react"
 import { assetUrl } from "@/lib/assets"
 import { isEditable } from "@/dashboard/lib/listing-form"
 import type { MyListing } from "@/dashboard/lib/club-api"
 import { Button } from "@/dashboard/components/ui/button.tsx"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/dashboard/components/ui/table.tsx"
 import { ListingStatusBadge } from "@/dashboard/components/dashboard/listing-status-badge"
+import { AuctionStatusBadge } from "@/dashboard/components/dashboard/auction-status-badge"
 
 const euro = new Intl.NumberFormat("en-IE", { style: "currency", currency: "EUR" })
 
@@ -16,9 +17,12 @@ interface MyListingsTableProps {
   onEdit: (listing: MyListing) => void
   onDelete: (listing: MyListing) => void
   onSubmit: (listing: MyListing) => void
+  onCancel: (listing: MyListing) => void
 }
 
-export function MyListingsTable({ data, busyId, onEdit, onDelete, onSubmit }: MyListingsTableProps) {
+const dateTime = (iso: string | null) => (iso ? new Date(iso).toLocaleString() : "—")
+
+export function MyListingsTable({ data, busyId, onEdit, onDelete, onSubmit, onCancel }: MyListingsTableProps) {
   const columns = useMemo<ColumnDef<MyListing>[]>(
     () => [
       {
@@ -46,6 +50,11 @@ export function MyListingsTable({ data, busyId, onEdit, onDelete, onSubmit }: My
         cell: ({ row }) => <ListingStatusBadge status={row.original.status} />,
       },
       {
+        id: "auction",
+        header: "Auction",
+        cell: ({ row }) => <AuctionStatusBadge status={row.original.auctionStatus} />,
+      },
+      {
         id: "charity",
         header: "Charity",
         cell: ({ row }) => {
@@ -66,10 +75,20 @@ export function MyListingsTable({ data, busyId, onEdit, onDelete, onSubmit }: My
         cell: ({ row }) => (row.original.startingPrice === null ? "—" : euro.format(row.original.startingPrice)),
       },
       {
-        accessorKey: "auctionEndsAt",
-        header: "Auction ends",
-        cell: ({ row }) =>
-          row.original.auctionEndsAt ? new Date(row.original.auctionEndsAt).toLocaleString() : "—",
+        id: "dates",
+        header: "Auction dates",
+        cell: ({ row }) => (
+          <div className="text-xs">
+            <div>
+              <span className="text-muted-foreground">Starts </span>
+              {row.original.auctionStartsAt ? dateTime(row.original.auctionStartsAt) : "when verified"}
+            </div>
+            <div>
+              <span className="text-muted-foreground">Ends </span>
+              {dateTime(row.original.auctionEndsAt)}
+            </div>
+          </div>
+        ),
       },
       {
         id: "actions",
@@ -78,7 +97,19 @@ export function MyListingsTable({ data, busyId, onEdit, onDelete, onSubmit }: My
           const listing = row.original
           return (
             <div className="flex justify-end gap-1">
-              {isEditable(listing.status) && (
+              {listing.canCancel && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  aria-label="Cancel auction"
+                  title="Cancel auction"
+                  disabled={busyId === listing.id}
+                  onClick={() => onCancel(listing)}
+                >
+                  <Ban />
+                </Button>
+              )}
+              {isEditable(listing.status) && !listing.cancelledAt && (
                 <>
                   <Button
                     variant="ghost"
@@ -105,7 +136,7 @@ export function MyListingsTable({ data, busyId, onEdit, onDelete, onSubmit }: My
         },
       },
     ],
-    [busyId, onEdit, onDelete, onSubmit]
+    [busyId, onEdit, onDelete, onSubmit, onCancel]
   )
 
   const table = useReactTable({

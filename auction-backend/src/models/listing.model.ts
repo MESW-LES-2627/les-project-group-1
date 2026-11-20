@@ -20,6 +20,8 @@ export interface ListingRow {
   verified_at: Date | null;
   starting_price: number | null;
   auction_ends_at: Date | null;
+  auction_starts_at: Date | null;
+  cancelled_at: Date | null;
   donation_percentage: number | null;
   charity_id: number | null;
   charity_name: string | null;
@@ -93,7 +95,9 @@ export async function findListingAuction(id: number) {
       title: true,
       status: true,
       startingPrice: true,
+      auctionStartsAt: true,
       auctionEndsAt: true,
+      cancelledAt: true,
       verifiedAt: true,
     },
   });
@@ -105,8 +109,10 @@ export async function findListingAuction(id: number) {
     title: listing.title,
     status: listing.status,
     startingPrice: Number(listing.startingPrice),
-    startsAt: listing.verifiedAt ? new Date(listing.verifiedAt) : null,
+    // Set when the admin verifies it at the latest (see updateListingStatus)
+    startsAt: listing.auctionStartsAt ?? listing.verifiedAt,
     endsAt: new Date(listing.auctionEndsAt),
+    cancelledAt: listing.cancelledAt,
   };
 }
 
@@ -135,7 +141,9 @@ export const listingSelect = {
   evidenceImages: true,
   certificateCode: true,
   startingPrice: true,
+  auctionStartsAt: true,
   auctionEndsAt: true,
+  cancelledAt: true,
   donationPercentage: true,
   charitableOrganizationId: true,
   charitableOrganization: {
@@ -182,16 +190,35 @@ export async function adminListing(opts: { status?: string; skip: number; take: 
   return { items, total };
 }
 
+export async function findListingForAdmin(id: number) {
+  return prisma.listing.findUnique({
+    where: { id },
+    select: { id: true, status: true, auctionStartsAt: true, auctionEndsAt: true, cancelledAt: true },
+  });
+}
+
 export async function updateListingStatus(
     id: number,
     status: "pending_verification" | "verified" | "rejected"
 ) {
-  return prisma.listing.update({
-    where: { id },
-    // verifiedAt is when the admin verified it: shown on the item page and used as the auction start
-    data: { status, verifiedAt: status === "verified" ? new Date() : null },
-    select: listingSelect,
-  });
+  const now = new Date();
+  const data: Prisma.ListingUpdateInput = { status, verifiedAt: status === "verified" ? now : null };
+
+  // An auction can't open before it is verified: with no start date, or one that has already passed,
+  // it opens now. A start date still in the future is kept, and the auction stays scheduled until then.
+  if (status === "verified") {
+    const current = await prisma.listing.findUnique({ where: { id }, select: { auctionStartsAt: true } });
+    if (current && (!current.auctionStartsAt || current.auctionStartsAt <= now)) data.auctionStartsAt = now;
+  }
+
+  return prisma.listing.update({ where: { id }, data, select: listingSelect });
+}
+
+/** Marks the auction as cancelled. Returns the listing, or null if it doesn't exist. */
+export async function cancelListing(id: number) {
+  const result = await prisma.listing.updateMany({ where: { id, cancelledAt: null }, data: { cancelledAt: new Date() } });
+  if (result.count === 0) return null;
+  return prisma.listing.findUnique({ where: { id }, select: listingSelect });
 }
 
 export async function findOwn(id: number, clubId: number) {
@@ -211,7 +238,7 @@ export async function createOwn(clubId: number, input: NewListingInput) {
 export async function updateOwn(id: number, clubId: number, input: ListingInput) {
   const { playerDetails, ...rest } = input;
   const result = await prisma.listing.updateMany({
-    where: { id, clubId, status: { in: EDITABLE_STATUSES_CLUB } },
+    where: { id, clubId, status: { in: EDITABLE_STATUSES_CLUB }, cancelledAt: null },
     data: { ...rest, ...playerDetailsData(playerDetails) },
   });
   return result.count;

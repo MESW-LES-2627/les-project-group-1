@@ -1,5 +1,6 @@
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import {
+  cancelMyListing,
   createMyListing,
   deleteMyListing,
   fetchCategories,
@@ -53,6 +54,11 @@ export function useUpdateMyListing() {
 export function useSubmitMyListing() {
   const refresh = useRefreshMyListings()
   return useMutation({ mutationFn: submitMyListing, onSuccess: refresh })
+}
+
+export function useCancelMyListing() {
+  const refresh = useRefreshMyListings()
+  return useMutation({ mutationFn: cancelMyListing, onSuccess: refresh })
 }
 
 export function useDeleteMyListing() {
