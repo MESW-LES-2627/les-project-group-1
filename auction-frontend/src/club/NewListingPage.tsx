@@ -9,6 +9,7 @@ import { Navbar } from '@/components/Navbar';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { API_URL } from '@/lib/api';
+import { JERSEY_DETAIL_FIELDS, PLAYER_ONLY_FIELDS, buildDetails, categoryHasPlayer, withoutPlayerFields } from '@/dashboard/lib/listing-form';
 
 /**
  * NewListingPage
@@ -31,6 +32,7 @@ const ERROR_MESSAGES: Record<string, string> = {
   title_taken: 'There is already a listing with this title. Choose a different one.',
   invalid_description: 'The description must have between 10 and 2000 characters.',
   invalid_player_name: 'The player name can have up to 80 characters.',
+  invalid_player_details: 'Check the player details: each value can have up to 100 characters.',
   invalid_season: 'The season can have up to 20 characters.',
   invalid_competition: 'The competition can have up to 100 characters.',
   invalid_match: 'The match can have up to 100 characters.',
@@ -68,6 +70,7 @@ function NewListingForm({ token }: { token: string }) {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [playerName, setPlayerName] = useState('');
+  const [playerDetails, setPlayerDetails] = useState<Record<string, string>>({});
   const [season, setSeason] = useState('');
   const [competition, setCompetition] = useState('');
   const [match, setMatch] = useState('');
@@ -82,6 +85,9 @@ function NewListingForm({ token }: { token: string }) {
   const [error, setError] = useState('');
   const [created, setCreated] = useState<{ title: string; status: Submission } | null>(null);
 
+  const categorySlug = categories.data?.find((category) => String(category.id) === categoryId)?.slug;
+  const hasPlayer = categoryHasPlayer(categorySlug);
+
   const submit = async (status: Submission) => {
     setError('');
 
@@ -91,11 +97,16 @@ function NewListingForm({ token }: { token: string }) {
       return;
     }
 
+    // Team jerseys have no player: drop anything typed before the category was changed
+    const player = hasPlayer ? { playerName, playerDetails } : withoutPlayerFields({ playerName, playerDetails });
+    const details = buildDetails(player.playerDetails, null);
+
     const form = new FormData();
     form.append('categoryId', categoryId);
     form.append('title', title);
     form.append('description', description);
-    form.append('playerName', playerName);
+    form.append('playerName', player.playerName);
+    form.append('playerDetails', details ? JSON.stringify(details) : '');
     form.append('season', season);
     form.append('competition', competition);
     form.append('match', match);
@@ -147,6 +158,7 @@ function NewListingForm({ token }: { token: string }) {
     setTitle('');
     setDescription('');
     setPlayerName('');
+    setPlayerDetails({});
     setSeason('');
     setCompetition('');
     setMatch('');
@@ -241,10 +253,12 @@ function NewListingForm({ token }: { token: string }) {
         </div>
 
         <div className="grid grid-cols-2 gap-6 max-tablet:grid-cols-1">
-          <div>
-            <label htmlFor="listing-player" className={labelClass}>Player</label>
-            <Input id="listing-player" className={inputClass} value={playerName} onChange={(event) => setPlayerName(event.target.value)} maxLength={80} />
-          </div>
+          {hasPlayer && (
+            <div>
+              <label htmlFor="listing-player" className={labelClass}>Player</label>
+              <Input id="listing-player" className={inputClass} value={playerName} onChange={(event) => setPlayerName(event.target.value)} maxLength={80} />
+            </div>
+          )}
           <div>
             <label htmlFor="listing-season" className={labelClass}>Season</label>
             <Input id="listing-season" className={inputClass} value={season} onChange={(event) => setSeason(event.target.value)} maxLength={20} placeholder="2024/25" />
@@ -257,7 +271,40 @@ function NewListingForm({ token }: { token: string }) {
             <label htmlFor="listing-match" className={labelClass}>Match</label>
             <Input id="listing-match" className={inputClass} value={match} onChange={(event) => setMatch(event.target.value)} maxLength={100} placeholder="Home vs Away, date" />
           </div>
+          {JERSEY_DETAIL_FIELDS.map(({ key, label }) => (
+            <div key={key}>
+              <label htmlFor={`detail-${key}`} className={labelClass}>{label}</label>
+              <Input
+                id={`detail-${key}`}
+                className={inputClass}
+                value={playerDetails[key] ?? ''}
+                onChange={(event) => setPlayerDetails((current) => ({ ...current, [key]: event.target.value }))}
+                maxLength={100}
+              />
+            </div>
+          ))}
         </div>
+
+        {hasPlayer && (
+        <fieldset className="space-y-4">
+          <legend className={labelClass}>Player details</legend>
+          <div className="grid grid-cols-2 gap-6 max-tablet:grid-cols-1">
+            {PLAYER_ONLY_FIELDS.map(({ key, label, numeric }) => (
+              <div key={key}>
+                <label htmlFor={`detail-${key}`} className={labelClass}>{label}</label>
+                <Input
+                  id={`detail-${key}`}
+                  type={numeric ? 'number' : 'text'}
+                  className={inputClass}
+                  value={playerDetails[key] ?? ''}
+                  onChange={(event) => setPlayerDetails((current) => ({ ...current, [key]: event.target.value }))}
+                  maxLength={numeric ? undefined : 100}
+                />
+              </div>
+            ))}
+          </div>
+        </fieldset>
+        )}
 
         <div>
           <label htmlFor="listing-tags" className={labelClass}>Tags</label>
@@ -364,7 +411,7 @@ function NewListingForm({ token }: { token: string }) {
   );
 }
 
-function NewListingView({ account }: { account: AccountNav }) {
+export function NewListingView({ account }: { account: AccountNav }) {
   const isClub = account.role === 'CLUB';
 
   return (

@@ -177,7 +177,8 @@ export async function updateListingStatus(
 ) {
   return prisma.listing.update({
     where: { id },
-    data: { status },
+    // verifiedAt is when the admin verified it: shown on the item page and used as the auction start
+    data: { status, verifiedAt: status === "verified" ? new Date() : null },
     select: listingSelect,
   });
 }

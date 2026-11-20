@@ -3,7 +3,9 @@ import { useCategories, useCreateMyListing, useUpdateMyListing } from "@/dashboa
 import { getClubErrorMessage } from "@/dashboard/lib/club-errors"
 import type { ListingPayload, MyListing } from "@/dashboard/lib/club-api"
 import {
-  PLAYER_DETAIL_FIELDS,
+  JERSEY_DETAIL_FIELDS,
+  PLAYER_ONLY_FIELDS,
+  categoryHasPlayer,
   emptyForm,
   formFromListing,
   formToFields,
@@ -57,6 +59,8 @@ function ListingForm({ listing, onDone }: { listing?: MyListing | null; onDone: 
   const create = useCreateMyListing()
   const update = useUpdateMyListing()
   const mutation = listing ? update : create
+  const categorySlug = categories?.find((category) => String(category.id) === values.categoryId)?.slug
+  const hasPlayer = categoryHasPlayer(categorySlug)
 
   function set<K extends keyof ListingFormValues>(key: K, value: ListingFormValues[K]) {
     setValues((current) => ({ ...current, [key]: value }))
@@ -68,7 +72,7 @@ function ListingForm({ listing, onDone }: { listing?: MyListing | null; onDone: 
 
   // submit = true also sends the listing for verification, in the same request
   function save(submit: boolean) {
-    const fields = formToFields(values, initial, listing)
+    const fields = formToFields(values, initial, listing, hasPlayer)
     if (submit) fields.status = "pending_verification"
 
     const payload: ListingPayload = {
@@ -140,9 +144,11 @@ function ListingForm({ listing, onDone }: { listing?: MyListing | null; onDone: 
       </Field>
 
       <div className="grid gap-4 sm:grid-cols-2">
-        <Field label="Player name" htmlFor="listing-player">
-          <Input id="listing-player" value={values.playerName} onChange={(e) => set("playerName", e.target.value)} />
-        </Field>
+        {hasPlayer && (
+          <Field label="Player name" htmlFor="listing-player">
+            <Input id="listing-player" value={values.playerName} onChange={(e) => set("playerName", e.target.value)} />
+          </Field>
+        )}
         <Field label="Season" htmlFor="listing-season">
           <Input id="listing-season" value={values.season} onChange={(e) => set("season", e.target.value)} />
         </Field>
@@ -156,6 +162,11 @@ function ListingForm({ listing, onDone }: { listing?: MyListing | null; onDone: 
         <Field label="Match" htmlFor="listing-match">
           <Input id="listing-match" value={values.match} onChange={(e) => set("match", e.target.value)} />
         </Field>
+        {JERSEY_DETAIL_FIELDS.map(({ key, label }) => (
+          <Field key={key} label={label} htmlFor={`detail-${key}`}>
+            <Input id={`detail-${key}`} value={values.playerDetails[key] ?? ""} onChange={(e) => setDetail(key, e.target.value)} />
+          </Field>
+        ))}
       </div>
 
       <Field label="Tags (separated by commas)" htmlFor="listing-tags">
@@ -167,10 +178,11 @@ function ListingForm({ listing, onDone }: { listing?: MyListing | null; onDone: 
         />
       </Field>
 
+      {hasPlayer && (
       <fieldset className="space-y-3 rounded-md border p-3">
         <legend className="px-1 text-sm font-medium">Player details</legend>
         <div className="grid gap-3 sm:grid-cols-2">
-          {PLAYER_DETAIL_FIELDS.map(({ key, label, numeric }) => (
+          {PLAYER_ONLY_FIELDS.map(({ key, label, numeric }) => (
             <Field key={key} label={label} htmlFor={`detail-${key}`}>
               <Input
                 id={`detail-${key}`}
@@ -182,6 +194,7 @@ function ListingForm({ listing, onDone }: { listing?: MyListing | null; onDone: 
           ))}
         </div>
       </fieldset>
+      )}
 
       <div className="grid gap-4 sm:grid-cols-2">
         <Field label="Starting price (€)" htmlFor="listing-price">
