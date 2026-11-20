@@ -59,6 +59,7 @@ async function cleanUp() {
   await removeUploadedFiles(listings.flatMap((l) => [...l.images, ...l.evidenceImages]));
   await prisma.listing.deleteMany({ where: { club: { slug: { startsWith: PREFIX } } } });
   await prisma.club.deleteMany({ where: { slug: { startsWith: PREFIX } } });
+  await prisma.category.deleteMany({ where: { slug: PREFIX } });
   await prisma.user.deleteMany({ where: { email: { startsWith: PREFIX } } });
 }
 
@@ -91,8 +92,8 @@ beforeAll(async () => {
   if (!httpServer.listening) httpServer.listen(PORT);
   await cleanUp(); // leftovers from an interrupted run
 
-  const category = await prisma.category.findFirst({ select: { id: true } });
-  if (!category) throw new Error("No categories in the database. Run the migrations and the seed first.");
+  // The CI database has no seed data, so each test file brings its own category
+  const category = await prisma.category.create({ data: { slug: PREFIX, name: `${PREFIX} category` } });
   categoryId = category.id;
 
   approvedToken = await createUser("approved", "CLUB", "approved");
