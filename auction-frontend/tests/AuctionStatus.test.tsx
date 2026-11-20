@@ -4,6 +4,7 @@ import userEvent from '@testing-library/user-event';
 import { BidPanel } from '../src/components/BidPanel';
 import { ListingCard } from '../src/components/ListingCard';
 import { formatDuration, formatTimeUntilStart } from '../src/auction/utils';
+import { emptyForm, formToFields, toLocalInput } from '../src/dashboard/lib/listing-form';
 import type { AuctionState } from '../src/auction/types';
 import type { ListingSummary } from '../src/catalogue/types';
 import { renderWithRouter } from './setup/render';
@@ -93,6 +94,22 @@ describe('BidPanel by auction status', () => {
     expect(screen.getByRole('heading', { name: 'This auction was cancelled' })).toBeInTheDocument();
     expect(screen.getByText('No more bids can be placed on it.')).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /bid/i })).toBeNull();
+  });
+
+  it('closes bidding the moment the countdown reaches zero, before the server says the auction ended', () => {
+    // The server still reports it as active: only the browser clock has reached the end
+    renderPanel(auction({ status: 'active', isActive: true, endTime: NOW }));
+
+    expect(screen.getByRole('button', { name: 'BIDDING CLOSED' })).toBeDisabled();
+    expect(screen.getByRole('spinbutton')).toBeDisabled();
+    expect(screen.getAllByText('Ended').length).toBeGreaterThan(0);
+  });
+
+  it('still allows bidding one second before the end', () => {
+    renderPanel(auction({ status: 'active', isActive: true, endTime: NOW + 1000 }));
+
+    expect(screen.getByRole('button', { name: 'PLACE BID' })).toBeEnabled();
+    expect(screen.getByText('1s left')).toBeInTheDocument();
   });
 
   it('works with a server that sends no status, using the active flag', () => {
@@ -375,5 +392,101 @@ describe('AdminListingsTable: auction status and cancelling', async () => {
 
     expect(screen.getByText('Completed')).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /cancel/i })).toBeNull();
+  });
+});
+
+describe('countdown and time zones', () => {
+  // Runs fn as if the computer were in another time zone (Bun applies TZ changes straight away)
+  function inTimeZone<T>(zone: string, fn: () => T): T {
+    const previous = process.env.TZ;
+    process.env.TZ = zone;
+    try {
+      return fn();
+    } finally {
+      if (previous === undefined) delete process.env.TZ;
+      else process.env.TZ = previous;
+    }
+  }
+
+  function cardText(auctionEndsAt: string) {
+    const { unmount } = renderWithRouter(
+      <ListingCard
+        listing={{
+          id: 1,
+          title: 'Signed shirt',
+          playerName: null,
+          season: null,
+          competition: null,
+          match: null,
+          tags: [],
+          images: ['/shirt.png'],
+          club: { slug: 'club', name: 'Club', logoUrl: null },
+          category: { id: 1, slug: 'player-jerseys', name: 'Player jerseys' },
+          currentBid: 100,
+          auctionStartsAt: new Date(NOW - HOUR).toISOString(),
+          auctionEndsAt,
+          auctionStatus: 'active',
+        }}
+        now={NOW}
+      />
+    );
+    const text = screen.getByRole('article').textContent;
+    unmount();
+    return text;
+  }
+
+  it('shows the same time left for the same moment, whatever time zone it is written in', () => {
+    // NOW is 12:00 UTC; the auction ends two hours later, at 14:00 UTC
+    const utc = cardText('2026-11-20T14:00:00.000Z');
+    const lisbonWinter = cardText('2026-11-20T14:00:00+00:00');
+    const madrid = cardText('2026-11-20T15:00:00+01:00');
+    const saoPaulo = cardText('2026-11-20T11:00:00-03:00');
+
+    expect(utc).toContain('2 hours 0 min left');
+    expect(lisbonWinter).toBe(utc);
+    expect(madrid).toBe(utc);
+    expect(saoPaulo).toBe(utc);
+  });
+
+  it('shows the same time left to buyers in different time zones', () => {
+    const endsAt = new Date(NOW + 2 * HOUR).toISOString();
+
+    const inLisbon = inTimeZone('Europe/Lisbon', () => cardText(endsAt));
+    const inTokyo = inTimeZone('Asia/Tokyo', () => cardText(endsAt));
+    const inSaoPaulo = inTimeZone('America/Sao_Paulo', () => cardText(endsAt));
+
+    expect(inLisbon).toContain('2 hours 0 min left');
+    expect(inTokyo).toBe(inLisbon);
+    expect(inSaoPaulo).toBe(inLisbon);
+  });
+
+  it("saves the date the club typed in its own time zone as the right moment", () => {
+    // A club in Lisbon and one in São Paulo both type 18:30: those are different moments
+    const fromLisbon = inTimeZone('Europe/Lisbon', () =>
+      formToFields({ ...emptyForm(), auctionEndsAt: '2030-05-01T18:30' }, emptyForm())
+    );
+    const fromSaoPaulo = inTimeZone('America/Sao_Paulo', () =>
+      formToFields({ ...emptyForm(), auctionEndsAt: '2030-05-01T18:30' }, emptyForm())
+    );
+
+    expect(fromLisbon.auctionEndsAt).toBe('2030-05-01T17:30:00.000Z'); // Lisbon is UTC+1 in May
+    expect(fromSaoPaulo.auctionEndsAt).toBe('2030-05-01T21:30:00.000Z'); // São Paulo is UTC-3
+  });
+
+  it('shows a saved date in the viewer\'s own time zone when editing', () => {
+    const saved = '2030-05-01T17:30:00.000Z';
+
+    expect(inTimeZone('Europe/Lisbon', () => toLocalInput(saved))).toBe('2030-05-01T18:30');
+    expect(inTimeZone('America/Sao_Paulo', () => toLocalInput(saved))).toBe('2030-05-01T14:30');
+  });
+
+  it('keeps the same moment when a date is loaded into the form and saved again', () => {
+    for (const zone of ['Europe/Lisbon', 'Asia/Tokyo', 'America/Sao_Paulo']) {
+      const saved = '2030-05-01T17:30:00.000Z';
+      const fields = inTimeZone(zone, () =>
+        formToFields({ ...emptyForm(), auctionEndsAt: toLocalInput(saved) }, emptyForm())
+      );
+      expect(fields.auctionEndsAt).toBe(saved);
+    }
   });
 });
