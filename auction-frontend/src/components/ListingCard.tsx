@@ -1,7 +1,8 @@
 import { Link } from 'react-router-dom';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
-import { formatEuroSuffix, formatTimeLeft } from '@/auction/utils';
+import { formatEuroSuffix, formatTimeLeft, formatTimeUntilStart } from '@/auction/utils';
+import { AuctionStatusBadge } from '@/components/AuctionStatusBadge';
 import type { ListingSummary } from '@/catalogue/types';
 
 const styles = {
@@ -22,8 +23,8 @@ const styles = {
 /**
  * ListingCard Component
  *
- * Card shown in the catalogue grid: tags, image, name, club, competition and season,
- * current bid and time left. Links to the item page and to the club page.
+ * Card shown in the catalogue grid: tags, image, name, club, competition, match and
+ * season, current bid and time left. Links to the item page and to the club page.
  */
 
 interface ListingCardProps {
@@ -35,6 +36,18 @@ export function ListingCard({ listing, now }: ListingCardProps) {
   const competition = [listing.competition, listing.season].filter(Boolean).join(' ');
   const hasAuction = listing.currentBid !== null && listing.auctionEndsAt !== null;
   const msLeft = listing.auctionEndsAt ? new Date(listing.auctionEndsAt).getTime() - now : 0;
+  const msToStart = listing.auctionStartsAt ? new Date(listing.auctionStartsAt).getTime() - now : 0;
+  // The server sends the status; the clock moves it on between page loads (scheduled -> live -> ended)
+  const status =
+    listing.auctionStatus === 'cancelled'
+      ? 'cancelled'
+      : msLeft <= 0
+        ? 'completed'
+        : listing.auctionStatus === 'scheduled' && msToStart > 0
+          ? 'scheduled'
+          : listing.auctionStatus === 'completed'
+            ? 'completed'
+            : 'active';
 
   return (
     <article className={styles.card}>
@@ -59,15 +72,23 @@ export function ListingCard({ listing, now }: ListingCardProps) {
           {listing.club.name}
         </Link>
         <p className={cn(styles.meta, 'm-0')}>{competition}</p>
+        {listing.match && <p className={cn(styles.meta, 'm-0')}>{listing.match}</p>}
 
         {hasAuction && (
-          <div className={styles.priceRow}>
-            <span className={styles.price}>{formatEuroSuffix(listing.currentBid!)}</span>
-            <div className={styles.bid}>
-              <span className="text-slate">current bid</span>
-              <span className="text-live">{formatTimeLeft(msLeft)}</span>
+          <>
+            <AuctionStatusBadge status={status} className="mt-2" />
+            <div className={styles.priceRow}>
+              <span className={styles.price}>{formatEuroSuffix(listing.currentBid!)}</span>
+              <div className={styles.bid}>
+                <span className="text-slate">{status === 'scheduled' ? 'starting bid' : 'current bid'}</span>
+                {status === 'scheduled' && <span className="text-orange">{formatTimeUntilStart(msToStart)}</span>}
+                {status === 'cancelled' && <span className="text-danger">Cancelled</span>}
+                {(status === 'active' || status === 'completed') && (
+                  <span className="text-live">{formatTimeLeft(msLeft)}</span>
+                )}
+              </div>
             </div>
-          </div>
+          </>
         )}
       </div>
     </article>

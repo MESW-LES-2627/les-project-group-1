@@ -3,6 +3,7 @@ import { createServer } from "http";
 import { Server } from "socket.io";
 import cors from "cors";
 import { env } from "./config/env";
+import { UPLOADS_DIR } from "./config/uploads";
 import routes from "./routes";
 import paymentsRoutes from "./routes/payments.routes";
 import { registerAuctionSocket } from "./controllers/auction.socket";
@@ -15,6 +16,7 @@ app.use(cors());
 // Must be BEFORE express.json(): Stripe signature checks need the raw body.
 app.use("/api/stripe", paymentsRoutes);
 
+app.use("/uploads", express.static(UPLOADS_DIR)); // uploaded club logos
 app.use(express.json());
 app.use("/api", routes);
 app.use(notFound);

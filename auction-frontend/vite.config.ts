@@ -11,4 +11,11 @@ export default defineConfig({
       '@': fileURLToPath(new URL('./src', import.meta.url)),
     },
   },
+  server: {
+    // Forward /api/* to the backend during development.
+    // The browser only talks to the Vite server, so there are no CORS problems.
+    proxy: {
+      "/api": { target: "http://localhost:3000", changeOrigin: true },
+    },
+  },
 })

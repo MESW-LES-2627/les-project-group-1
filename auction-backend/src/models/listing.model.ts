@@ -1,4 +1,6 @@
 import { prisma } from "../config/prisma";
+import { Prisma } from "../../generated/prisma/client";
+import type { ListingInput, NewListingInput } from "../utils/listingValidation";
 
 // Row shape returned by the public_listings view.
 export interface ListingRow {
@@ -8,6 +10,7 @@ export interface ListingRow {
   player_details: Record<string, string | number> | null;
   season: string | null;
   competition: string | null;
+  match: string | null;
   tags: string[];
   description: string;
   images: string[];
@@ -17,8 +20,17 @@ export interface ListingRow {
   verified_at: Date | null;
   starting_price: number | null;
   auction_ends_at: Date | null;
+  auction_starts_at: Date | null;
+  cancelled_at: Date | null;
+  donation_percentage: number | null;
+  charity_id: number | null;
+  charity_name: string | null;
+  charity_description: string | null;
+  charity_logo_url: string | null;
+  charity_country: string | null;
   club_slug: string;
   club_name: string;
+  club_logo_url: string | null;
   category_slug: string;
   category_name: string;
 }
@@ -29,7 +41,8 @@ export async function findPublicListings(pattern: string | null, categorySlug: s
     where (${pattern}::text is null
         or title ilike ${pattern}
         or club_name ilike ${pattern}
-        or player_name ilike ${pattern})
+        or player_name ilike ${pattern}
+        or match ilike ${pattern})
       and (${categorySlug}::text is null or category_slug = ${categorySlug})
     order by id
   `;
@@ -41,7 +54,7 @@ export async function findPublicListingById(id: number) {
 }
 
 export async function findCategories() {
-  return prisma.category.findMany({ select: { slug: true, name: true }, orderBy: { name: "asc" } });
+  return prisma.category.findMany({ select: { id: true, slug: true, name: true }, orderBy: { name: "asc" } });
 }
 
 export async function findClubBySlug(slug: string) {
@@ -56,7 +69,7 @@ export async function findPublicListingsByClub(slug: string) {
 }
 
 /** Data needed to open a live auction for a verified listing, or null if it has no auction data. */
-export async function findListingAuction(id: number) {
+/*export async function findListingAuction(id: number) {
   if (!Number.isInteger(id)) return null;
 
   const rows = await prisma.$queryRaw<
@@ -70,4 +83,198 @@ export async function findListingAuction(id: number) {
     startingPrice: Number(row.starting_price),
     endsAt: new Date(row.auction_ends_at),
   };
+}*/
+
+export async function findListingAuction(id: number) {
+  if (!Number.isInteger(id)) return null;
+
+  const listing = await prisma.listing.findUnique({
+    where: { id },
+    select: {
+      id: true,
+      title: true,
+      status: true,
+      startingPrice: true,
+      auctionStartsAt: true,
+      auctionEndsAt: true,
+      cancelledAt: true,
+      verifiedAt: true,
+    },
+  });
+
+  if (!listing || listing.startingPrice === null || !listing.auctionEndsAt) return null;
+
+  return {
+    id: listing.id,
+    title: listing.title,
+    status: listing.status,
+    startingPrice: Number(listing.startingPrice),
+    // Set when the admin verifies it at the latest (see updateListingStatus)
+    startsAt: listing.auctionStartsAt ?? listing.verifiedAt,
+    endsAt: new Date(listing.auctionEndsAt),
+    cancelledAt: listing.cancelledAt,
+  };
+}
+
+// CLUB-OWNED LISTINGS
+
+/** Every query here is scoped by clubId, so a club can never read or change another club's listings. */
+
+/**
+ * Clubs can fully edit listings in these states. Pending listings are locked while the admin reviews them.
+ * A verified listing only accepts its auction settings, and only while the auction is scheduled
+ * (see clubEditMode in services/auctionStatus.ts).
+ */
+export const EDITABLE_STATUSES_CLUB = ["draft", "rejected"];
+
+export const listingSelect = {
+  id: true,
+  categoryId: true,
+  category: { select: { slug: true, name: true } },
+  title: true,
+  playerName: true,
+  playerDetails: true,
+  season: true,
+  competition: true,
+  match: true,
+  tags: true,
+  description: true,
+  images: true,
+  status: true,
+  authenticityNotes: true,
+  evidenceImages: true,
+  certificateCode: true,
+  startingPrice: true,
+  auctionStartsAt: true,
+  auctionEndsAt: true,
+  cancelledAt: true,
+  donationPercentage: true,
+  charitableOrganizationId: true,
+  charitableOrganization: {
+    select: { id: true, name: true, description: true, logoUrl: true, country: true, verified: true },
+  },
+  createdAt: true,
+  verifiedAt: true,
+} as const;
+
+// A nullable JSON column needs Prisma.DbNull to be set to NULL. Returns what to spread into the data.
+function playerDetailsData(value: ListingInput["playerDetails"]) {
+  if (value === undefined) return {};
+  return { playerDetails: value === null ? Prisma.DbNull : value };
+}
+
+export async function listOwn(clubId: number, opts: { status?: string; skip: number; take: number }) {
+  const where = { clubId, ...(opts.status ? { status: opts.status } : {}) };
+  const [items, total] = await prisma.$transaction([
+    prisma.listing.findMany({ where, select: listingSelect, orderBy: { id: "desc" }, skip: opts.skip, take: opts.take }),
+    prisma.listing.count({ where }),
+  ]);
+  return { items, total };
+}
+
+export async function adminListing(opts: { status?: string; skip: number; take: number }) {
+  const where = {
+    // Drafts are private to the club; everything that reached the admin can be viewed
+    status: {
+      in: ["pending_verification", "verified", "rejected"],
+      ...(opts.status ? { equals: opts.status } : {}),
+    },
+  };
+
+  const [items, total] = await prisma.$transaction([
+    prisma.listing.findMany({
+      where,
+      select: listingSelect,
+      orderBy: { id: "desc" },
+      skip: opts.skip,
+      take: opts.take,
+    }),
+    prisma.listing.count({ where }),
+  ]);
+
+  return { items, total };
+}
+
+export async function findListingForAdmin(id: number) {
+  return prisma.listing.findUnique({
+    where: { id },
+    select: { id: true, status: true, auctionStartsAt: true, auctionEndsAt: true, cancelledAt: true },
+  });
+}
+
+export async function updateListingStatus(
+    id: number,
+    status: "pending_verification" | "verified" | "rejected"
+) {
+  const now = new Date();
+  const data: Prisma.ListingUpdateInput = { status, verifiedAt: status === "verified" ? now : null };
+
+  // An auction can't open before it is verified: with no start date, or one that has already passed,
+  // it opens now. A start date still in the future is kept, and the auction stays scheduled until then.
+  if (status === "verified") {
+    const current = await prisma.listing.findUnique({ where: { id }, select: { auctionStartsAt: true } });
+    if (current && (!current.auctionStartsAt || current.auctionStartsAt <= now)) data.auctionStartsAt = now;
+  }
+
+  return prisma.listing.update({ where: { id }, data, select: listingSelect });
+}
+
+/** Marks the auction as cancelled. Returns the listing, or null if it doesn't exist. */
+export async function cancelListing(id: number) {
+  const result = await prisma.listing.updateMany({ where: { id, cancelledAt: null }, data: { cancelledAt: new Date() } });
+  if (result.count === 0) return null;
+  return prisma.listing.findUnique({ where: { id }, select: listingSelect });
+}
+
+export async function findOwn(id: number, clubId: number) {
+  return prisma.listing.findFirst({ where: { id, clubId }, select: listingSelect });
+}
+
+export async function createOwn(clubId: number, input: NewListingInput) {
+  // Throws Prisma P2002 if the title is taken, P2003 if the category doesn't exist.
+  const { playerDetails, ...rest } = input;
+  return prisma.listing.create({
+    data: { ...rest, ...playerDetailsData(playerDetails), clubId },
+    select: listingSelect,
+  });
+}
+
+/** Returns how many rows changed: 0 means not found, not yours, or no longer editable. */
+export async function updateOwn(id: number, clubId: number, input: ListingInput) {
+  const { playerDetails, ...rest } = input;
+  const result = await prisma.listing.updateMany({
+    where: { id, clubId, status: { in: EDITABLE_STATUSES_CLUB }, cancelledAt: null },
+    data: { ...rest, ...playerDetailsData(playerDetails) },
+  });
+  return result.count;
+}
+
+/**
+ * Changes the auction settings of a verified listing. Only while its auction hasn't opened yet: the
+ * condition is checked in the same query, so an auction that opens in the meantime is left alone.
+ * Returns how many rows changed.
+ */
+export async function updateScheduledAuction(
+  id: number,
+  clubId: number,
+  input: Pick<ListingInput, "startingPrice" | "auctionStartsAt" | "auctionEndsAt" | "charitableOrganizationId" | "donationPercentage">
+) {
+  const { startingPrice, auctionStartsAt, auctionEndsAt, charitableOrganizationId, donationPercentage } = input;
+  const result = await prisma.listing.updateMany({
+    where: { id, clubId, status: "verified", cancelledAt: null, auctionStartsAt: { gt: new Date() } },
+    data: { startingPrice, auctionStartsAt, auctionEndsAt, charitableOrganizationId, donationPercentage },
+  });
+  return result.count;
+}
+
+/** How many bids an auction has and the highest one, for the club's view of its auction. */
+export async function bidSummary(listingId: number) {
+  const result = await prisma.bid.aggregate({ where: { listingId }, _count: true, _max: { amount: true } });
+  return { bidCount: result._count, highestBid: result._max.amount ? Number(result._max.amount) : null };
+}
+
+/** Returns how many rows were deleted. Verified listings can't be deleted. */
+export async function deleteOwn(id: number, clubId: number) {
+  const result = await prisma.listing.deleteMany({ where: { id, clubId, status: { not: "verified" } } });
+  return result.count;
 }

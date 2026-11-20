@@ -1,9 +1,19 @@
-import type { PlayerInfo } from '@/auction/types';
+import type { AuctionStatus, PlayerInfo } from '@/auction/types';
 
 // Category used to browse and filter the catalogue.
 export interface Category {
+  id: number;
   slug: string;
   name: string;
+}
+
+// Verified charity supported by an auction.
+export interface ListingCharity {
+  id: number;
+  name: string;
+  description: string;
+  logoUrl: string | null;
+  country: string;
 }
 
 // Short listing data shown on catalogue cards.
@@ -13,12 +23,17 @@ export interface ListingSummary {
   playerName: string | null;
   season: string | null;
   competition: string | null;
+  match: string | null;
   tags: string[];
   images: string[];
-  club: { slug: string; name: string };
+  club: { slug: string; name: string; logoUrl: string | null };
   category: Category;
+  charity?: ListingCharity | null;
+  donationPercentage?: number | null;
   currentBid: number | null;
+  auctionStartsAt?: string | null;
   auctionEndsAt: string | null;
+  auctionStatus?: AuctionStatus;
 }
 
 // Full listing data shown on the item detail page, including authenticity evidence.

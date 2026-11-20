@@ -35,3 +35,7 @@ report.[0-9]_.[0-9]_.[0-9]_.[0-9]_.json
 
 
 /generated/prisma
+
+
+# files uploaded at runtime (club logos, listing images): data, not code
+/uploads

@@ -17,7 +17,14 @@ export interface AuctionState {
   isActive: boolean;
   bidCount?: number;
   bids?: Bid[];
+  /** scheduled, active, completed or cancelled (sent by the server). */
+  status?: AuctionStatus;
+  /** When a scheduled auction opens (ms). */
+  startTime?: number | null;
 }
+
+/** Where an auction is in its life. Only an active auction accepts bids. */
+export type AuctionStatus = 'scheduled' | 'active' | 'completed' | 'cancelled';
 
 //Result data shown when the auction finishes.
 export interface WinnerData {
@@ -42,15 +49,18 @@ export interface PlayerInfo {
 export interface Cause {
   name: string;
   description: string;
-  logo: string;
+  logo: string | null;
+  country?: string;
+  donationPercentage?: number | null;
 }
 
-//Item data shown on the auction page (tags, subtitle, images, player and causes).
+//Item data shown on the auction page (tags, subtitle, images, player, team and causes).
 export interface AuctionItem {
   subtitle: string;
   tags: string[];
   images: string[];
   player: PlayerInfo | null;
+  club: { name: string; logoUrl: string | null };
   causes: Cause[];
 }
 
@@ -61,6 +71,7 @@ export interface AccountNav {
   username: string;
   country: string;
   token: string;
+  role?: string;
   onProfileSaved: (user: ProfileUser) => void;
   onSignUpClick: () => void;
   onLoginClick: () => void;

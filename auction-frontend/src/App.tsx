@@ -9,6 +9,8 @@ import { SportsPage } from './sports/SportsPage';
 import { AboutPage } from './about/AboutPage';
 import { SupportPage } from './support/SupportPage';
 import { LivePage } from './live/LivePage';
+import { NewListingPage } from './club/NewListingPage';
+import DashboardRoutes from "@/dashboard/DashboardRoutes.tsx";
 
 /**
  * Root Application Component
@@ -17,6 +19,7 @@ import { LivePage } from './live/LivePage';
  * - /                 home page: memorabilia catalogue
  * - /auction/:id      item page with its live auction
  * - /club/:slug       club page
+ * - /listings/new     club creates a new auction
  * - /profile          account page of the logged in user
  * - /reset-password   link sent by email, opens the reset password form
  * - /demo             live auction prototype from Sprint 0
@@ -28,6 +31,7 @@ function App() {
         <Route path="/" element={<CataloguePage />} />
         <Route path="/auction/:id" element={<ItemPage />} />
         <Route path="/club/:slug" element={<ClubPage />} />
+        <Route path="/listings/new" element={<NewListingPage />} />
         <Route path="/live" element={<LivePage />} />
         <Route path="/sports" element={<SportsPage />} />
         <Route path="/charities" element={<CharitiesPage />} />
@@ -36,6 +40,7 @@ function App() {
         <Route path="/profile" element={<ProfilePage />} />
         <Route path="/reset-password" element={<CataloguePage />} />
         <Route path="/demo" element={<AuctionApp />} />
+        <Route path="/dashboard/*" element={<DashboardRoutes />} />
         <Route
           path="*"
           element={
@@ -45,6 +50,8 @@ function App() {
             </main>
           }
         />
+
+
       </Routes>
     </BrowserRouter>
   );

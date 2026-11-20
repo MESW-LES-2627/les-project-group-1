@@ -26,6 +26,8 @@ services:
       DATABASE_URL: postgres://${POSTGRES_USER:-auction}:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}@db:5432/${POSTGRES_DB:-auction}
       NODE_ENV: production
       PORT: 3000
+    volumes:
+      - uploads_data:/app/uploads
     expose:
       - "3000"
     networks:
@@ -56,3 +58,4 @@ networks:
 
 volumes:
   postgres_data:
+  uploads_data:

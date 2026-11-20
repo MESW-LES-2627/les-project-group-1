@@ -28,6 +28,7 @@ model User {
   createdAt         DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
   role              Role @default(BUYER)
   addresses         Address[]
+  club              Club?
 
   @@map("users")
 }
@@ -51,9 +52,12 @@ model Winner {
 
 model Club {
   id          Int       @id @default(autoincrement())
+  userId      Int?      @unique @map("user_id")
+  user        User?     @relation(fields: [userId], references: [id], onDelete: Cascade)
   slug        String    @unique
   name        String    @unique
   description String    @default("")
+  status      String    @default("pending") 
   logoUrl     String?   @map("logo_url")
   createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
   listings    Listing[]
@@ -73,29 +77,49 @@ model Category {
 // "status" has a CHECK constraint in the database (draft, pending_verification,
 // verified, rejected). Prisma can't model it, so it lives in the migration SQL only.
 model Listing {
-  id                Int       @id @default(autoincrement())
-  clubId            Int       @map("club_id")
-  categoryId        Int       @map("category_id")
-  title             String    @unique
-  playerName        String?   @map("player_name")
-  playerDetails     Json?     @map("player_details")
-  season            String?
-  competition       String?
-  tags              String[]  @default([])
-  description       String
-  images            String[]  @default([])
-  status            String    @default("draft")
-  authenticityNotes String?   @map("authenticity_notes")
-  evidenceImages    String[]  @default([]) @map("evidence_images")
-  certificateCode   String?   @unique @map("certificate_code")
-  startingPrice     Decimal?  @map("starting_price") @db.Decimal(10, 2)
-  auctionEndsAt     DateTime? @map("auction_ends_at") @db.Timestamptz(6)
-  createdAt         DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
-  verifiedAt        DateTime? @map("verified_at") @db.Timestamptz(6)
-  club              Club      @relation(fields: [clubId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  category          Category  @relation(fields: [categoryId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-
+  id                       Int                     @id @default(autoincrement())
+  clubId                   Int                     @map("club_id")
+  categoryId               Int                     @map("category_id")
+  charitableOrganizationId Int?                    @map("charitable_organization_id")
+  title                    String                  @unique
+  playerName               String?                 @map("player_name")
+  playerDetails            Json?                   @map("player_details")
+  season                   String?
+  competition              String?
+  match                    String?
+  tags                     String[]                @default([])
+  description              String
+  images                   String[]                @default([])
+  status                   String                  @default("draft")
+  authenticityNotes        String?                 @map("authenticity_notes")
+  evidenceImages           String[]                @default([]) @map("evidence_images")
+  certificateCode           String?                 @unique @map("certificate_code")
+  startingPrice            Decimal?                @map("starting_price") @db.Decimal(10, 2)
+  auctionStartsAt          DateTime?               @map("auction_starts_at") @db.Timestamptz(6)
+  auctionEndsAt            DateTime?               @map("auction_ends_at") @db.Timestamptz(6)
+  cancelledAt              DateTime?               @map("cancelled_at") @db.Timestamptz(6)
+  donationPercentage       Int?                    @map("donation_percentage")
+  createdAt                DateTime                @default(now()) @map("created_at") @db.Timestamptz(6)
+  verifiedAt               DateTime?               @map("verified_at") @db.Timestamptz(6)
+  club                     Club                    @relation(fields: [clubId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  category                 Category                @relation(fields: [categoryId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  charitableOrganization   CharitableOrganization? @relation(fields: [charitableOrganizationId], references: [id], onDelete: SetNull, onUpdate: NoAction)
+  bids                     Bid[]
+  
   @@map("listings")
+}
+
+model Bid {
+  id        Int      @id @default(autoincrement())
+  listingId Int      @map("listing_id")
+  bidder    String
+  country   String?
+  amount    Decimal  @db.Decimal(10, 2)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  listing   Listing  @relation(fields: [listingId], references: [id], onDelete: Cascade)
+
+  @@index([listingId, createdAt])
+  @@map("bids")
 }
 
 model Address {
@@ -113,4 +137,18 @@ model Address {
   updatedAt  DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
 
   @@map("shipping_addresses")
+}
+
+model CharitableOrganization {
+  id          Int       @id @default(autoincrement())
+  name        String    @unique
+  description String    @default("")
+  logoUrl     String?   @map("logo_url")
+  country     String    @default("")
+  verified    Boolean   @default(false)
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+  listings    Listing[]
+
+  @@map("charitable_organizations")
 }

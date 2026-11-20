@@ -5,15 +5,18 @@ import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { useState } from 'react';
+
+const MAX_ROWS_WITHOUT_SCROLL = 5;
 
 const cell = 'border-t-2 border-line px-[14px] py-[10px] text-center max-mobile:px-1 max-mobile:py-[9px] max-mobile:text-[0.72rem]';
 
 const styles = {
-  card: 'gap-0 overflow-hidden rounded-xl bg-chalk p-0 shadow-[4px_6px_8px_rgba(0,0,0,0.23)] ring-0',
+  card: 'gap-0 overflow-hidden rounded-xl bg-chalk !py-0 shadow-[4px_6px_8px_rgba(0,0,0,0.23)] ring-0',
   header: 'flex items-center justify-between gap-0 rounded-none bg-panel-strong px-[18px] py-2 max-mobile:px-3 max-mobile:py-[9px]',
   title: 'text-[clamp(1.8rem,2.35vw,2.8rem)] font-extrabold tracking-[-0.04em] max-mobile:text-2xl',
-  viewAll: 'h-auto p-0 text-[clamp(1rem,1.2vw,1.4rem)] font-bold text-info underline decoration-1 underline-offset-[3px] max-mobile:text-[0.9rem]',
-  tableHeading: 'px-[10px] pt-3 pb-2 text-center text-[clamp(0.8rem,1vw,1.15rem)] font-bold text-slate capitalize max-mobile:px-1 max-mobile:text-[0.7rem]',
+  viewAll: 'h-auto p-0 text-[clamp(1rem,1.2vw,1.4rem)] font-bold text-slate underline decoration-transparent underline-offset-[3px] transition-all duration-200 hover:decoration-current max-mobile:text-[0.9rem]',
+  tableHeading: 'sticky top-0 z-10 bg-chalk px-[10px] pt-3 pb-2 text-center text-[clamp(0.8rem,1vw,1.15rem)] font-bold text-slate capitalize max-mobile:px-1 max-mobile:text-[0.7rem]',
   row: 'hover:bg-transparent',
   emptyCell: 'border-t-2 border-line px-4 py-4 text-center font-bold text-grey-strong',
   bidderCell: `${cell} text-[clamp(0.9rem,1.1vw,1.25rem)] font-extrabold`,
@@ -35,48 +38,56 @@ interface LatestBidsProps {
 }
 
 export function LatestBids({ bids, myId }: LatestBidsProps) {
+  const [showAll, setShowAll] = useState(false);
+  const visibleBids = showAll ? bids : bids.slice(0, LATEST_BIDS_SHOWN);
+  const scrollable = showAll && bids.length > MAX_ROWS_WITHOUT_SCROLL;
+
   return (
     <Card className={styles.card}>
       <CardHeader className={styles.header}>
         <CardTitle className={styles.title}>Latest bids</CardTitle>
-        <Button asChild variant="link" className={styles.viewAll}>
-          <a href="#all-bids">View all</a>
+        {bids.length > LATEST_BIDS_SHOWN && (
+        <Button type="button" variant="link" className={styles.viewAll} onClick={() => setShowAll((value) => !value)}>
+          {showAll ? 'Show less' : 'View all'}
         </Button>
+      )}
       </CardHeader>
-      <Table>
-        <TableHeader>
-          <TableRow className={cn('border-b-0', styles.row)}>
-            <TableHead className={styles.tableHeading}>Bidder</TableHead>
-            <TableHead className={styles.tableHeading}>Date</TableHead>
-            <TableHead className={styles.tableHeading}>Bid</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {bids.length === 0 ? (
-            <TableRow className={styles.row}>
-              <TableCell colSpan={3} className={styles.emptyCell}>
-                No bids yet
-              </TableCell>
+      <div data-testid="bids-scroll" className={cn('[&>div]:overflow-visible', scrollable && 'max-h-72 overflow-y-auto')}>
+        <Table>
+          <TableHeader>
+            <TableRow className={cn('border-b-0', styles.row)}>
+              <TableHead className={styles.tableHeading}>Bidder</TableHead>
+              <TableHead className={styles.tableHeading}>Date</TableHead>
+              <TableHead className={styles.tableHeading}>Bid</TableHead>
             </TableRow>
-          ) : (
-            bids.slice(0, LATEST_BIDS_SHOWN).map((bid, index) => (
-              <TableRow key={`${bid.timestamp}-${index}`} className={styles.row}>
-                <TableCell className={styles.bidderCell}>
-                  <span className={styles.flag}>{flagEmoji(bid.country)}</span>
-                  {shortId(bid.bidder)}
-                  {bid.bidder === myId && (
-                    <span className={styles.youBadge}>
-                      you
-                    </span>
-                  )}
+          </TableHeader>
+          <TableBody>
+            {bids.length === 0 ? (
+              <TableRow className={styles.row}>
+                <TableCell colSpan={3} className={styles.emptyCell}>
+                  No bids yet
                 </TableCell>
-                <TableCell className={styles.bidCell}>{formatDate(bid.timestamp)}</TableCell>
-                <TableCell className={styles.bidCell}>{formatEuroSuffix(bid.amount)}</TableCell>
               </TableRow>
-            ))
-          )}
-        </TableBody>
-      </Table>
+            ) : (
+              visibleBids.map((bid, index) => (
+                <TableRow key={`${bid.timestamp}-${index}`} className={styles.row}>
+                  <TableCell className={styles.bidderCell}>
+                    <span className={styles.flag}>{flagEmoji(bid.country)}</span>
+                    {shortId(bid.bidder)}
+                    {bid.bidder === myId && (
+                      <span className={styles.youBadge}>
+                        you
+                      </span>
+                    )}
+                  </TableCell>
+                  <TableCell className={styles.bidCell}>{formatDate(bid.timestamp)}</TableCell>
+                  <TableCell className={styles.bidCell}>{formatEuroSuffix(bid.amount)}</TableCell>
+                </TableRow>
+              ))
+            )}
+          </TableBody>
+        </Table>
+      </div>
     </Card>
   );
 }

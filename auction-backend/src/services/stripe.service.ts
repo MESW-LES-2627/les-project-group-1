@@ -1,11 +1,21 @@
 import Stripe from "stripe";
 import { env } from "../config/env";
 
-export const stripe = new Stripe(env.stripeSecretKey);
+// Created on first use, so importing the app (for example in tests) does not
+// require STRIPE_SECRET_KEY to be set.
+let stripeClient: Stripe | null = null;
+
+export function getStripe(): Stripe {
+  if (!stripeClient) {
+    if (!env.stripeSecretKey) throw new Error("STRIPE_SECRET_KEY is not set.");
+    stripeClient = new Stripe(env.stripeSecretKey);
+  }
+  return stripeClient;
+}
 
 /** Creates a hosted Stripe Checkout session for the auction winner. */
 export async function createPaymentLink(itemName: string, amountEuros: number, email?: string) {
-  const session = await stripe.checkout.sessions.create({
+  const session = await getStripe().checkout.sessions.create({
     mode: "payment",
     customer_email: email,
     line_items: [

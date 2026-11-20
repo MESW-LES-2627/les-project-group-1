@@ -9,7 +9,7 @@ import { signToken } from "../services/token.service";
 
 export async function registerUser(req: Request, res: Response) {
   try {
-    const { username, email, password, country } = req.body;
+    const { username, email, password, country, accountType, clubName, clubSlug} = req.body;
 
     if (!username || !email || !password || !country)
       return res.status(400).json({ error: "Username, email, password and country are required." });
@@ -18,9 +18,27 @@ export async function registerUser(req: Request, res: Response) {
 
     if (await User.emailExists(email)) return res.status(400).json({ error: "User already exists." });
 
+    const role = accountType === "CLUB" ? "CLUB" : "BUYER";
+    if (role === "CLUB" && (!clubName || !clubSlug)) {
+      return res.status(400).json({ error: "Club name and slug are required for club registration." });
+    }
+
     const hashedPassword = await Bun.password.hash(password, { algorithm: "argon2id" });
-    const newUser = await User.createUser(username, email, hashedPassword, country);
-    const token = signToken(newUser.id);
+    const newUser = await User.createUser(username, email, hashedPassword, country, role);
+
+    let createdClubId = null;
+    let createdClub = null;
+    if (role === "CLUB") {
+      const club = await User.createClubForUser(newUser.id, clubName, clubSlug);
+      createdClubId = club.id;
+      createdClub = club;
+    }
+
+    const token = signToken({
+      userId: newUser.id,
+      role: newUser.role,
+      clubId: createdClubId,
+    });
 
     return res.status(201).json({
       message: "User registered successfully.",
@@ -30,6 +48,8 @@ export async function registerUser(req: Request, res: Response) {
         email: newUser.email,
         created_at: newUser.createdAt,
         country: newUser.country,
+        role: newUser.role,
+        club: createdClub ?? null,
       },
     });
   } catch (error) {
@@ -49,10 +69,18 @@ export async function loginUser(req: Request, res: Response) {
     const isPasswordValid = await Bun.password.verify(password, user.passwordHash);
     if (!isPasswordValid) return res.status(401).json({ error: "Invalid credentials." });
 
+    const tokenPayload = {
+      userId: user.id,
+      role: user.role,
+      clubId: user.club?.id ?? null, 
+    };
+
+    const token = signToken(tokenPayload);
+
     return res.status(200).json({
       message: "Login successful.",
-      user: { id: user.id, username: user.username, email: user.email, country: user.country, role: user.role },
-      token: signToken(user.id),
+      user: { id: user.id, username: user.username, email: user.email, country: user.country, role: user.role, club: user.club ?? null },
+      token,
     });
   } catch (error) {
     console.error("Login error:", (error as Error).message);

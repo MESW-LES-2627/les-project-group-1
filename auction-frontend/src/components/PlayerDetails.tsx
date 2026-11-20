@@ -30,7 +30,10 @@ const styles = {
   profileHeader:
     'flex min-h-16 items-center justify-between gap-4 rounded-none bg-orange px-[22px] py-2 max-mobile:min-h-[54px] max-mobile:px-[14px]',
   profileName: 'text-[clamp(1.6rem,2.2vw,2.6rem)] font-extrabold text-ink-deep',
-  nickname: 'text-[clamp(1rem,1.35vw,1.5rem)] font-bold text-brown',
+  team: 'flex items-center gap-2 max-mobile:gap-1.5',
+  teamLogo: 'size-[clamp(28px,2.4vw,40px)] shrink-0 object-contain',
+  teamLogoFallback: 'text-[clamp(0.7rem,0.95vw,0.95rem)] font-extrabold text-brown',
+  teamName: 'text-[clamp(1rem,1.35vw,1.5rem)] font-bold text-brown max-mobile:text-sm',
   primaryStats: 'grid grid-cols-4 gap-3 px-4 py-[14px] max-mobile:gap-[7px] max-mobile:px-[7px] max-mobile:py-3',
   secondaryStats:
     'grid grid-cols-3 gap-3 border-t-2 border-panel-strong px-4 py-[14px] max-mobile:gap-[7px] max-mobile:px-[7px] max-mobile:py-3',
@@ -64,15 +67,31 @@ export function PlayerGallery({ itemName, activeImage, onImageChange, className 
 }
 
 export function PlayerProfile({ className }: { className?: string }) {
-  const { player } = useItem();
+  const { player, club } = useItem();
 
   if (!player) return null;
-  
+
+  const initials = club.name
+    .replace(/[()]/g, '')
+    .split(/\s+/)
+    .filter(Boolean)
+    .map((word) => word[0])
+    .join('')
+    .slice(0, 3)
+    .toUpperCase();
+
   return (
     <Card className={cn(styles.profileCard, className)}>
       <CardHeader className={styles.profileHeader}>
         <CardTitle className={styles.profileName}>{player.name}</CardTitle>
-        <span className={styles.nickname}>{player.nickname}</span>
+        <div className={styles.team}>
+          {club.logoUrl ? (
+            <img className={styles.teamLogo} src={club.logoUrl} alt="" />
+          ) : (
+            <span className={styles.teamLogoFallback} aria-hidden="true">{initials}</span>
+          )}
+          <span className={styles.teamName}>{club.name}</span>
+        </div>
       </CardHeader>
       <CardContent className={styles.primaryStats}>
         <Stat label="Age" value={String(player.age)} />

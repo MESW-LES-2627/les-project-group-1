@@ -35,16 +35,26 @@ export function ItemPage() {
     );
   }
 
-  const competition = [listing.competition, listing.season].filter(Boolean).join(' ');
+  const competition = [listing.competition, listing.match, listing.season].filter(Boolean).join(' · ');
 
   // Data of this item for the existing auction page components.
-  // Causes stay empty until charities are linked to auctions (Sprint 2).
   const item: AuctionItem = {
     subtitle: [listing.club.name, competition].filter(Boolean).join(' · '),
     tags: listing.tags,
     images: listing.images,
     player: listing.player,
-    causes: [],
+    club: { name: listing.club.name, logoUrl: listing.club.logoUrl },
+    causes: listing.charity
+      ? [
+          {
+            name: listing.charity.name,
+            description: listing.charity.description,
+            logo: listing.charity.logoUrl,
+            country: listing.charity.country,
+            donationPercentage: listing.donationPercentage,
+          },
+        ]
+      : [],
   };
 
   return (

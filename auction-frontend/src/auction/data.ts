@@ -17,17 +17,20 @@ export const ITEM = {
     preferredFoot: 'Right',
   },
 
-  //Charities supported by the auction.
+  //Team that provided the item.
+  club: {
+    name: 'Nexus Gaming',
+    logoUrl: null,
+  },
+
+  //Verified charity supported by the demo auction.
   causes: [
     {
-      name: 'Fundação Semear Futuro',
-      description: '100% of proceeds support sports access for underprivileged children.',
-      logo: '/cause-semear-futuro.png',
-    },
-    {
-      name: 'Play for All Foundation',
-      description: 'Supporting youth sports and community programs.',
-      logo: '/cause-play-for-all.png',
+      name: 'Right to Play',
+      description: 'Uses play and sport to help children build life skills, stay in school and recover from adversity.',
+      logo: '/images/charities/right-to-play.png',
+      country: 'CA',
+      donationPercentage: 10,
     },
   ],
 };
@@ -35,4 +38,4 @@ export const ITEM = {
 //Minimum bid increment
 export const MIN_INCREMENT = 1;
 //Number of recent bids to display in the latest bids panel.
-export const LATEST_BIDS_SHOWN = 5;
+export const LATEST_BIDS_SHOWN = 3;
