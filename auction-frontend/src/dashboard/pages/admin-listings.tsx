@@ -2,6 +2,7 @@ import { useState } from "react"
 import type { AdminListing, AdminListingStatus } from "@/dashboard/lib/api"
 import {
   useAdminListings,
+  useCancelAdminListing,
   useUpdateAdminListingStatus,
 } from "@/dashboard/hooks/use-admin-listings"
 import { AdminListingsTable } from "@/dashboard/components/dashboard/admin-listings-table"
@@ -25,12 +26,25 @@ export default function AdminListings() {
   })
 
   const updateStatus = useUpdateAdminListingStatus()
+  const cancel = useCancelAdminListing()
+
+  const cancelAuction = (listing: AdminListing) => {
+    if (!window.confirm(`Cancel the auction for "${listing.title}"? Nobody will be able to bid on it. This can't be undone.`)) {
+      return
+    }
+    cancel.mutate(listing.id)
+  }
 
   const changeStatus = (
       listing: AdminListing,
       nextStatus: AdminListingStatus
   ) => {
-    const action = nextStatus === "verified" ? "verify" : "move back to pending"
+    const action =
+        nextStatus === "verified"
+            ? "verify"
+            : nextStatus === "rejected"
+                ? "reject (the club can fix it and submit it again)"
+                : "move back to pending"
 
     if (!window.confirm(`Are you sure you want to ${action} "${listing.title}"?`)) {
       return
@@ -78,6 +92,13 @@ export default function AdminListings() {
           >
             Verified
           </Button>
+          <Button
+              size="sm"
+              variant={status === "rejected" ? "default" : "outline"}
+              onClick={() => changeFilter("rejected")}
+          >
+            Rejected
+          </Button>
         </div>
 
         {query.isLoading ? (
@@ -100,9 +121,12 @@ export default function AdminListings() {
                   busyId={
                     updateStatus.isPending
                         ? (updateStatus.variables?.id ?? null)
-                        : null
+                        : cancel.isPending
+                            ? (cancel.variables ?? null)
+                            : null
                   }
                   onChangeStatus={changeStatus}
+                  onCancel={cancelAuction}
                   onView={(listing) => setSelectedListing(listing)}
               />
 
@@ -140,6 +164,12 @@ export default function AdminListings() {
         {updateStatus.isError && (
             <p className="text-sm text-destructive">
               Could not update the listing status. Please try again.
+            </p>
+        )}
+
+        {cancel.isError && (
+            <p className="text-sm text-destructive">
+              Could not cancel the auction. Please try again.
             </p>
         )}
 

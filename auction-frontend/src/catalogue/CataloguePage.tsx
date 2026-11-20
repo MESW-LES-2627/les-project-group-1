@@ -5,6 +5,7 @@ import type { AccountNav } from '@/auction/types';
 import { CategoryFilter } from '@/components/CategoryFilter';
 import { ListingGrid } from '@/components/ListingGrid';
 import { Navbar } from '@/components/Navbar';
+import { Button } from '@/components/ui/button';
 import { useApi } from './api';
 import type { Category, ListingSummary } from './types';
 
@@ -21,6 +22,7 @@ const SEARCH_DELAY_MS = 300;
 const styles = {
   main: 'mx-auto w-[calc(100%_-_112px)] max-w-[1888px] py-[60px] pb-[70px] max-tablet:w-[calc(100%_-_64px)] max-mobile:w-[calc(100%_-_36px)] max-mobile:py-6',
   title: 'm-0 text-[clamp(2rem,3.2vw,3.4rem)] leading-none font-extrabold tracking-[-0.055em] text-ink-strong uppercase',
+  header: 'flex items-start justify-between gap-6 max-mobile:flex-col max-mobile:gap-0',
   subtitle: 'mt-3 mb-9 text-[clamp(1rem,1.15vw,1.3rem)] font-medium text-slate',
 };
 
@@ -94,8 +96,17 @@ function CatalogueHome({ account }: { account: AccountNav }) {
           </div>
         </div>
 
-        <h1 className={styles.title}>Memorabilia</h1>
-        <p className={styles.subtitle}>Verified sports memorabilia, with part of every sale going to charity.</p>
+        <div className={styles.header}>
+          <div>
+            <h1 className={styles.title}>Memorabilia</h1>
+            <p className={styles.subtitle}>Verified sports memorabilia, with part of every sale going to charity.</p>
+          </div>
+          {account.isLoggedIn && account.role === 'CLUB' && (
+            <Button asChild variant="solid" size="form">
+              <Link to="/listings/new">+ NEW AUCTION</Link>
+            </Button>
+          )}
+        </div>
 
         <CategoryFilter categories={categories.data ?? []} activeCategory={category} onCategoryChange={setCategory} />
 

@@ -72,6 +72,9 @@ export async function fetchSelectableCharities(): Promise<SelectableCharity[]> {
 export const LISTING_STATUSES = ["draft", "pending_verification", "verified", "rejected"] as const
 export type ListingStatus = (typeof LISTING_STATUSES)[number]
 
+/** Where the auction is in its life. null while the listing isn't verified (and not cancelled). */
+export type AuctionStatus = "scheduled" | "active" | "completed" | "cancelled"
+
 export interface MyListing {
   id: number
   categoryId: number
@@ -90,7 +93,17 @@ export interface MyListing {
   evidenceImages: string[]
   certificateCode: string | null
   startingPrice: number | null
+  auctionStartsAt: string | null
   auctionEndsAt: string | null
+  cancelledAt: string | null
+  auctionStatus: AuctionStatus | null
+  /** The club can cancel while the listing isn't verified, or while its auction is scheduled. */
+  canCancel: boolean
+  /**
+   * What the club can still edit: "full" for drafts and rejected listings, "auction" (only the auction
+   * settings) for a verified auction that hasn't opened, null for nothing.
+   */
+  editMode: "full" | "auction" | null
   charitableOrganizationId: number | null
   charitableOrganization: {
     id: number
@@ -143,6 +156,22 @@ function toFormData(payload: ListingPayload) {
     form.append("removeEvidenceImages", JSON.stringify(payload.removeEvidenceImages))
   }
   return form
+}
+
+/** One listing with how its auction is going, for the details view. */
+export interface MyListingDetails extends MyListing {
+  bidCount: number
+  highestBid: number | null
+}
+
+export async function fetchMyListing(id: number): Promise<MyListingDetails> {
+  const { data } = await http.get<MyListingDetails>(`/clubs/me/listings/${id}`)
+  return data
+}
+
+export async function cancelMyListing(id: number): Promise<MyListing> {
+  const { data } = await http.post<MyListing>(`/clubs/me/listings/${id}/cancel`)
+  return data
 }
 
 export async function createMyListing(payload: ListingPayload): Promise<MyListing> {

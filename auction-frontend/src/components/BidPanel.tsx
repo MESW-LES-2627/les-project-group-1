@@ -1,12 +1,14 @@
 import type { FormEventHandler } from 'react';
-import type { AuctionState, WinnerData } from '../auction/types';
+import type { AuctionState, AuctionStatus, WinnerData } from '../auction/types';
 import { MIN_INCREMENT } from '../auction/data';
-import { formatEuro, formatTimeLeft } from '../auction/utils';
+import { formatEuro, formatTimeLeft, formatTimeUntilStart } from '../auction/utils';
+import { AuctionStatusBadge } from '@/components/AuctionStatusBadge';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 
 const styles = {
+  cancelledCard: 'gap-2 rounded-lg border border-danger bg-white px-7 py-6 ring-0',
   winnerCard: 'gap-0 rounded-lg border border-success-border bg-success-bg px-7 py-6 text-success-text ring-0',
   winnerTitle: 'mb-2 text-[1.8rem] font-bold text-black',
   winnerText: 'my-1 text-[1.4rem] font-bold',
@@ -50,6 +52,21 @@ export function BidPanel({
   myId,
   now,
 }: BidPanelProps) {
+  // Older servers don't send a status: fall back to the active flag
+  const status: AuctionStatus = auction.status ?? (auction.isActive ? 'active' : 'completed');
+
+  if (status === 'cancelled') {
+    return (
+      <>
+        <AuctionStatusBadge status="cancelled" className="mb-3" />
+        <Card className={styles.cancelledCard}>
+          <h2 className={styles.winnerTitle}>This auction was cancelled</h2>
+          <p className="m-0 text-[1.2rem] font-semibold text-slate">No more bids can be placed on it.</p>
+        </Card>
+      </>
+    );
+  }
+
   // Keep the completed-auction result in the same card-based visual language.
   if (winnerData) {
     return (
@@ -76,14 +93,17 @@ export function BidPanel({
   // Derive the next allowed bid and urgency state from the live auction clock.
   const minBid = bidCount === 0 ? auction.currentBid : auction.currentBid + MIN_INCREMENT;
   const msLeft = auction.endTime - now;
+  const scheduled = status === 'scheduled';
   const ended = !auction.isActive || msLeft <= 0;
   const urgent = !ended && msLeft <= 10 * 60 * 1000;
+  const msToStart = (auction.startTime ?? now) - now;
 
   return (
     <>
+      <AuctionStatusBadge status={scheduled ? 'scheduled' : ended ? 'completed' : 'active'} className="mb-3" />
       <Card className={styles.panel}>
         <div>
-          <div className={styles.currentBid}>Current bid</div>
+          <div className={styles.currentBid}>{scheduled ? 'Starting bid' : 'Current bid'}</div>
           <div className={styles.price}>{formatEuro(auction.currentBid)}</div>
         </div>
         <form className={styles.form} onSubmit={onBid}>
@@ -103,7 +123,7 @@ export function BidPanel({
             className={styles.submit}
             disabled={ended}
           >
-            {ended ? 'BIDDING CLOSED' : 'PLACE BID'}
+            {scheduled ? 'NOT OPEN YET' : ended ? 'BIDDING CLOSED' : 'PLACE BID'}
           </Button>
         </form>
       </Card>
@@ -113,14 +133,20 @@ export function BidPanel({
         <span>
           {bidCount} bid{bidCount === 1 ? '' : 's'}
         </span>
-        <span className={urgent ? 'text-danger-strong' : 'text-danger-deep'}>{formatTimeLeft(msLeft)}</span>
+        {scheduled ? (
+          <span className="text-orange">{formatTimeUntilStart(msToStart)}</span>
+        ) : (
+          <span className={urgent ? 'text-danger-strong' : 'text-danger-deep'}>{formatTimeLeft(msLeft)}</span>
+        )}
       </div>
       <p className="mt-2 mr-[14px] ml-[14px] font-bold text-[#555]">
-        {auction.highestBidder === myId
-          ? "You're the highest bidder!"
-          : auction.highestBidder
-            ? `Highest bidder: ${auction.highestBidder}`
-            : 'No bids yet — be the first!'}
+        {scheduled
+          ? 'Bidding opens when the countdown ends.'
+          : auction.highestBidder === myId
+            ? "You're the highest bidder!"
+            : auction.highestBidder
+              ? `Highest bidder: ${auction.highestBidder}`
+              : 'No bids yet — be the first!'}
       </p>
     </>
   );

@@ -4,7 +4,10 @@ import * as Listings from "../models/listing.model";
 import * as CharitableOrganization from "../models/charitableOrganization.model";
 import { EDITABLE_STATUSES_CLUB } from "../models/listing.model";
 import { detectImageType, removeUploadedFiles, saveImage, saveImages } from "../utils/imageFiles.ts";
+import { AUCTION_SETTING_FIELDS, auctionStatus, clubCanCancel, clubEditMode } from "../services/auctionStatus";
+import { refreshRoom } from "../services/auction.service";
 import {
+  auctionDatesInOrder,
   missingForSubmission,
   normalizeFormBody,
   parseStringList,
@@ -129,8 +132,31 @@ function parseId(req: Request) {
 }
 
 /** Prisma returns prices as Decimal; the API returns plain numbers. */
-function present<T extends { startingPrice: { toNumber(): number } | null }>(row: T) {
-  return { ...row, startingPrice: row.startingPrice ? row.startingPrice.toNumber() : null };
+type PresentableListing = {
+  startingPrice: { toNumber(): number } | null;
+  status: string;
+  auctionStartsAt: Date | null;
+  auctionEndsAt: Date | null;
+  cancelledAt: Date | null;
+};
+
+/**
+ * Prisma returns prices as Decimal; the API returns plain numbers. Also adds the auction status
+ * (null while the listing isn't verified and not cancelled, because its auction hasn't been approved)
+ * and whether the club may still cancel it.
+ */
+export function present<T extends PresentableListing>(row: T) {
+  const status =
+    row.status === "verified" || row.cancelledAt
+      ? auctionStatus({ startsAt: row.auctionStartsAt, endsAt: row.auctionEndsAt, cancelledAt: row.cancelledAt })
+      : null;
+  return {
+    ...row,
+    startingPrice: row.startingPrice ? row.startingPrice.toNumber() : null,
+    auctionStatus: status,
+    canCancel: clubCanCancel(row),
+    editMode: clubEditMode(row),
+  };
 }
 
 function writeError(res: Response, error: unknown, label: string) {
@@ -174,7 +200,8 @@ export async function getMyListing(req: Request, res: Response) {
 
     const listing = await Listings.findOwn(id, req.user!.clubId!);
     if (!listing) return res.status(404).json({ error: "not_found" });
-    return res.json(present(listing));
+    // The details page also shows how the auction is going
+    return res.json({ ...present(listing), ...(await Listings.bidSummary(id)) });
   } catch (error) {
     return writeError(res, error, "Get my listing");
   }
@@ -243,7 +270,9 @@ export async function createMyListing(req: Request, res: Response) {
  * PATCH /api/clubs/me/listings/:id: send only the fields to change (multipart/form-data, or JSON without images).
  * New files in "images" / "evidenceImages" are added to the existing ones. To delete existing images, send
  * "removeImages" / "removeEvidenceImages" with their paths (JSON array, comma separated, or repeated field).
- * Only "draft" and "rejected" listings can be edited. Editing a rejected listing makes it a draft again.
+ * "draft" and "rejected" listings can be fully edited; editing a rejected listing makes it a draft again.
+ * A verified listing whose auction is still scheduled only accepts the auction settings (see clubEditMode).
+ * Anything else is locked: pending verification, an auction that already opened, finished or was cancelled.
  */
 export async function updateMyListing(req: Request, res: Response) {
   let saved: string[] = [];
@@ -254,7 +283,11 @@ export async function updateMyListing(req: Request, res: Response) {
 
     const existing = await Listings.findOwn(id, clubId);
     if (!existing) return res.status(404).json({ error: "not_found" });
-    if (!EDITABLE_STATUSES_CLUB.includes(existing.status)) return res.status(409).json({ error: "listing_locked" });
+    if (existing.cancelledAt) return res.status(409).json({ error: "listing_cancelled" });
+    const mode = clubEditMode(existing);
+    if (mode === "auction") return updateScheduledAuction(req, res, existing);
+    if (mode !== "full" || !EDITABLE_STATUSES_CLUB.includes(existing.status))
+      return res.status(409).json({ error: "listing_locked" });
 
     // Images to delete: they must be images of this listing
     const removeImages = parseStringList(req.body?.removeImages);
@@ -281,6 +314,11 @@ export async function updateMyListing(req: Request, res: Response) {
 
     if (!(await charityIsSelectable(input.charitableOrganizationId)))
       return res.status(400).json({ error: "invalid_charitable_organization" });
+
+    // Only one of the two dates may have been sent: compare with the saved one
+    const startsAt = input.auctionStartsAt !== undefined ? input.auctionStartsAt : existing.auctionStartsAt;
+    const endsAt = input.auctionEndsAt !== undefined ? input.auctionEndsAt : existing.auctionEndsAt;
+    if (!auctionDatesInOrder(startsAt, endsAt)) return res.status(400).json({ error: "auction_starts_after_end" });
 
     const keptImages = existing.images.filter((p) => !removeImages.includes(p));
     const keptEvidence = existing.evidenceImages.filter((p) => !removeEvidence.includes(p));
@@ -319,7 +357,77 @@ export async function updateMyListing(req: Request, res: Response) {
   }
 }
 
+/**
+ * Edit of a verified listing whose auction hasn't opened yet: only the auction settings can change.
+ * The item (title, photos, authenticity...) was approved by an admin and stays as it is. The auction
+ * must keep a starting price, a start date in the future and an end date after it.
+ */
+async function updateScheduledAuction(
+  req: Request,
+  res: Response,
+  existing: NonNullable<Awaited<ReturnType<typeof Listings.findOwn>>>
+) {
+  const files = uploadedFiles(req, "images").length + uploadedFiles(req, "evidenceImages").length;
+  const removals = [...(parseStringList(req.body?.removeImages) ?? []), ...(parseStringList(req.body?.removeEvidenceImages) ?? [])];
+  if (files > 0 || removals.length > 0) return res.status(409).json({ error: "only_auction_settings", fields: ["images"] });
+
+  const parsed = validateListingInput(listingBody(req), "update");
+  if (!parsed.ok) return res.status(400).json({ error: parsed.error });
+  const input = parsed.value;
+
+  const notAllowed = Object.keys(input).filter((key) => !(AUCTION_SETTING_FIELDS as readonly string[]).includes(key));
+  if (notAllowed.length) return res.status(409).json({ error: "only_auction_settings", fields: notAllowed });
+
+  if (!(await charityIsSelectable(input.charitableOrganizationId)))
+    return res.status(400).json({ error: "invalid_charitable_organization" });
+
+  const startsAt = input.auctionStartsAt !== undefined ? input.auctionStartsAt : existing.auctionStartsAt;
+  const endsAt = input.auctionEndsAt !== undefined ? input.auctionEndsAt : existing.auctionEndsAt;
+  const startingPrice = input.startingPrice !== undefined ? input.startingPrice : existing.startingPrice;
+
+  // Removing the start date would open the auction straight away, which is not an edit "before it starts"
+  if (!startsAt) return res.status(400).json({ error: "auction_start_required" });
+  const missing = [...(startingPrice ? [] : ["startingPrice"]), ...(endsAt ? [] : ["auctionEndsAt"])];
+  if (missing.length) return res.status(400).json({ error: "incomplete_listing", missing });
+  if (!auctionDatesInOrder(startsAt, endsAt)) return res.status(400).json({ error: "auction_starts_after_end" });
+
+  const id = existing.id;
+  const clubId = req.user!.clubId!;
+  const changed = await Listings.updateScheduledAuction(id, clubId, input);
+  if (changed === 0) return res.status(409).json({ error: "auction_already_open" }); // it opened in the meantime
+
+  await refreshRoom(req.app.get("io"), id); // anyone on the auction page sees the new countdown
+  const updated = await Listings.findOwn(id, clubId);
+  return res.json(present(updated!));
+}
+
 /** DELETE /api/clubs/me/listings/:id. Verified listings can't be deleted. Its image files are deleted too. */
+/**
+ * POST /api/clubs/me/listings/:id/cancel
+ * A club can cancel its approved auction while it is still scheduled. Before approval there is nothing to
+ * cancel: the club deletes the listing instead. Once the auction has opened, only an admin can cancel it.
+ */
+export async function cancelMyListing(req: Request, res: Response) {
+  try {
+    const id = parseId(req);
+    if (!id) return res.status(400).json({ error: "invalid_id" });
+
+    const existing = await Listings.findOwn(id, req.user!.clubId!);
+    if (!existing) return res.status(404).json({ error: "not_found" });
+    if (existing.cancelledAt) return res.status(409).json({ error: "already_cancelled" });
+    if (existing.status !== "verified") return res.status(409).json({ error: "not_verified" });
+    if (!clubCanCancel(existing)) return res.status(409).json({ error: "auction_already_open" });
+
+    const listing = await Listings.cancelListing(id);
+    if (!listing) return res.status(409).json({ error: "already_cancelled" });
+
+    await refreshRoom(req.app.get("io"), id);
+    return res.json(present(listing));
+  } catch (error) {
+    return writeError(res, error, "Cancel listing");
+  }
+}
+
 export async function deleteMyListing(req: Request, res: Response) {
   try {
     const id = parseId(req);

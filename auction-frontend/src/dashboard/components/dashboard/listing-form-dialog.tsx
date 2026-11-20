@@ -10,7 +10,9 @@ import { flagEmoji } from "@/lib/utils"
 import { COUNTRIES } from "@/lib/countries"
 import type { ListingPayload, MyListing } from "@/dashboard/lib/club-api"
 import {
-  PLAYER_DETAIL_FIELDS,
+  JERSEY_DETAIL_FIELDS,
+  PLAYER_ONLY_FIELDS,
+  categoryHasPlayer,
   emptyForm,
   formFromListing,
   formToFields,
@@ -42,11 +44,15 @@ export function ListingFormDialog({ open, onOpenChange, listing }: ListingFormDi
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-2xl">
         <DialogHeader>
-          <DialogTitle>{listing ? "Edit listing" : "Add listing"}</DialogTitle>
+          <DialogTitle>
+            {listing?.editMode === "auction" ? "Edit auction settings" : listing ? "Edit listing" : "Add listing"}
+          </DialogTitle>
           <DialogDescription>
-            {listing
-              ? "Change the fields you want to update."
-              : "It is saved as a draft until you submit it for verification."}
+            {listing?.editMode === "auction"
+              ? "The item was verified, so only the auction settings can change until the auction opens."
+              : listing
+                ? "Change the fields you want to update."
+                : "It is saved as a draft until you submit it for verification."}
           </DialogDescription>
         </DialogHeader>
         {/* The form only exists while the dialog is open, so its fields reset every time */}
@@ -67,6 +73,10 @@ function ListingForm({ listing, onDone }: { listing?: MyListing | null; onDone: 
   const create = useCreateMyListing()
   const update = useUpdateMyListing()
   const mutation = listing ? update : create
+  const categorySlug = categories?.find((category) => String(category.id) === values.categoryId)?.slug
+  const hasPlayer = categoryHasPlayer(categorySlug)
+  // A verified auction that hasn't opened: only the auction settings are shown and sent
+  const auctionOnly = listing?.editMode === "auction"
 
   function set<K extends keyof ListingFormValues>(key: K, value: ListingFormValues[K]) {
     setValues((current) => ({ ...current, [key]: value }))
@@ -78,7 +88,7 @@ function ListingForm({ listing, onDone }: { listing?: MyListing | null; onDone: 
 
   // submit = true also sends the listing for verification, in the same request
   function save(submit: boolean) {
-    const fields = formToFields(values, initial, listing)
+    const fields = formToFields(values, initial, listing, auctionOnly || hasPlayer)
     if (submit) fields.status = "pending_verification"
 
     const payload: ListingPayload = {
@@ -106,12 +116,21 @@ function ListingForm({ listing, onDone }: { listing?: MyListing | null; onDone: 
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
+      {auctionOnly && (
+        <p className="rounded-md bg-blue-50 p-3 text-sm text-blue-800 dark:bg-blue-500/10 dark:text-blue-300">
+          You can change the starting price, the dates and the charity until the auction opens. The item itself
+          (title, photos, authenticity) stays as the administrator verified it.
+        </p>
+      )}
+
       {listing?.status === "rejected" && (
         <p className="rounded-md bg-red-50 p-3 text-sm text-red-700 dark:bg-red-500/10 dark:text-red-400">
           This listing was rejected. Saving your changes turns it back into a draft that you can submit again.
         </p>
       )}
 
+      {!auctionOnly && (
+      <>
       <div className="grid gap-4 sm:grid-cols-2">
         <Field label="Title" htmlFor="listing-title">
           <Input id="listing-title" value={values.title} onChange={(e) => set("title", e.target.value)} required />
@@ -150,9 +169,11 @@ function ListingForm({ listing, onDone }: { listing?: MyListing | null; onDone: 
       </Field>
 
       <div className="grid gap-4 sm:grid-cols-2">
-        <Field label="Player name" htmlFor="listing-player">
-          <Input id="listing-player" value={values.playerName} onChange={(e) => set("playerName", e.target.value)} />
-        </Field>
+        {hasPlayer && (
+          <Field label="Player name" htmlFor="listing-player">
+            <Input id="listing-player" value={values.playerName} onChange={(e) => set("playerName", e.target.value)} />
+          </Field>
+        )}
         <Field label="Season" htmlFor="listing-season">
           <Input id="listing-season" value={values.season} onChange={(e) => set("season", e.target.value)} />
         </Field>
@@ -166,6 +187,11 @@ function ListingForm({ listing, onDone }: { listing?: MyListing | null; onDone: 
         <Field label="Match" htmlFor="listing-match">
           <Input id="listing-match" value={values.match} onChange={(e) => set("match", e.target.value)} />
         </Field>
+        {JERSEY_DETAIL_FIELDS.map(({ key, label }) => (
+          <Field key={key} label={label} htmlFor={`detail-${key}`}>
+            <Input id={`detail-${key}`} value={values.playerDetails[key] ?? ""} onChange={(e) => setDetail(key, e.target.value)} />
+          </Field>
+        ))}
       </div>
 
       <Field label="Tags (separated by commas)" htmlFor="listing-tags">
@@ -177,10 +203,11 @@ function ListingForm({ listing, onDone }: { listing?: MyListing | null; onDone: 
         />
       </Field>
 
+      {hasPlayer && (
       <fieldset className="space-y-3 rounded-md border p-3">
         <legend className="px-1 text-sm font-medium">Player details</legend>
         <div className="grid gap-3 sm:grid-cols-2">
-          {PLAYER_DETAIL_FIELDS.map(({ key, label, numeric }) => (
+          {PLAYER_ONLY_FIELDS.map(({ key, label, numeric }) => (
             <Field key={key} label={label} htmlFor={`detail-${key}`}>
               <Input
                 id={`detail-${key}`}
@@ -192,6 +219,9 @@ function ListingForm({ listing, onDone }: { listing?: MyListing | null; onDone: 
           ))}
         </div>
       </fieldset>
+      )}
+      </>
+      )}
 
       <div className="grid gap-4 sm:grid-cols-2">
         <Field label="Starting price (€)" htmlFor="listing-price">
@@ -204,6 +234,15 @@ function ListingForm({ listing, onDone }: { listing?: MyListing | null; onDone: 
             onChange={(e) => set("startingPrice", e.target.value)}
           />
         </Field>
+        <Field label={auctionOnly ? "Auction starts" : "Auction starts (optional)"} htmlFor="listing-starts">
+          <Input
+            id="listing-starts"
+            type="datetime-local"
+            value={values.auctionStartsAt}
+            onChange={(e) => set("auctionStartsAt", e.target.value)}
+            required={auctionOnly}
+          />
+        </Field>
         <Field label="Auction ends" htmlFor="listing-ends">
           <Input
             id="listing-ends"
@@ -213,6 +252,12 @@ function ListingForm({ listing, onDone }: { listing?: MyListing | null; onDone: 
           />
         </Field>
       </div>
+      {!auctionOnly && (
+        <p className="-mt-2 text-xs text-muted-foreground">
+          Leave the start empty to open the auction as soon as an administrator verifies it. Until it opens, the
+          catalogue shows a countdown.
+        </p>
+      )}
 
       <div className="grid gap-4 sm:grid-cols-2">
         <Field label="Support a charity (verified only)" htmlFor="listing-charity">
@@ -258,6 +303,8 @@ function ListingForm({ listing, onDone }: { listing?: MyListing | null; onDone: 
         </Field>
       </div>
 
+      {!auctionOnly && (
+      <>
       <ImagePicker label="Photos" existing={listing?.images ?? []} value={photos} onChange={setPhotos} />
 
       <Field label="Authenticity notes" htmlFor="listing-notes">
@@ -276,6 +323,8 @@ function ListingForm({ listing, onDone }: { listing?: MyListing | null; onDone: 
         value={evidence}
         onChange={setEvidence}
       />
+      </>
+      )}
 
       {mutation.isError && (
         <p role="alert" className="text-sm text-destructive">
@@ -287,9 +336,11 @@ function ListingForm({ listing, onDone }: { listing?: MyListing | null; onDone: 
         <Button type="button" variant="outline" onClick={onDone}>
           Cancel
         </Button>
-        <Button type="button" variant="secondary" onClick={() => save(true)} disabled={mutation.isPending}>
-          Save & submit for verification
-        </Button>
+        {!auctionOnly && (
+          <Button type="button" variant="secondary" onClick={() => save(true)} disabled={mutation.isPending}>
+            Save & submit for verification
+          </Button>
+        )}
         <Button type="submit" disabled={mutation.isPending}>
           {mutation.isPending ? "Saving…" : listing ? "Save changes" : "Save as draft"}
         </Button>

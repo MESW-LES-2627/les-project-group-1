@@ -1,7 +1,8 @@
-import type { PlayerInfo } from '@/auction/types';
+import type { AuctionStatus, PlayerInfo } from '@/auction/types';
 
 // Category used to browse and filter the catalogue.
 export interface Category {
+  id: number;
   slug: string;
   name: string;
 }
@@ -30,7 +31,9 @@ export interface ListingSummary {
   charity?: ListingCharity | null;
   donationPercentage?: number | null;
   currentBid: number | null;
+  auctionStartsAt?: string | null;
   auctionEndsAt: string | null;
+  auctionStatus?: AuctionStatus;
 }
 
 // Full listing data shown on the item detail page, including authenticity evidence.

@@ -2,12 +2,13 @@ import { useEffect, useState } from "react"
 import { Link } from "react-router-dom"
 import { ChevronLeft, ChevronRight, Plus } from "lucide-react"
 import { useMyClub } from "@/dashboard/hooks/use-club"
-import { useMyListings, useSubmitMyListing } from "@/dashboard/hooks/use-my-listings"
+import { useCancelMyListing, useMyListings, useSubmitMyListing } from "@/dashboard/hooks/use-my-listings"
 import { getClubErrorMessage } from "@/dashboard/lib/club-errors"
 import { CLUB_APPROVED, LISTING_STATUSES, type ListingStatus, type MyListing } from "@/dashboard/lib/club-api"
 import { MyListingsTable } from "@/dashboard/components/dashboard/my-listings-table"
 import { ListingFormDialog } from "@/dashboard/components/dashboard/listing-form-dialog"
 import { DeleteListingDialog } from "@/dashboard/components/dashboard/delete-listing-dialog"
+import { MyListingDetailsDialog } from "@/dashboard/components/dashboard/my-listing-details-dialog"
 import { selectClass } from "@/dashboard/components/dashboard/field"
 import { Button } from "@/components/ui/button"
 
@@ -33,6 +34,7 @@ export default function MyListings() {
   const [formOpen, setFormOpen] = useState(false)
   const [editing, setEditing] = useState<MyListing | null>(null)
   const [deleting, setDeleting] = useState<MyListing | null>(null)
+  const [viewing, setViewing] = useState<MyListing | null>(null)
   const [actionError, setActionError] = useState("")
 
   const club = useMyClub()
@@ -43,6 +45,7 @@ export default function MyListings() {
     approved
   )
   const submit = useSubmitMyListing()
+  const cancel = useCancelMyListing()
 
   const total = data?.total ?? 0
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE))
@@ -72,6 +75,15 @@ export default function MyListings() {
     setActionError("")
     submit.mutate(listing.id, {
       onError: (e) => setActionError(getClubErrorMessage(e, "Couldn’t submit the listing. Try again.")),
+    })
+  }
+
+  function handleCancel(listing: MyListing) {
+    const ok = window.confirm(`Cancel the auction for “${listing.title}”? This can't be undone.`)
+    if (!ok) return
+    setActionError("")
+    cancel.mutate(listing.id, {
+      onError: (e) => setActionError(getClubErrorMessage(e, "Couldn’t cancel the auction. Try again.")),
     })
   }
 
@@ -157,10 +169,12 @@ export default function MyListings() {
         <div className={isPlaceholderData ? "opacity-60 transition-opacity" : "transition-opacity"}>
           <MyListingsTable
             data={data.items}
-            busyId={submit.isPending ? (submit.variables ?? null) : null}
+            busyId={submit.isPending ? (submit.variables ?? null) : cancel.isPending ? (cancel.variables ?? null) : null}
             onEdit={openEdit}
             onDelete={setDeleting}
             onSubmit={handleSubmit}
+            onCancel={handleCancel}
+            onView={setViewing}
           />
 
           <div className="mt-4 flex items-center justify-between text-sm text-muted-foreground">
@@ -186,6 +200,7 @@ export default function MyListings() {
 
       <ListingFormDialog open={formOpen} onOpenChange={setFormOpen} listing={editing} />
       <DeleteListingDialog listing={deleting} onOpenChange={(open) => !open && setDeleting(null)} />
+      <MyListingDetailsDialog listing={viewing} onOpenChange={(open) => !open && setViewing(null)} />
     </div>
   )
 }

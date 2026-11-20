@@ -5,16 +5,37 @@ import type { MyListing } from "./club-api.ts"
  * a listing from the API and the form values, and build the fields to send (only what changed).
  */
 
+// Stored together in listing.playerDetails. "size" belongs to the jersey, so it applies to every
+// category; the others describe the player and are hidden for team jerseys.
 export const PLAYER_DETAIL_FIELDS = [
-  { key: "nickname", label: "Nickname", numeric: false },
-  { key: "age", label: "Age", numeric: true },
-  { key: "position", label: "Position", numeric: false },
-  { key: "number", label: "Shirt number", numeric: true },
-  { key: "size", label: "Size", numeric: false },
-  { key: "nationality", label: "Nationality", numeric: false },
-  { key: "placeOfBirth", label: "Place of birth", numeric: false },
-  { key: "preferredFoot", label: "Preferred foot", numeric: false },
+  { key: "nickname", label: "Nickname", numeric: false, playerOnly: true },
+  { key: "age", label: "Age", numeric: true, playerOnly: true },
+  { key: "position", label: "Position", numeric: false, playerOnly: true },
+  { key: "number", label: "Shirt number", numeric: true, playerOnly: true },
+  { key: "size", label: "Size", numeric: false, playerOnly: false },
+  { key: "nationality", label: "Nationality", numeric: false, playerOnly: true },
+  { key: "placeOfBirth", label: "Place of birth", numeric: false, playerOnly: true },
+  { key: "preferredFoot", label: "Preferred foot", numeric: false, playerOnly: true },
 ] as const
+
+export const JERSEY_DETAIL_FIELDS = PLAYER_DETAIL_FIELDS.filter((field) => !field.playerOnly)
+export const PLAYER_ONLY_FIELDS = PLAYER_DETAIL_FIELDS.filter((field) => field.playerOnly)
+
+/** A team jersey isn't tied to one player, so it has no player name or player details. */
+export const TEAM_CATEGORY_SLUG = "team-jerseys"
+
+export function categoryHasPlayer(categorySlug: string | undefined): boolean {
+  return categorySlug !== TEAM_CATEGORY_SLUG
+}
+
+/** Empties the player name and the player-only details, keeping the jersey ones (size). */
+export function withoutPlayerFields<T extends { playerName: string; playerDetails: Record<string, string> }>(values: T): T {
+  const playerDetails: Record<string, string> = {}
+  for (const { key } of JERSEY_DETAIL_FIELDS) {
+    if (values.playerDetails[key] !== undefined) playerDetails[key] = values.playerDetails[key]
+  }
+  return { ...values, playerName: "", playerDetails }
+}
 
 type PlayerDetails = Record<string, string | number>
 
@@ -29,6 +50,7 @@ export interface ListingFormValues {
   tags: string // separated by commas
   authenticityNotes: string
   startingPrice: string
+  auctionStartsAt: string // value of <input type="datetime-local">; empty = opens when verified
   auctionEndsAt: string // value of <input type="datetime-local">, in the user's time zone
   charitableOrganizationId: string
   donationPercentage: string
@@ -61,6 +83,7 @@ export function emptyForm(): ListingFormValues {
     tags: "",
     authenticityNotes: "",
     startingPrice: "",
+    auctionStartsAt: "",
     auctionEndsAt: "",
     charitableOrganizationId: "",
     donationPercentage: "",
@@ -95,6 +118,7 @@ export function formFromListing(listing: MyListing): ListingFormValues {
     tags: listing.tags.join(", "),
     authenticityNotes: listing.authenticityNotes ?? "",
     startingPrice: listing.startingPrice === null ? "" : String(listing.startingPrice),
+    auctionStartsAt: toLocalInput(listing.auctionStartsAt),
     auctionEndsAt: toLocalInput(listing.auctionEndsAt),
     charitableOrganizationId:
       listing.charitableOrganizationId === null ? "" : String(listing.charitableOrganizationId),
@@ -113,7 +137,7 @@ function parseTags(text: string): string[] {
 }
 
 // The known player fields from the form, plus any other keys the listing already had
-function buildDetails(values: Record<string, string>, original: PlayerDetails | null): PlayerDetails | null {
+export function buildDetails(values: Record<string, string>, original: PlayerDetails | null): PlayerDetails | null {
   const result: PlayerDetails = { ...(original ?? {}) }
   for (const { key, numeric } of PLAYER_DETAIL_FIELDS) {
     const text = (values[key] ?? "").trim()
@@ -136,13 +160,20 @@ function stable(details: PlayerDetails | null): string {
 export function formToFields(
   values: ListingFormValues,
   initial: ListingFormValues,
-  original?: MyListing | null
+  original?: MyListing | null,
+  hasPlayer = true
 ): Record<string, string> {
   const fields: Record<string, string> = {}
+  // Hidden player fields are sent empty, so switching to a team jersey clears what was there
+  if (!hasPlayer) values = withoutPlayerFields(values)
 
   for (const key of SIMPLE_KEYS) {
     const next = values[key].trim()
     if (next !== initial[key].trim()) fields[key] = next
+  }
+
+  if (values.auctionStartsAt !== initial.auctionStartsAt) {
+    fields.auctionStartsAt = values.auctionStartsAt ? new Date(values.auctionStartsAt).toISOString() : ""
   }
 
   if (values.auctionEndsAt !== initial.auctionEndsAt) {

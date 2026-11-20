@@ -4,21 +4,26 @@ export const formatEuro = (amount: number) => `€${new Intl.NumberFormat('de-DE
 //Formats numbers as Euro currency with symbol at the end(e.g., 50€)
 export const formatEuroSuffix = (amount: number) => `${new Intl.NumberFormat('de-DE').format(amount)} €`;
 
-//Converts milliseconds to a human-readable time format (e.g., "1 day 1 hour left")
-export const formatTimeLeft = (ms: number): string => {
-  if (ms <= 0) return 'Ended';
-  const totalSec = Math.floor(ms / 1000);
+//Converts milliseconds to a short duration (e.g., "1 day 1 hour", "3 min 20s")
+export const formatDuration = (ms: number): string => {
+  const totalSec = Math.max(0, Math.floor(ms / 1000));
   const days = Math.floor(totalSec / 86400);
   const hours = Math.floor((totalSec % 86400) / 3600);
   const minutes = Math.floor((totalSec % 3600) / 60);
   const seconds = totalSec % 60;
   const plural = (value: number, unit: string) => `${value} ${unit}${value === 1 ? '' : 's'}`;
 
-  if (days > 0) return `${plural(days, 'day')} ${plural(hours, 'hour')} left`;
-  if (hours > 0) return `${plural(hours, 'hour')} ${minutes} min left`;
-  if (minutes > 0) return `${minutes} min ${seconds}s left`;
-  return `${seconds}s left`;
+  if (days > 0) return `${plural(days, 'day')} ${plural(hours, 'hour')}`;
+  if (hours > 0) return `${plural(hours, 'hour')} ${minutes} min`;
+  if (minutes > 0) return `${minutes} min ${seconds}s`;
+  return `${seconds}s`;
 };
+
+//Converts milliseconds to a human-readable time format (e.g., "1 day 1 hour left")
+export const formatTimeLeft = (ms: number): string => (ms <= 0 ? 'Ended' : `${formatDuration(ms)} left`);
+
+//Time until a scheduled auction opens (e.g., "Opens in 2 hours 5 min")
+export const formatTimeUntilStart = (ms: number): string => (ms <= 0 ? 'Opening…' : `Opens in ${formatDuration(ms)}`);
 
 //Formats a timestamp into a human-readable date and time
 export const formatDate = (timestamp: number) => {

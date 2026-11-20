@@ -1,4 +1,5 @@
 import { http } from "@/lib/http"
+import type { AuctionStatus } from "./club-api"
 
 export const USER_ROLES = ["ADMIN", "BUYER", "CLUB"] as const
 export type UserRole = (typeof USER_ROLES)[number]
@@ -191,7 +192,7 @@ export async function deleteCharitableOrganization(id: number): Promise<void> {
 
 // Admin listings
 
-export type AdminListingStatus = "pending_verification" | "verified"
+export type AdminListingStatus = "pending_verification" | "verified" | "rejected"
 export interface AdminListingsParams {
   page: number
   limit: number
@@ -215,7 +216,12 @@ export interface AdminListing {
   evidenceImages: string[]
   certificateCode: string | null
   startingPrice: number | null
+  auctionStartsAt: string | null
   auctionEndsAt: string | null
+  cancelledAt: string | null
+  auctionStatus: AuctionStatus | null
+  /** An admin can cancel any auction that is scheduled or active. */
+  canCancel: boolean
   createdAt: string
   verifiedAt: string | null
 }
@@ -227,6 +233,11 @@ export interface AdminListingsPage {
 export async function fetchAdminListings(params: AdminListingsParams): Promise<AdminListingsPage> {
   const { data } = await http.get<{ items: AdminListing[]; total: number }>("/admin/listings", { params })
   return { items: data.items, total: data.total }
+}
+
+export async function cancelAdminListing(id: number): Promise<AdminListing> {
+  const { data } = await http.post<AdminListing>(`/admin/listings/${id}/cancel`)
+  return data
 }
 
 export async function updateAdminListingStatus(

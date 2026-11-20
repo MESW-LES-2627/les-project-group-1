@@ -15,6 +15,8 @@ export type ListingInput = {
   authenticityNotes?: string | null;
   evidenceImages?: string[];
   startingPrice?: number | null;
+  /** When the auction opens. Optional: without it, the auction opens as soon as an admin verifies it. */
+  auctionStartsAt?: Date | null;
   auctionEndsAt?: Date | null;
   /** The verified charity supported by this auction. null clears the selection. */
   charitableOrganizationId?: number | null;
@@ -134,6 +136,16 @@ export function validateListingInput(body: unknown, mode: "create" | "update"): 
     else return fail("invalid_starting_price");
   }
 
+  if (d.auctionStartsAt !== undefined) {
+    const v = d.auctionStartsAt;
+    if (v === null) out.auctionStartsAt = null;
+    else if (typeof v === "string") {
+      const date = new Date(v);
+      if (Number.isNaN(date.getTime()) || date.getTime() <= Date.now()) return fail("invalid_auction_starts_at");
+      out.auctionStartsAt = date;
+    } else return fail("invalid_auction_starts_at");
+  }
+
   if (d.auctionEndsAt !== undefined) {
     const v = d.auctionEndsAt;
     if (v === null) out.auctionEndsAt = null;
@@ -143,6 +155,8 @@ export function validateListingInput(body: unknown, mode: "create" | "update"): 
       out.auctionEndsAt = date;
     } else return fail("invalid_auction_ends_at");
   }
+
+  if (!auctionDatesInOrder(out.auctionStartsAt, out.auctionEndsAt)) return fail("auction_starts_after_end");
 
   if (d.charitableOrganizationId !== undefined) {
     const v = d.charitableOrganizationId;
@@ -165,6 +179,12 @@ export function validateListingInput(body: unknown, mode: "create" | "update"): 
 
   if (mode === "update" && Object.keys(out).length === 0) return fail("no_fields");
   return { ok: true, value: out };
+}
+
+/** The auction must open before it ends. Missing dates can't be out of order. */
+export function auctionDatesInOrder(startsAt: Date | null | undefined, endsAt: Date | null | undefined) {
+  if (!startsAt || !endsAt) return true;
+  return startsAt.getTime() < endsAt.getTime();
 }
 
 /** What a listing still needs before it can be sent for verification. Empty list means it is ready. */
@@ -212,7 +232,10 @@ export function normalizeFormBody(raw: Record<string, unknown>): Record<string, 
     if (typeof v === "string") out[key] = v.trim() === "" ? null : Number(v);
   }
 
-  if (typeof out.auctionEndsAt === "string" && out.auctionEndsAt.trim() === "") out.auctionEndsAt = null;
+  for (const key of ["auctionStartsAt", "auctionEndsAt"]) {
+    const v = out[key];
+    if (typeof v === "string" && v.trim() === "") out[key] = null;
+  }
 
   if (typeof out.playerDetails === "string") {
     const t = out.playerDetails.trim();

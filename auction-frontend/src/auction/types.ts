@@ -17,7 +17,14 @@ export interface AuctionState {
   isActive: boolean;
   bidCount?: number;
   bids?: Bid[];
+  /** scheduled, active, completed or cancelled (sent by the server). */
+  status?: AuctionStatus;
+  /** When a scheduled auction opens (ms). */
+  startTime?: number | null;
 }
+
+/** Where an auction is in its life. Only an active auction accepts bids. */
+export type AuctionStatus = 'scheduled' | 'active' | 'completed' | 'cancelled';
 
 //Result data shown when the auction finishes.
 export interface WinnerData {

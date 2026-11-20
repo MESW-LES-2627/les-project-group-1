@@ -23,6 +23,13 @@ function DashboardIndex() {
     if (user?.role === "CLUB") return <Navigate to="/dashboard/listings" replace />;
     return <Overview />;
 }
+
+// /dashboard/listings: admins review every club's listings, a club manages its own.
+// One route for both, because two routes with the same path only ever match the first one.
+function ListingsPage() {
+    const { user } = useAuth();
+    return user?.role === "ADMIN" ? <AdminListings /> : <MyListings />;
+}
 export default function DashboardRoutes() {
     useEffect(() => {
         document.body.classList.add("dashboard-theme");
@@ -40,6 +47,7 @@ export default function DashboardRoutes() {
                     <Route element={<RoleRoute allow={["ADMIN", "CLUB"]} />}>
                         <Route element={<AppLayout />}>
                             <Route index element={<DashboardIndex />} />
+                            <Route path="listings" element={<ListingsPage />} />
 
                             <Route element={<RoleRoute allow={["ADMIN"]} />}>
                                 <Route path="users" element={<Users />} />
@@ -47,12 +55,10 @@ export default function DashboardRoutes() {
                                 <Route path="charitable-organizations" element={<CharitableOrganizations />} />
                                 <Route path="analytics" element={<Placeholder title="Analytics" />} />
                                 <Route path="settings" element={<Placeholder title="Settings" />} />
-                                <Route path="listings" element={<AdminListings />} />
 
                             </Route>
 
                             <Route element={<RoleRoute allow={["CLUB"]} />}>
-                                <Route path="listings" element={<MyListings />} />
                                 <Route path="club" element={<ClubProfilePage />} />
                             </Route>
                         </Route>
