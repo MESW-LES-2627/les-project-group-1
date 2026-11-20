@@ -239,6 +239,7 @@ describe("POST /api/clubs/me/listings: validation", () => {
     ["a short description", { description: "short" }, "invalid_description"],
     ["an end date in the past", { auctionEndsAt: "2020-01-01T00:00:00.000Z" }, "invalid_auction_ends_at"],
     ["a negative price", { startingPrice: -5 }, "invalid_starting_price"],
+    ["a starting price of zero", { startingPrice: 0 }, "invalid_starting_price"],
     ["player details that are not an object", { playerDetails: ["a", "b"] }, "invalid_player_details"],
   ];
 
@@ -255,6 +256,21 @@ describe("POST /api/clubs/me/listings: validation", () => {
       expect(data.error).toBe(error);
     });
   }
+
+  it("rejects a starting price that is not a number", async () => {
+    const res = await createListing(
+      approvedToken,
+      listingForm({
+        categoryId: String(categoryId),
+        title: `${PREFIX} price not a number`,
+        description: "A valid description.",
+        startingPrice: "abc",
+      })
+    );
+    expect(res.status).toBe(400);
+    const data: any = await res.json();
+    expect(data.error).toBe("invalid_starting_price");
+  });
 
   it("rejects a category that doesn't exist", async () => {
     const res = await createListing(approvedToken, {

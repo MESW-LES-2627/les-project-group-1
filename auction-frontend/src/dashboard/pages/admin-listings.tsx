@@ -39,7 +39,12 @@ export default function AdminListings() {
       listing: AdminListing,
       nextStatus: AdminListingStatus
   ) => {
-    const action = nextStatus === "verified" ? "verify" : "move back to pending"
+    const action =
+        nextStatus === "verified"
+            ? "verify"
+            : nextStatus === "rejected"
+                ? "reject (the club can fix it and submit it again)"
+                : "move back to pending"
 
     if (!window.confirm(`Are you sure you want to ${action} "${listing.title}"?`)) {
       return
@@ -86,6 +91,13 @@ export default function AdminListings() {
               onClick={() => changeFilter("verified")}
           >
             Verified
+          </Button>
+          <Button
+              size="sm"
+              variant={status === "rejected" ? "default" : "outline"}
+              onClick={() => changeFilter("rejected")}
+          >
+            Rejected
           </Button>
         </div>
 

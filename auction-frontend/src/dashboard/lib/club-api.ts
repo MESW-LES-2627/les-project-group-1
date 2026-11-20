@@ -99,6 +99,11 @@ export interface MyListing {
   auctionStatus: AuctionStatus | null
   /** The club can cancel while the listing isn't verified, or while its auction is scheduled. */
   canCancel: boolean
+  /**
+   * What the club can still edit: "full" for drafts and rejected listings, "auction" (only the auction
+   * settings) for a verified auction that hasn't opened, null for nothing.
+   */
+  editMode: "full" | "auction" | null
   charitableOrganizationId: number | null
   charitableOrganization: {
     id: number
@@ -151,6 +156,17 @@ function toFormData(payload: ListingPayload) {
     form.append("removeEvidenceImages", JSON.stringify(payload.removeEvidenceImages))
   }
   return form
+}
+
+/** One listing with how its auction is going, for the details view. */
+export interface MyListingDetails extends MyListing {
+  bidCount: number
+  highestBid: number | null
+}
+
+export async function fetchMyListing(id: number): Promise<MyListingDetails> {
+  const { data } = await http.get<MyListingDetails>(`/clubs/me/listings/${id}`)
+  return data
 }
 
 export async function cancelMyListing(id: number): Promise<MyListing> {

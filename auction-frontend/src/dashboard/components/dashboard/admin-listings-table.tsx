@@ -6,7 +6,7 @@ import {
   useReactTable,
   type ColumnDef,
 } from "@tanstack/react-table"
-import { Ban, Check, RotateCcw, Eye } from "lucide-react"
+import { Ban, Check, RotateCcw, Eye, X } from "lucide-react"
 import { assetUrl } from "@/lib/assets"
 import type {
   AdminListing,
@@ -148,15 +148,28 @@ export function AdminListingsTable({
                       </Button>
                   )}
 
-                  {listing.cancelledAt ? null : listing.status === "pending_verification" ? (
-                      <Button
-                          size="sm"
-                          disabled={busy}
-                          onClick={() => onChangeStatus(listing, "verified")}
-                      >
-                        <Check /> Verify
-                      </Button>
-                  ) : (
+                  {/* Under review: verify, or reject so the club can fix it and submit it again */}
+                  {!listing.cancelledAt && listing.status === "pending_verification" && (
+                      <>
+                        <Button
+                            size="sm"
+                            variant="outline"
+                            disabled={busy}
+                            onClick={() => onChangeStatus(listing, "rejected")}
+                        >
+                          <X /> Reject
+                        </Button>
+                        <Button
+                            size="sm"
+                            disabled={busy}
+                            onClick={() => onChangeStatus(listing, "verified")}
+                        >
+                          <Check /> Verify
+                        </Button>
+                      </>
+                  )}
+
+                  {!listing.cancelledAt && listing.status === "verified" && (
                       <Button
                           size="sm"
                           variant="outline"

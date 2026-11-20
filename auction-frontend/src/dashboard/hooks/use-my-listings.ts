@@ -4,6 +4,7 @@ import {
   createMyListing,
   deleteMyListing,
   fetchCategories,
+  fetchMyListing,
   fetchMyListings,
   fetchSelectableCharities,
   submitMyListing,
@@ -20,6 +21,16 @@ export function useMyListings(params: MyListingsParams, enabled = true) {
     queryFn: () => fetchMyListings(params),
     placeholderData: keepPreviousData,
     enabled,
+    retry: false,
+  })
+}
+
+/** One listing with its bids, for the details view. Only fetched while the view is open. */
+export function useMyListing(id: number | null) {
+  return useQuery({
+    queryKey: ["my-listings", "details", id],
+    queryFn: () => fetchMyListing(id!),
+    enabled: id !== null,
     retry: false,
   })
 }

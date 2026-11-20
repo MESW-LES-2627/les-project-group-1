@@ -1,8 +1,7 @@
 import { useMemo } from "react"
 import { flexRender, getCoreRowModel, useReactTable, type ColumnDef } from "@tanstack/react-table"
-import { Ban, Pencil, Send, Trash2 } from "lucide-react"
+import { Ban, Eye, Pencil, Send, Trash2 } from "lucide-react"
 import { assetUrl } from "@/lib/assets"
-import { isEditable } from "@/dashboard/lib/listing-form"
 import type { MyListing } from "@/dashboard/lib/club-api"
 import { Button } from "@/dashboard/components/ui/button.tsx"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/dashboard/components/ui/table.tsx"
@@ -18,11 +17,12 @@ interface MyListingsTableProps {
   onDelete: (listing: MyListing) => void
   onSubmit: (listing: MyListing) => void
   onCancel: (listing: MyListing) => void
+  onView: (listing: MyListing) => void
 }
 
 const dateTime = (iso: string | null) => (iso ? new Date(iso).toLocaleString() : "—")
 
-export function MyListingsTable({ data, busyId, onEdit, onDelete, onSubmit, onCancel }: MyListingsTableProps) {
+export function MyListingsTable({ data, busyId, onEdit, onDelete, onSubmit, onCancel, onView }: MyListingsTableProps) {
   const columns = useMemo<ColumnDef<MyListing>[]>(
     () => [
       {
@@ -97,6 +97,9 @@ export function MyListingsTable({ data, busyId, onEdit, onDelete, onSubmit, onCa
           const listing = row.original
           return (
             <div className="flex justify-end gap-1">
+              <Button variant="ghost" size="icon" aria-label="View details" title="View details" onClick={() => onView(listing)}>
+                <Eye />
+              </Button>
               {listing.canCancel && (
                 <Button
                   variant="ghost"
@@ -109,22 +112,33 @@ export function MyListingsTable({ data, busyId, onEdit, onDelete, onSubmit, onCa
                   <Ban />
                 </Button>
               )}
-              {isEditable(listing.status) && !listing.cancelledAt && (
-                <>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    aria-label="Submit for verification"
-                    title="Submit for verification"
-                    disabled={busyId === listing.id}
-                    onClick={() => onSubmit(listing)}
-                  >
-                    <Send />
-                  </Button>
-                  <Button variant="ghost" size="icon" aria-label="Edit listing" onClick={() => onEdit(listing)}>
-                    <Pencil />
-                  </Button>
-                </>
+              {listing.editMode === "full" && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  aria-label="Submit for verification"
+                  title="Submit for verification"
+                  disabled={busyId === listing.id}
+                  onClick={() => onSubmit(listing)}
+                >
+                  <Send />
+                </Button>
+              )}
+              {listing.editMode === "full" && (
+                <Button variant="ghost" size="icon" aria-label="Edit listing" title="Edit listing" onClick={() => onEdit(listing)}>
+                  <Pencil />
+                </Button>
+              )}
+              {listing.editMode === "auction" && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  aria-label="Edit auction settings"
+                  title="Edit auction settings"
+                  onClick={() => onEdit(listing)}
+                >
+                  <Pencil />
+                </Button>
               )}
               {listing.status !== "verified" && (
                 <Button variant="ghost" size="icon" aria-label="Delete listing" onClick={() => onDelete(listing)}>
@@ -136,7 +150,7 @@ export function MyListingsTable({ data, busyId, onEdit, onDelete, onSubmit, onCa
         },
       },
     ],
-    [busyId, onEdit, onDelete, onSubmit, onCancel]
+    [busyId, onEdit, onDelete, onSubmit, onCancel, onView]
   )
 
   const table = useReactTable({

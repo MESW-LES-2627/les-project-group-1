@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, mock } from 'bun:test';
-import { cleanup, screen, waitFor } from '@testing-library/react';
+import { cleanup, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { NewListingView } from '../src/club/NewListingPage';
 import type { AccountNav } from '../src/auction/types';
@@ -9,6 +9,11 @@ const CATEGORIES = [
   { id: 1, slug: 'player-jerseys', name: 'Player jerseys' },
   { id: 2, slug: 'team-jerseys', name: 'Team jerseys' },
   { id: 3, slug: 'special-editions', name: 'Special editions' },
+];
+
+const CHARITIES = [
+  { id: 7, name: 'Play for All', country: 'PT' },
+  { id: 8, name: 'Semear Futuro', country: 'BR' },
 ];
 
 const originalFetch = globalThis.fetch;
@@ -29,7 +34,8 @@ beforeEach(() => {
         headers: { 'Content-Type': 'application/json' },
       });
     }
-    return new Response(JSON.stringify(url.endsWith('/api/categories') ? CATEGORIES : {}), {
+    const body = url.endsWith('/api/categories') ? CATEGORIES : url.endsWith('/api/charities') ? CHARITIES : {};
+    return new Response(JSON.stringify(body), {
       status: 200,
       headers: { 'Content-Type': 'application/json' },
     });
@@ -95,7 +101,8 @@ describe('NewListingView: who sees the form', () => {
     await renderForm();
 
     expect(screen.getByLabelText('Title *')).toBeInTheDocument();
-    expect(screen.getAllByRole('option').map((option) => option.textContent)).toEqual([
+    const categorySelect = screen.getByLabelText('Category *');
+    expect(within(categorySelect).getAllByRole('option').map((option) => option.textContent)).toEqual([
       'Choose a category',
       'Player jerseys',
       'Team jerseys',
@@ -279,5 +286,64 @@ describe('NewListingView: auction start date', () => {
     await user.click(screen.getByRole('button', { name: 'SAVE AS DRAFT' }));
 
     expect(await screen.findByRole('alert')).toHaveTextContent('The auction must start before it ends.');
+  });
+});
+
+describe('NewListingView: charity and donation', () => {
+  it('lists the verified charities, with the donation disabled until one is chosen', async () => {
+    await renderForm();
+    await screen.findByRole('option', { name: /Play for All/ });
+
+    expect(screen.getByRole('option', { name: /Semear Futuro/ })).toBeInTheDocument();
+    expect(screen.getByLabelText('Donation (%)')).toBeDisabled();
+  });
+
+  it('suggests 10% when a charity is chosen and clears it when "No charity" is chosen again', async () => {
+    const user = await renderForm();
+    await screen.findByRole('option', { name: /Play for All/ });
+
+    await user.selectOptions(screen.getByLabelText('Support a charity'), '7');
+    expect(screen.getByLabelText('Donation (%)')).toBeEnabled();
+    expect(screen.getByLabelText('Donation (%)')).toHaveValue(10);
+
+    await user.selectOptions(screen.getByLabelText('Support a charity'), '');
+    expect(screen.getByLabelText('Donation (%)')).toBeDisabled();
+    expect(screen.getByLabelText('Donation (%)')).toHaveValue(null);
+  });
+
+  it('sends the chosen charity and donation percentage', async () => {
+    const user = await renderForm();
+    await screen.findByRole('option', { name: /Play for All/ });
+    await fillRequired(user, 'Player jerseys');
+    await user.selectOptions(screen.getByLabelText('Support a charity'), '8');
+    await user.clear(screen.getByLabelText('Donation (%)'));
+    await user.type(screen.getByLabelText('Donation (%)'), '25');
+
+    await user.click(screen.getByRole('button', { name: 'SAVE AS DRAFT' }));
+
+    await waitFor(() => expect(posts).toHaveLength(1));
+    expect(lastForm().get('charitableOrganizationId')).toBe('8');
+    expect(lastForm().get('donationPercentage')).toBe('25');
+  });
+
+  it('sends no charity and no donation when none is chosen', async () => {
+    const user = await renderForm();
+    await fillRequired(user, 'Player jerseys');
+
+    await user.click(screen.getByRole('button', { name: 'SAVE AS DRAFT' }));
+
+    await waitFor(() => expect(posts).toHaveLength(1));
+    expect(lastForm().get('charitableOrganizationId')).toBe('');
+    expect(lastForm().get('donationPercentage')).toBe('');
+  });
+
+  it('explains when the charity is not accepted by the server', async () => {
+    createResponse = { status: 400, body: { error: 'invalid_charitable_organization' } };
+    const user = await renderForm();
+    await fillRequired(user, 'Player jerseys');
+
+    await user.click(screen.getByRole('button', { name: 'SAVE AS DRAFT' }));
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('Choose one of the verified charities.');
   });
 });

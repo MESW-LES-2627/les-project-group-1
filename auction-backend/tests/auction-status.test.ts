@@ -178,15 +178,21 @@ describe("who can cancel", () => {
     cancelledAt: extra.cancelledAt ? new Date(extra.cancelledAt) : null,
   });
 
-  it("lets a club cancel while the listing isn't verified", () => {
-    expect(clubCanCancel(listing("draft", now - MINUTE), now)).toBe(true);
-    expect(clubCanCancel(listing("pending_verification", now - MINUTE), now)).toBe(true);
+  it("doesn't let a club cancel a listing that isn't approved yet (it deletes it instead)", () => {
+    expect(clubCanCancel(listing("draft", now + MINUTE), now)).toBe(false);
+    expect(clubCanCancel(listing("pending_verification", now + MINUTE), now)).toBe(false);
+    expect(clubCanCancel(listing("rejected", now + MINUTE), now)).toBe(false);
   });
 
   it("lets a club cancel a verified auction only while it is scheduled", () => {
     expect(clubCanCancel(listing("verified", now + MINUTE), now)).toBe(true);
     expect(clubCanCancel(listing("verified", now - MINUTE), now)).toBe(false);
     expect(clubCanCancel(listing("verified", now - HOUR, { endsAt: now - MINUTE }), now)).toBe(false);
+  });
+
+  it("doesn't let an admin cancel a listing under review (it rejects it instead)", () => {
+    expect(adminCanCancel(listing("pending_verification", now + MINUTE), now)).toBe(false);
+    expect(adminCanCancel(listing("rejected", now + MINUTE), now)).toBe(false);
   });
 
   it("lets an admin cancel scheduled and active auctions, but not finished ones", () => {
@@ -196,7 +202,7 @@ describe("who can cancel", () => {
   });
 
   it("doesn't let anyone cancel twice", () => {
-    expect(clubCanCancel(listing("draft", now - MINUTE, { cancelledAt: now - 1 }), now)).toBe(false);
+    expect(clubCanCancel(listing("verified", now + MINUTE, { cancelledAt: now - 1 }), now)).toBe(false);
     expect(adminCanCancel(listing("verified", now - MINUTE, { cancelledAt: now - 1 }), now)).toBe(false);
   });
 });
@@ -334,6 +340,35 @@ describe("start date chosen by the club", () => {
     expect(data.error).toBe("auction_starts_after_end");
   });
 
+  it("can't be the same as the end date", async () => {
+    const same = new Date(Date.now() + HOUR).toISOString();
+    const res = await api("/api/clubs/me/listings", clubToken, {
+      method: "POST",
+      body: JSON.stringify(form({ auctionStartsAt: same, auctionEndsAt: same })),
+    });
+    expect(res.status).toBe(400);
+    const data: any = await res.json();
+    expect(data.error).toBe("auction_starts_after_end");
+  });
+
+  it("is checked against the saved start date when only the end date is edited", async () => {
+    const id = await makeListing({
+      status: "draft",
+      startsAt: new Date(Date.now() + 2 * HOUR),
+      endsAt: new Date(Date.now() + 3 * HOUR),
+    });
+    const res = await api(`/api/clubs/me/listings/${id}`, clubToken, {
+      method: "PATCH",
+      body: JSON.stringify({ auctionEndsAt: new Date(Date.now() + HOUR).toISOString() }),
+    });
+    expect(res.status).toBe(400);
+    const data: any = await res.json();
+    expect(data.error).toBe("auction_starts_after_end");
+
+    const saved = await prisma.listing.findUnique({ where: { id }, select: { auctionEndsAt: true } });
+    expect(saved!.auctionEndsAt!.getTime()).toBeGreaterThan(Date.now() + 2 * HOUR); // nothing was saved
+  });
+
   it("is checked against the saved end date when only the start date is edited", async () => {
     const id = await makeListing({ status: "draft", startsAt: null, endsAt: new Date(Date.now() + HOUR) });
     const res = await api(`/api/clubs/me/listings/${id}`, clubToken, {
@@ -394,25 +429,23 @@ describe("verification and the start date", () => {
 describe("POST /api/clubs/me/listings/:id/cancel", () => {
   const cancel = (id: number, token = clubToken) => api(`/api/clubs/me/listings/${id}/cancel`, token, { method: "POST" });
 
-  it("cancels a listing that is still waiting for verification", async () => {
-    const id = await makeListing({ status: "pending_verification" });
-    const res = await cancel(id);
-    expect(res.status).toBe(200);
-    const data: any = await res.json();
-    expect(data.cancelledAt).not.toBeNull();
-    expect(data.auctionStatus).toBe("cancelled");
-    expect(data.canCancel).toBe(false);
-  });
-
-  it("cancels a draft", async () => {
-    const id = await makeListing({ status: "draft" });
-    expect((await cancel(id)).status).toBe(200);
+  it("refuses to cancel a listing that isn't approved yet: it is deleted instead", async () => {
+    for (const status of ["draft", "pending_verification", "rejected"]) {
+      const res = await cancel(await makeListing({ status }));
+      expect(res.status).toBe(409);
+      const data: any = await res.json();
+      expect(data.error).toBe("not_verified");
+    }
   });
 
   it("cancels a verified auction that is still scheduled", async () => {
     const id = await makeListing({ startsAt: new Date(Date.now() + HOUR), endsAt: new Date(Date.now() + 2 * HOUR) });
     const res = await cancel(id);
     expect(res.status).toBe(200);
+    const data: any = await res.json();
+    expect(data.cancelledAt).not.toBeNull();
+    expect(data.auctionStatus).toBe("cancelled");
+    expect(data.canCancel).toBe(false);
     expect(await publicStatus(id)).toBe("cancelled");
   });
 
@@ -425,7 +458,7 @@ describe("POST /api/clubs/me/listings/:id/cancel", () => {
   });
 
   it("refuses to cancel twice", async () => {
-    const id = await makeListing({ status: "draft", cancelledAt: new Date() });
+    const id = await makeListing({ startsAt: new Date(Date.now() + HOUR), cancelledAt: new Date() });
     const res = await cancel(id);
     expect(res.status).toBe(409);
     const data: any = await res.json();
@@ -433,13 +466,13 @@ describe("POST /api/clubs/me/listings/:id/cancel", () => {
   });
 
   it("doesn't let a club cancel another club's listing", async () => {
-    const id = await makeListing({ status: "pending_verification" });
+    const id = await makeListing({ startsAt: new Date(Date.now() + HOUR) });
     const res = await cancel(id, otherClubToken);
     expect(res.status).toBe(404);
   });
 
   it("doesn't let buyers use it", async () => {
-    const id = await makeListing({ status: "pending_verification" });
+    const id = await makeListing({ startsAt: new Date(Date.now() + HOUR) });
     expect((await cancel(id, buyerToken)).status).toBe(403);
   });
 

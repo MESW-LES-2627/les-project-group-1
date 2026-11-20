@@ -30,23 +30,60 @@ export function auctionStatus(
   return "active";
 }
 
-/** A club can cancel its own auction while it hasn't been verified yet, or while it is still scheduled. */
+/*
+ * Each action has one meaning, at one stage of a listing:
+ *   delete  the club removes something of its own that was never public (draft, pending, rejected)
+ *   reject  the admin sends a listing under review back to the club to fix and resubmit
+ *   cancel  an approved (verified) auction is stopped for good, and stays on record as cancelled
+ */
+
+/** A club can cancel its own auction once it is approved, while it is still scheduled. Before that, it deletes it. */
 export function clubCanCancel(listing: {
   status: string;
   auctionStartsAt: DateLike;
   auctionEndsAt: DateLike;
   cancelledAt: DateLike;
 }, now = Date.now()) {
-  if (time(listing.cancelledAt) !== null) return false;
-  if (listing.status !== "verified") return true;
+  if (time(listing.cancelledAt) !== null || listing.status !== "verified") return false;
   return auctionStatus({ startsAt: listing.auctionStartsAt, endsAt: listing.auctionEndsAt }, now) === "scheduled";
 }
 
-/** An admin can cancel any auction that hasn't finished or been cancelled already. */
-export function adminCanCancel(listing: { auctionStartsAt: DateLike; auctionEndsAt: DateLike; cancelledAt: DateLike }, now = Date.now()) {
+/** An admin can cancel an approved auction while it is scheduled or active. A listing under review is rejected instead. */
+export function adminCanCancel(
+  listing: { status: string; auctionStartsAt: DateLike; auctionEndsAt: DateLike; cancelledAt: DateLike },
+  now = Date.now()
+) {
+  if (listing.status !== "verified") return false;
   const status = auctionStatus(
     { startsAt: listing.auctionStartsAt, endsAt: listing.auctionEndsAt, cancelledAt: listing.cancelledAt },
     now
   );
   return status === "scheduled" || status === "active";
+}
+
+/** The auction settings a club can still change once the item is verified, while the auction is scheduled. */
+export const AUCTION_SETTING_FIELDS = [
+  "startingPrice",
+  "auctionStartsAt",
+  "auctionEndsAt",
+  "charitableOrganizationId",
+  "donationPercentage",
+] as const;
+
+/**
+ * What a club can edit:
+ *   "full"     drafts and rejected listings: everything (the admin hasn't approved the item yet)
+ *   "auction"  verified listings whose auction is still scheduled: only the auction settings, because the
+ *              item itself was already checked by the admin
+ *   null       nothing: pending verification, already open, finished or cancelled
+ */
+export function clubEditMode(
+  listing: { status: string; auctionStartsAt: DateLike; auctionEndsAt: DateLike; cancelledAt: DateLike },
+  now = Date.now()
+): "full" | "auction" | null {
+  if (time(listing.cancelledAt) !== null) return null;
+  if (listing.status === "draft" || listing.status === "rejected") return "full";
+  if (listing.status !== "verified") return null;
+  const status = auctionStatus({ startsAt: listing.auctionStartsAt, endsAt: listing.auctionEndsAt }, now);
+  return status === "scheduled" ? "auction" : null;
 }

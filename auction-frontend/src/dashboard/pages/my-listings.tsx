@@ -8,6 +8,7 @@ import { CLUB_APPROVED, LISTING_STATUSES, type ListingStatus, type MyListing } f
 import { MyListingsTable } from "@/dashboard/components/dashboard/my-listings-table"
 import { ListingFormDialog } from "@/dashboard/components/dashboard/listing-form-dialog"
 import { DeleteListingDialog } from "@/dashboard/components/dashboard/delete-listing-dialog"
+import { MyListingDetailsDialog } from "@/dashboard/components/dashboard/my-listing-details-dialog"
 import { selectClass } from "@/dashboard/components/dashboard/field"
 import { Button } from "@/components/ui/button"
 
@@ -33,6 +34,7 @@ export default function MyListings() {
   const [formOpen, setFormOpen] = useState(false)
   const [editing, setEditing] = useState<MyListing | null>(null)
   const [deleting, setDeleting] = useState<MyListing | null>(null)
+  const [viewing, setViewing] = useState<MyListing | null>(null)
   const [actionError, setActionError] = useState("")
 
   const club = useMyClub()
@@ -172,6 +174,7 @@ export default function MyListings() {
             onDelete={setDeleting}
             onSubmit={handleSubmit}
             onCancel={handleCancel}
+            onView={setViewing}
           />
 
           <div className="mt-4 flex items-center justify-between text-sm text-muted-foreground">
@@ -197,6 +200,7 @@ export default function MyListings() {
 
       <ListingFormDialog open={formOpen} onOpenChange={setFormOpen} listing={editing} />
       <DeleteListingDialog listing={deleting} onOpenChange={(open) => !open && setDeleting(null)} />
+      <MyListingDetailsDialog listing={viewing} onOpenChange={(open) => !open && setViewing(null)} />
     </div>
   )
 }

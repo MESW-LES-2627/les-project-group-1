@@ -242,7 +242,10 @@ export async function getAllListings(req: Request, res: Response) {
     }
 }
 
-/** PATCH /api/admin//listings/:id/status : approve, reject or reset a listing to pending. */
+/**
+ * PATCH /api/admin/listings/:id/status: verify, reject, or set a verified listing back to pending.
+ * Rejecting is only for a listing under review: the club can then edit it and submit it again.
+ */
 export async function updateListingStatus(req: Request, res: Response) {
     const id = Number(req.params.id);
     const { status } = req.body;
@@ -251,13 +254,15 @@ export async function updateListingStatus(req: Request, res: Response) {
         return res.status(400).json({ error: "Invalid listing ID" });
     }
 
-    if (!["pending_verification", "verified"].includes(status)) {
+    if (!["pending_verification", "verified", "rejected"].includes(status)) {
         return res.status(400).json({ error: "Invalid listing status" });
     }
 
     const existing = await Listings.findListingForAdmin(id);
     if (!existing) return res.status(404).json({ error: "Listing not found" });
     if (existing.cancelledAt) return res.status(409).json({ error: "listing_cancelled" });
+    if (status === "rejected" && existing.status !== "pending_verification")
+        return res.status(409).json({ error: "not_under_review" });
 
     const listing = await Listings.updateListingStatus(id, status);
     await refreshRoom(req.app.get("io"), id); // people already on the auction page see it open
@@ -267,8 +272,8 @@ export async function updateListingStatus(req: Request, res: Response) {
 
 /**
  * POST /api/admin/listings/:id/cancel
- * An admin can cancel any auction that is scheduled or active. Nobody can bid on it afterwards, and
- * everyone watching it is told straight away.
+ * An admin can cancel an approved auction that is scheduled or active. Nobody can bid on it afterwards,
+ * and everyone watching it is told straight away. A listing under review is rejected instead.
  */
 export async function cancelListing(req: Request, res: Response) {
     try {
@@ -278,6 +283,7 @@ export async function cancelListing(req: Request, res: Response) {
         const existing = await Listings.findListingForAdmin(id);
         if (!existing) return res.status(404).json({ error: "Listing not found" });
         if (existing.cancelledAt) return res.status(409).json({ error: "already_cancelled" });
+        if (existing.status !== "verified") return res.status(409).json({ error: "not_verified" });
         if (!adminCanCancel(existing)) return res.status(409).json({ error: "auction_completed" });
 
         const listing = await Listings.cancelListing(id);

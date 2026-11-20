@@ -9,6 +9,8 @@ import { Navbar } from '@/components/Navbar';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { API_URL } from '@/lib/api';
+import { COUNTRIES } from '@/lib/countries';
+import { flagEmoji } from '@/lib/utils';
 import { JERSEY_DETAIL_FIELDS, PLAYER_ONLY_FIELDS, buildDetails, categoryHasPlayer, withoutPlayerFields } from '@/dashboard/lib/listing-form';
 
 /**
@@ -44,9 +46,20 @@ const ERROR_MESSAGES: Record<string, string> = {
   auction_starts_after_end: 'The auction must start before it ends.',
   invalid_image: 'Images must be PNG, JPEG or WebP files.',
   unknown_category: 'This category no longer exists.',
+  invalid_charitable_organization: 'Choose one of the verified charities.',
+  invalid_donation_percentage: 'The donation must be a whole percentage between 0 and 100.',
   club_not_approved: 'Your club has not been approved yet, so it cannot create auctions.',
   no_club: 'This account is not linked to a club.',
 };
+
+// Verified charities a club can support, from the public GET /api/charities
+interface CharityOption {
+  id: number;
+  name: string;
+  country: string;
+}
+
+const countryNames = new Map(COUNTRIES.map((country) => [country.code, country.name]));
 
 const MISSING_LABELS: Record<string, string> = {
   startingPrice: 'starting price',
@@ -67,6 +80,7 @@ function checkImages(files: File[], label: string): string | null {
 
 function NewListingForm({ token }: { token: string }) {
   const categories = useApi<Category[]>('/api/categories');
+  const charities = useApi<CharityOption[]>('/api/charities');
 
   const [categoryId, setCategoryId] = useState('');
   const [title, setTitle] = useState('');
@@ -78,6 +92,8 @@ function NewListingForm({ token }: { token: string }) {
   const [match, setMatch] = useState('');
   const [tags, setTags] = useState('');
   const [startingPrice, setStartingPrice] = useState('');
+  const [charityId, setCharityId] = useState('');
+  const [donationPercentage, setDonationPercentage] = useState('');
   const [auctionStartsAt, setAuctionStartsAt] = useState('');
   const [auctionEndsAt, setAuctionEndsAt] = useState('');
   const [authenticityNotes, setAuthenticityNotes] = useState('');
@@ -117,6 +133,8 @@ function NewListingForm({ token }: { token: string }) {
     form.append('tags', tags);
     form.append('startingPrice', startingPrice);
     // datetime-local has no timezone; convert it to an ISO date in the user's timezone.
+    form.append('charitableOrganizationId', charityId);
+    form.append('donationPercentage', charityId ? donationPercentage : '');
     form.append('auctionStartsAt', auctionStartsAt ? new Date(auctionStartsAt).toISOString() : '');
     form.append('auctionEndsAt', auctionEndsAt ? new Date(auctionEndsAt).toISOString() : '');
     form.append('status', status);
@@ -168,6 +186,8 @@ function NewListingForm({ token }: { token: string }) {
     setMatch('');
     setTags('');
     setStartingPrice('');
+    setCharityId('');
+    setDonationPercentage('');
     setAuctionStartsAt('');
     setAuctionEndsAt('');
     setAuthenticityNotes('');
@@ -372,6 +392,50 @@ function NewListingForm({ token }: { token: string }) {
               value={auctionEndsAt}
               onChange={(event) => setAuctionEndsAt(event.target.value)}
             />
+          </div>
+        </div>
+
+        <div className="grid grid-cols-2 gap-6 max-tablet:grid-cols-1">
+          <div>
+            <label htmlFor="listing-charity" className={labelClass}>Support a charity</label>
+            <select
+              id="listing-charity"
+              className={`${inputClass} w-full`}
+              value={charityId}
+              onChange={(event) => {
+                const id = event.target.value;
+                setCharityId(id);
+                if (!id) setDonationPercentage('');
+                else if (!donationPercentage) setDonationPercentage('10');
+              }}
+              disabled={charities.loading}
+            >
+              <option value="">{charities.loading ? 'Loading…' : 'No charity'}</option>
+              {(charities.data ?? []).map((charity) => (
+                <option key={charity.id} value={charity.id}>
+                  {flagEmoji(charity.country)} {charity.name}
+                  {charity.country ? ` (${countryNames.get(charity.country.toUpperCase()) ?? charity.country})` : ''}
+                </option>
+              ))}
+            </select>
+            {charities.error && <p className="mt-1 text-sm font-bold text-danger">Could not load the charities.</p>}
+            <p className={hintClass}>Only verified charities are listed.</p>
+          </div>
+          <div>
+            <label htmlFor="listing-donation" className={labelClass}>Donation (%)</label>
+            <Input
+              id="listing-donation"
+              type="number"
+              min="0"
+              max="100"
+              step="1"
+              className={inputClass}
+              value={donationPercentage}
+              onChange={(event) => setDonationPercentage(event.target.value)}
+              disabled={!charityId}
+              placeholder="e.g. 10"
+            />
+            <p className={hintClass}>Share of the winning bid donated to the chosen charity.</p>
           </div>
         </div>
       </section>

@@ -171,6 +171,9 @@ export async function refreshRoom(io: Server | undefined, listingId: number) {
 
   const wasActive = room.state.isActive;
   room.status = listing.status;
+  // The club may have changed the starting price; with no bids yet, it is also the current bid
+  room.startingPrice = listing.startingPrice;
+  if (room.state.bidCount === 0 && !room.state.highestBidder) room.state.currentBid = listing.startingPrice;
   room.startsAt = listing.startsAt ? listing.startsAt.getTime() : null;
   room.cancelledAt = listing.cancelledAt ? listing.cancelledAt.getTime() : null;
   room.state.endTime = listing.endsAt.getTime();

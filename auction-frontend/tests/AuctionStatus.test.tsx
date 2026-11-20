@@ -202,6 +202,7 @@ describe('MyListingsTable: auction status and cancelling', async () => {
       cancelledAt: null,
       auctionStatus: 'scheduled',
       canCancel: true,
+      editMode: 'auction',
       charitableOrganizationId: null,
       charitableOrganization: null,
       donationPercentage: null,
@@ -213,7 +214,15 @@ describe('MyListingsTable: auction status and cancelling', async () => {
 
   function renderTable(data: any[], onCancel = mock()) {
     render(
-      <MyListingsTable data={data} busyId={null} onEdit={mock()} onDelete={mock()} onSubmit={mock()} onCancel={onCancel} />
+      <MyListingsTable
+        data={data}
+        busyId={null}
+        onEdit={mock()}
+        onDelete={mock()}
+        onSubmit={mock()}
+        onCancel={onCancel}
+        onView={mock()}
+      />
     );
     return onCancel;
   }
@@ -245,7 +254,9 @@ describe('MyListingsTable: auction status and cancelling', async () => {
   });
 
   it('hides editing and submitting for a cancelled draft', () => {
-    renderTable([myListing({ status: 'draft', auctionStatus: 'cancelled', cancelledAt: new Date(NOW).toISOString(), canCancel: false })]);
+    renderTable([
+      myListing({ status: 'draft', auctionStatus: 'cancelled', cancelledAt: new Date(NOW).toISOString(), canCancel: false, editMode: null }),
+    ]);
 
     expect(screen.getByText('Cancelled')).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Edit listing' })).toBeNull();
@@ -253,7 +264,7 @@ describe('MyListingsTable: auction status and cancelling', async () => {
   });
 
   it('says the auction opens when verified if no start date was chosen', () => {
-    renderTable([myListing({ status: 'draft', auctionStartsAt: null, auctionStatus: null })]);
+    renderTable([myListing({ status: 'draft', auctionStartsAt: null, auctionStatus: null, editMode: 'full' })]);
 
     expect(screen.getByText('when verified')).toBeInTheDocument();
   });
@@ -325,6 +336,38 @@ describe('AdminListingsTable: auction status and cancelling', async () => {
     expect(screen.queryByRole('button', { name: /cancel/i })).toBeNull();
     expect(screen.queryByRole('button', { name: /verify/i })).toBeNull();
     expect(screen.queryByRole('button', { name: /set pending/i })).toBeNull();
+  });
+
+  it('offers verify or reject for a listing under review, but no cancel', async () => {
+    const user = userEvent.setup();
+    const onChangeStatus = mock();
+    const pending = adminListing({ status: 'pending_verification', auctionStatus: null, canCancel: false });
+    render(<AdminListingsTable data={[pending]} busyId={null} onChangeStatus={onChangeStatus} onView={mock()} onCancel={mock()} />);
+
+    await user.click(screen.getByRole('button', { name: /reject/i }));
+    expect(onChangeStatus).toHaveBeenCalledWith(pending, 'rejected');
+    await user.click(screen.getByRole('button', { name: /verify/i }));
+    expect(onChangeStatus).toHaveBeenCalledWith(pending, 'verified');
+    expect(screen.queryByRole('button', { name: /cancel/i })).toBeNull();
+    expect(screen.queryByRole('button', { name: /set pending/i })).toBeNull();
+  });
+
+  it('only lets the admin view a rejected listing, which is now up to the club', () => {
+    renderTable([adminListing({ status: 'rejected', auctionStatus: null, canCancel: false })]);
+
+    expect(screen.getByText('Rejected')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /view/i })).toBeInTheDocument();
+    for (const name of [/reject/i, /verify/i, /set pending/i, /cancel/i]) {
+      expect(screen.queryByRole('button', { name })).toBeNull();
+    }
+  });
+
+  it('offers set pending and cancel for a verified auction, but not reject', () => {
+    renderTable([adminListing({})]);
+
+    expect(screen.getByRole('button', { name: /set pending/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /cancel/i })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /reject/i })).toBeNull();
   });
 
   it('offers no cancel action for a completed auction', () => {

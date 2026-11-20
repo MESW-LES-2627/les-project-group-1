@@ -192,7 +192,7 @@ export async function deleteCharitableOrganization(id: number): Promise<void> {
 
 // Admin listings
 
-export type AdminListingStatus = "pending_verification" | "verified"
+export type AdminListingStatus = "pending_verification" | "verified" | "rejected"
 export interface AdminListingsParams {
   page: number
   limit: number
