@@ -23,6 +23,17 @@ export type Purchase = {
   paidAt: string | null;
 };
 
+export type ActiveBid = {
+  listingId: number;
+  title: string;
+  clubName: string;
+  image: string | null;
+  currentHighestBid: number;
+  userHighestBid: number;
+  isHighestBidder: boolean;
+  auctionEndsAt: string;
+};
+
 export class ApiError extends Error {
   status: number;
   code: string;
@@ -68,4 +79,9 @@ export async function saveAvatar(token: string, image: string): Promise<void> {
 
 export async function removeAvatar(token: string): Promise<void> {
   await request('/api/users/me/avatar', token, { method: 'DELETE' });
+}
+
+export async function fetchActiveBids(token: string): Promise<ActiveBid[]> {
+  const data = await request('/api/users/me/active-bids', token);
+  return Array.isArray(data.activeBids) ? (data.activeBids as ActiveBid[]) : [];
 }

@@ -2,6 +2,7 @@ import { Router } from "express";
 import { requireAuth, requireRole } from "../middlewares/auth";
 import * as admin from "../controllers/admin.controller";
 import * as charity from "../controllers/charitableOrganization.controller";
+import {getAllListings} from "../controllers/admin.controller";
 
 const router = Router();
 
@@ -19,5 +20,8 @@ router.post("/charitable-organizations", charity.createCharitableOrganization);
 router.get("/charitable-organizations/:id", charity.getCharitableOrganization);
 router.patch("/charitable-organizations/:id", charity.updateCharitableOrganization);
 router.delete("/charitable-organizations/:id", charity.deleteCharitableOrganization);
+
+router.get("/listings", admin.getAllListings);
+router.patch("/listings/:id/status", admin.updateListingStatus);
 
 export default router;

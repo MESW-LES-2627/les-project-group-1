@@ -25,24 +25,35 @@ export interface AuctionState {
 
 export interface AuctionRoom {
   startingPrice: number;
+  status: string;
+  startsAt: number | null;
   state: AuctionState;
   highestBidderEmail: string | null;
 }
+
+export type PlaceBidResult =
+  | { ok: true; bid: AuctionState["bids"][number] }
+  | { ok: false; status: number; error: string };
 
 const rooms = new Map<string, AuctionRoom>();
 
 export const roomName = (auctionId: string) => `auction:${auctionId}`;
 
-function createRoom(itemName: string, startingPrice: number, endTime: number): AuctionRoom {
+function createRoom(itemName: string, startingPrice: number, endTime: number, status = "verified", startsAt: number | null = null ): 
+AuctionRoom {
+  const now = Date.now();
+  const isScheduled = status !== "verified" || (startsAt !== null && startsAt > now);
   return {
     startingPrice,
+    status,
+    startsAt,
     highestBidderEmail: null,
     state: {
       itemName,
       currentBid: startingPrice,
       highestBidder: null,
       endTime,
-      isActive: endTime > Date.now(),
+      isActive: !isScheduled && endTime > now,
       bidCount: 0,
       bids: [],
     },
@@ -64,7 +75,7 @@ export async function getRoom(auctionId: string): Promise<AuctionRoom | null> {
     const created = rooms.get(auctionId);
     if (created) return created;
 
-    const room = createRoom(listing.title, listing.startingPrice, listing.endsAt.getTime());
+    const room = createRoom(listing.title, listing.startingPrice, listing.endsAt.getTime(), listing.status, listing.startsAt ? listing.startsAt.getTime() : null);
     const bids = await findBidsByListingId(Number(auctionId));
     room.state.bids = bids;
     room.state.bidCount = bids.length;
@@ -87,11 +98,18 @@ export function getLiveAuction(listingId: number) {
 }
 
 export function resetRoom(room: AuctionRoom) {
+  room.status = "verified";
+  room.startsAt = null;
   room.state = createRoom(room.state.itemName, room.startingPrice, Date.now() + AUCTION_DURATION).state;
   room.highestBidderEmail = null;
 }
 
-/** Returns true if the bid was accepted. */
+/** Removes an auction room from memory (useful when listing status/dates change or in tests). */
+export function evictRoom(auctionId: string) {
+  rooms.delete(auctionId);
+}
+
+/** Returns true if the bid was accepted. 
 export function placeBid(
   room: AuctionRoom,
   amount: number,
@@ -108,7 +126,88 @@ export function placeBid(
   auction.bidCount += 1;
   auction.bids.unshift({ bidder: bidder.name, country: bidder.country, amount, timestamp: Date.now() });
   return true;
+}*/
+
+/** Validates auction status, timing, and bid amount rules, updating room state if accepted. */
+export function evaluateAndPlaceBid(
+  room: AuctionRoom,
+  amount: unknown,
+  bidder: { name: string; email: string; country?: string },
+): PlaceBidResult {
+  const now = Date.now();
+  const auction = room.state;
+
+  // Reject scheduled, cancelled, or non-active listings
+  if (room.status === "cancelled" || room.status === "rejected") {
+    return { ok: false, status: 400, error: "Cannot place a bid on a cancelled auction." };
+  }
+  if (room.status === "completed" || !auction.isActive) {
+    return { ok: false, status: 400, error: "Cannot place a bid on a completed or inactive auction." };
+  }
+  if (
+    room.status === "scheduled" ||
+    room.status === "draft" ||
+    room.status === "pending_verification" ||
+    (room.startsAt !== null && now < room.startsAt)
+  ) {
+    return { ok: false, status: 400, error: "Cannot place a bid on a scheduled auction that has not started yet." };
+  }
+
+  // Reject bids placed at or after the auction end time
+  if (now >= auction.endTime) {
+    auction.isActive = false;
+    return { ok: false, status: 400, error: "The auction has already ended." };
+  }
+
+  // Validate bid amount presence and numeric type
+  if (amount === undefined || amount === null || amount === "") {
+    return { ok: false, status: 400, error: "Bid amount is required." };
+  }
+  if (typeof amount !== "number" || !Number.isFinite(amount) || amount <= 0) {
+    return { ok: false, status: 400, error: "Bid amount must be a valid positive number." };
+  }
+
+  // First bid must be >= startingPrice; subsequent bids must be strictly > currentBid
+  if (auction.bidCount === 0 && !auction.highestBidder) {
+    if (amount < room.startingPrice) {
+      return {
+        ok: false,
+        status: 400,
+        error: `First bid must be at least the starting bid of ${room.startingPrice}.`,
+      };
+    }
+  } else if (amount <= auction.currentBid) {
+    return {
+      ok: false,
+      status: 400,
+      error: `Bid amount must be higher than the current highest bid of ${auction.currentBid}.`,
+    };
+  }
+
+  const bid = {
+    bidder: bidder.name,
+    country: bidder.country,
+    amount,
+    timestamp: now,
+  };
+
+  auction.currentBid = amount;
+  auction.highestBidder = bidder.name;
+  room.highestBidderEmail = bidder.email;
+  auction.bidCount += 1;
+  auction.bids.unshift(bid);
+
+  return { ok: true, bid };
 }
+
+/** Boolean wrapper kept for backwards compatibility with existing callers. */
+export function placeBid(
+    room: AuctionRoom,
+    amount: number,
+    bidder: { name: string; email: string; country?: string },
+  ): boolean {
+    return evaluateAndPlaceBid(room, amount, bidder).ok;
+  }
 
 /** Persists an accepted bid for catalogue auctions. The demo auction has no listing row. */
 export async function persistBid(auctionId: string, bid: AuctionState["bids"][number]) {
@@ -181,4 +280,29 @@ export function startAuctionTimer(io: Server) {
       }
     }
   }, 1000);
+}
+
+//Tracks the active promise queue per auction so bids on the same item run sequentially
+const roomLocks = new Map<string, Promise<unknown>>();
+
+export async function withAuctionLock<T>(auctionId: string, fn: () => Promise<T>): Promise<T> {
+  //Get the tail of the current queue for this auction
+  const previous = roomLocks.get(auctionId) ?? Promise.resolve();
+  let release!: () => void;
+  //Create a gate for the current operation that will unblock the next caller when done
+  const current = new Promise<void>((resolve) => {
+    release = resolve;
+  });
+  const queued = previous.then(() => current);
+  roomLocks.set(auctionId, queued);
+  //Wait for all earlier operations on this auction to finish
+  await previous;
+  try {
+    return await fn();
+  } finally {
+    release();
+    if (roomLocks.get(auctionId) === queued) {
+      roomLocks.delete(auctionId);
+    }
+  }
 }

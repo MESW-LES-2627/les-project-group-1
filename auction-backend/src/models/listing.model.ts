@@ -67,7 +67,7 @@ export async function findPublicListingsByClub(slug: string) {
 }
 
 /** Data needed to open a live auction for a verified listing, or null if it has no auction data. */
-export async function findListingAuction(id: number) {
+/*export async function findListingAuction(id: number) {
   if (!Number.isInteger(id)) return null;
 
   const rows = await prisma.$queryRaw<
@@ -81,6 +81,33 @@ export async function findListingAuction(id: number) {
     startingPrice: Number(row.starting_price),
     endsAt: new Date(row.auction_ends_at),
   };
+}*/
+
+export async function findListingAuction(id: number) {
+  if (!Number.isInteger(id)) return null;
+
+  const listing = await prisma.listing.findUnique({
+    where: { id },
+    select: {
+      id: true,
+      title: true,
+      status: true,
+      startingPrice: true,
+      auctionEndsAt: true,
+      verifiedAt: true,
+    },
+  });
+
+  if (!listing || listing.startingPrice === null || !listing.auctionEndsAt) return null;
+
+  return {
+    id: listing.id,
+    title: listing.title,
+    status: listing.status,
+    startingPrice: Number(listing.startingPrice),
+    startsAt: listing.verifiedAt ? new Date(listing.verifiedAt) : null,
+    endsAt: new Date(listing.auctionEndsAt),
+  };
 }
 
 // CLUB-OWNED LISTINGS
@@ -88,7 +115,7 @@ export async function findListingAuction(id: number) {
 /** Every query here is scoped by clubId, so a club can never read or change another club's listings. */
 
 /** Clubs can only edit listings in these states. Pending and verified listings are locked. */
-export const EDITABLE_STATUSES = ["draft", "rejected"];
+export const EDITABLE_STATUSES_CLUB = ["draft", "rejected"];
 
 export const listingSelect = {
   id: true,
@@ -133,6 +160,39 @@ export async function listOwn(clubId: number, opts: { status?: string; skip: num
   return { items, total };
 }
 
+export async function adminListing(opts: { status?: string; skip: number; take: number }) {
+  const where = {
+    status: {
+      in: ["pending_verification", "verified"],
+      ...(opts.status ? { equals: opts.status } : {}),
+    },
+  };
+
+  const [items, total] = await prisma.$transaction([
+    prisma.listing.findMany({
+      where,
+      select: listingSelect,
+      orderBy: { id: "desc" },
+      skip: opts.skip,
+      take: opts.take,
+    }),
+    prisma.listing.count({ where }),
+  ]);
+
+  return { items, total };
+}
+
+export async function updateListingStatus(
+    id: number,
+    status: "pending_verification" | "verified" | "rejected"
+) {
+  return prisma.listing.update({
+    where: { id },
+    data: { status },
+    select: listingSelect,
+  });
+}
+
 export async function findOwn(id: number, clubId: number) {
   return prisma.listing.findFirst({ where: { id, clubId }, select: listingSelect });
 }
@@ -150,7 +210,7 @@ export async function createOwn(clubId: number, input: NewListingInput) {
 export async function updateOwn(id: number, clubId: number, input: ListingInput) {
   const { playerDetails, ...rest } = input;
   const result = await prisma.listing.updateMany({
-    where: { id, clubId, status: { in: EDITABLE_STATUSES } },
+    where: { id, clubId, status: { in: EDITABLE_STATUSES_CLUB } },
     data: { ...rest, ...playerDetailsData(playerDetails) },
   });
   return result.count;

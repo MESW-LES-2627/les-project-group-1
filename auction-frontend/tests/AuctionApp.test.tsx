@@ -180,11 +180,18 @@ describe('highest bid', () => {
     expect(screen.getByText('Highest bidder: someone')).toBeInTheDocument();
   });
 
-  it('suggests the next minimum bid based on the current highest bid', async () => {
-    await renderLoggedIn({ currentBid: 100 });
-    expect(getBidInput()).toHaveAttribute('placeholder', '101€');
+  it('suggests the starting bid when there are no bids and the next increment after a bid', async () => {
+    await renderLoggedIn({ currentBid: 100, bids: [] });
+    expect(getBidInput()).toHaveAttribute('placeholder', '100€');
 
-    serverSends('auction_state', makeAuction({ currentBid: 175 }));
+    serverSends(
+      'auction_state',
+      makeAuction({
+        currentBid: 175,
+        highestBidder: 'someone',
+        bids: [{ bidder: 'someone', amount: 175, timestamp: Date.now() }],
+      }),
+    );
     expect(getBidInput()).toHaveAttribute('placeholder', '176€');
   });
 });

@@ -9,6 +9,7 @@ import { COUNTRIES } from '../auction/countries';
 import { ApiError, saveProfile } from '../profile/api';
 import type { ProfileUser } from '../profile/api';
 import { ShippingAddresses } from './ShippingAddresses';
+import { ActiveBids } from './ActiveBids';
 
 const errorMessages: Record<string, string> = {
   invalid_username: 'The username must have between 3 and 30 characters.',
@@ -174,7 +175,7 @@ export function AccountProfile({ token, username, email, country, onSaved }: Acc
           </form>
         </section>
       </div>
-
+      <ActiveBids token={token} />
       <PurchasedJerseys token={token} />
       <ShippingAddresses token={token} />
     </main>
