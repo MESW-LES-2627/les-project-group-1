@@ -1,6 +1,6 @@
 import type { Request, Response } from "express";
 import { env } from "../config/env";
-import { stripe } from "../services/stripe.service";
+import { getStripe } from "../services/stripe.service";
 import { sendEmail } from "../services/email.service";
 import { markPaid } from "../models/winner.model";
 
@@ -8,7 +8,7 @@ import { markPaid } from "../models/winner.model";
 export async function stripeWebhook(req: Request, res: Response) {
   let event;
   try {
-    event = await stripe.webhooks.constructEventAsync(
+    event = await getStripe().webhooks.constructEventAsync(
       req.body,
       req.headers["stripe-signature"] as string,
       env.stripeWebhookSecret,
