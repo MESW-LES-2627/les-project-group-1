@@ -34,7 +34,8 @@ Adopted output was reviewed by at least one team member and checked with tests, 
 | 2026-11-20 | Claude | Let clubs create and edit auctions | The club's new auction page and editing of auction settings until the auction opens | Adopted. Covered by tests |
 | 2026-11-19 | Deepseek | Give the admin dashboard a clubs management page | A React Query hook, a searchable and filterable table and approve/reject actions | Adopted. Tested in the browser against the running backend |
 | 2026-11-19 | Gemini | Review our custom club/role status check and verify if the bidding logic made sense | Confirmed the `role === "BUYER"` restriction and pointed out where to enforce it on both REST and Socket endpoints | Adapted. Applied the checks on the backend and added UI error feedback for clubs |
-
+| 2026-11-18 | Clude | generate crud API for Memorabilia listing | Api endpoints for the backend | Adapted. Applied the code |
+| 2026-11-19 | Clude | generate dashboard components and pages for the listing | components to get/edit/delete listing using endpoints | Adapted. Applied the code |
 
 ## Debugging
 
