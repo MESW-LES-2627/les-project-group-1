@@ -46,7 +46,7 @@ export async function findPublicListingById(id: number) {
 }
 
 export async function findCategories() {
-  return prisma.category.findMany({ select: { slug: true, name: true }, orderBy: { name: "asc" } });
+  return prisma.category.findMany({ select: { id: true, slug: true, name: true }, orderBy: { name: "asc" } });
 }
 
 export async function findClubBySlug(slug: string) {

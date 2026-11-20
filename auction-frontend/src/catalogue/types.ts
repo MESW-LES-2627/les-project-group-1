@@ -2,6 +2,7 @@ import type { PlayerInfo } from '@/auction/types';
 
 // Category used to browse and filter the catalogue.
 export interface Category {
+  id: number;
   slug: string;
   name: string;
 }
