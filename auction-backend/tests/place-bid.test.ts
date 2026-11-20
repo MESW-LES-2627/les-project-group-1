@@ -288,8 +288,9 @@ describe("Place a bid on an active auction", () => {
   });
 
   it("handles concurrent bids consistently so only valid higher bids succeed", async () => {
-    // Current highest bid from previous test is 120
-    const amounts = [130, 125, 150, 140, 150];
+    // Current highest bid from previous test is 120. Five identical concurrent bids
+    // must produce exactly one accepted bid: the lock prevents duplicate 150s.
+    const amounts = [150, 150, 150, 150, 150];
     const responses = await Promise.all(
       amounts.map((amount, idx) =>
         fetch(`${baseUrl}/api/auction/${activeListingId}/bids`, {
@@ -304,8 +305,25 @@ describe("Place a bid on an active auction", () => {
     );
 
     const statuses = responses.map((r) => r.status);
-    // 130 succeeds (120 -> 130), 125 fails, 150 succeeds (130 -> 150), 140 fails, duplicate 150 fails
-    expect(statuses).toEqual([201, 400, 201, 400, 400]);
+    expect(statuses.filter((status) => status === 201)).toHaveLength(1);
+    expect(statuses.filter((status) => status === 400)).toHaveLength(4);
+
+    // Now that the highest bid is 150, all lower/equal concurrent bids must fail,
+    // regardless of the order in which the requests reach the auction lock.
+    const tooLowAmounts = [125, 140, 150, 149, 150];
+    const tooLowResponses = await Promise.all(
+      tooLowAmounts.map((amount, idx) =>
+        fetch(`${baseUrl}/api/auction/${activeListingId}/bids`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${idx % 2 === 0 ? buyer1Token : buyer2Token}`,
+          },
+          body: JSON.stringify({ amount }),
+        }),
+      ),
+    );
+    expect(tooLowResponses.map((r) => r.status)).toEqual([400, 400, 400, 400, 400]);
 
     const finalRes = await fetch(`${baseUrl}/api/auction/${activeListingId}/bids`, {
       method: "POST",
