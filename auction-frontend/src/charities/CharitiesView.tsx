@@ -1,8 +1,8 @@
 import type { AccountNav } from '../auction/types';
-import { formatEuro } from '../auction/utils';
+import { useApi } from '../catalogue/api';
 import { CharityCard } from '../components/CharityCard';
 import { Navbar } from '../components/Navbar';
-import { CHARITIES } from './data';
+import type { Charity } from './data';
 
 const styles = {
   main: 'mx-auto w-[calc(100%_-_112px)] max-w-[1888px] py-[60px] pb-[70px] max-tablet:w-[calc(100%_-_64px)] max-mobile:w-[calc(100%_-_36px)] max-mobile:py-6',
@@ -12,7 +12,9 @@ const styles = {
 };
 
 export function CharitiesView({ account }: { account: AccountNav }) {
-  const totalRaised = CHARITIES.reduce((sum, charity) => sum + charity.raised, 0);
+  const { data: charities, loading, error } = useApi<Charity[]>('/api/charities');
+  const list = charities ?? [];
+  const totalAuctions = list.reduce((sum, charity) => sum + charity.auctionCount, 0);
 
   return (
     <>
@@ -21,14 +23,24 @@ export function CharitiesView({ account }: { account: AccountNav }) {
       <main className={styles.main}>
         <h1 className={styles.title}>Charities</h1>
         <p className={styles.subtitle}>
-          {formatEuro(totalRaised)} raised so far by {CHARITIES.length} charities supported by our auctions.
+          {list.length} verified {list.length === 1 ? 'charity' : 'charities'} supported by our auctions
+          {totalAuctions > 0 ? `, across ${totalAuctions} ${totalAuctions === 1 ? 'auction' : 'auctions'}` : ''}.
         </p>
 
-        <div className={styles.grid}>
-          {CHARITIES.map((charity) => (
-            <CharityCard key={charity.slug} charity={charity} />
-          ))}
-        </div>
+        {loading && <p className="text-lg font-medium text-slate">Loading charities…</p>}
+        {error && (
+          <p role="alert" className="text-lg font-medium text-danger">
+            {error}
+          </p>
+        )}
+
+        {!loading && !error && (
+          <div className={styles.grid}>
+            {list.map((charity) => (
+              <CharityCard key={charity.id} charity={charity} />
+            ))}
+          </div>
+        )}
       </main>
     </>
   );

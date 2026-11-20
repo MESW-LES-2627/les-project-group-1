@@ -1,6 +1,13 @@
 import { useMemo, useState } from "react"
-import { useCategories, useCreateMyListing, useUpdateMyListing } from "@/dashboard/hooks/use-my-listings"
+import {
+  useCategories,
+  useCreateMyListing,
+  useSelectableCharities,
+  useUpdateMyListing,
+} from "@/dashboard/hooks/use-my-listings"
 import { getClubErrorMessage } from "@/dashboard/lib/club-errors"
+import { flagEmoji } from "@/lib/utils"
+import { COUNTRIES } from "@/lib/countries"
 import type { ListingPayload, MyListing } from "@/dashboard/lib/club-api"
 import {
   PLAYER_DETAIL_FIELDS,
@@ -21,6 +28,8 @@ import {
 } from "@/dashboard/components/ui/dialog"
 import { Field, selectClass, textareaClass } from "@/dashboard/components/dashboard/field"
 import { EMPTY_SELECTION, ImagePicker, type ImageSelection } from "@/dashboard/components/dashboard/image-picker"
+
+const countryNames = new Map(COUNTRIES.map((country) => [country.code, country.name]))
 
 interface ListingFormDialogProps {
   open: boolean
@@ -54,6 +63,7 @@ function ListingForm({ listing, onDone }: { listing?: MyListing | null; onDone: 
   const [evidence, setEvidence] = useState<ImageSelection>(EMPTY_SELECTION)
 
   const { data: categories, isPending: loadingCategories } = useCategories()
+  const { data: charities, isPending: loadingCharities } = useSelectableCharities()
   const create = useCreateMyListing()
   const update = useUpdateMyListing()
   const mutation = listing ? update : create
@@ -201,6 +211,50 @@ function ListingForm({ listing, onDone }: { listing?: MyListing | null; onDone: 
             value={values.auctionEndsAt}
             onChange={(e) => set("auctionEndsAt", e.target.value)}
           />
+        </Field>
+      </div>
+
+      <div className="grid gap-4 sm:grid-cols-2">
+        <Field label="Support a charity (verified only)" htmlFor="listing-charity">
+          <select
+            id="listing-charity"
+            value={values.charitableOrganizationId}
+            onChange={(e) => {
+              const id = e.target.value
+              set("charitableOrganizationId", id)
+              if (!id) set("donationPercentage", "")
+              else if (!values.donationPercentage) set("donationPercentage", "10")
+            }}
+            disabled={loadingCharities}
+            className={selectClass}
+          >
+            <option value="">{loadingCharities ? "Loading…" : "No charity"}</option>
+            {charities?.map((charity) => (
+              <option key={charity.id} value={charity.id}>
+                {flagEmoji(charity.country)} {charity.name}
+                {charity.country
+                  ? ` (${countryNames.get(charity.country.toUpperCase()) ?? charity.country})`
+                  : ""}
+              </option>
+            ))}
+          </select>
+        </Field>
+
+        <Field label="Donation percentage (%)" htmlFor="listing-donation">
+          <Input
+            id="listing-donation"
+            type="number"
+            min="0"
+            max="100"
+            step="1"
+            value={values.donationPercentage}
+            onChange={(e) => set("donationPercentage", e.target.value)}
+            disabled={!values.charitableOrganizationId}
+            placeholder="e.g. 10"
+          />
+          <p className="text-xs text-muted-foreground">
+            Share of the winning bid donated to the selected charity.
+          </p>
         </Field>
       </div>
 

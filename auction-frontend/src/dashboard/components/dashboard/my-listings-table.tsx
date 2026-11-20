@@ -46,6 +46,21 @@ export function MyListingsTable({ data, busyId, onEdit, onDelete, onSubmit }: My
         cell: ({ row }) => <ListingStatusBadge status={row.original.status} />,
       },
       {
+        id: "charity",
+        header: "Charity",
+        cell: ({ row }) => {
+          const charity = row.original.charitableOrganization
+          if (!charity) return "—"
+          const donation = row.original.donationPercentage
+          return (
+            <span className="text-sm">
+              {charity.name}
+              {donation !== null ? ` · ${donation}%` : ""}
+            </span>
+          )
+        },
+      },
+      {
         accessorKey: "startingPrice",
         header: "Starting price",
         cell: ({ row }) => (row.original.startingPrice === null ? "—" : euro.format(row.original.startingPrice)),

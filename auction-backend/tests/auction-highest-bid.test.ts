@@ -20,6 +20,8 @@ interface AuctionState {
 // Builds an isolated room, so these unit tests never touch the shared demo auction.
 const makeRoom = (overrides: Partial<AuctionRoom['state']> = {}): AuctionRoom => ({
   startingPrice: 50,
+  status: 'verified',
+  startsAt: null,
   highestBidderEmail: null,
   state: {
     itemName: 'Test Jersey',

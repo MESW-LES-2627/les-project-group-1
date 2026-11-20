@@ -121,6 +121,8 @@ export interface CharitableOrganization {
   name: string
   description: string
   logoUrl: string | null
+  country: string
+  verified: boolean
   createdAt: string
   updatedAt: string
 }
@@ -140,6 +142,8 @@ export interface NewCharitableOrganization {
   name: string
   description?: string
   logoUrl?: string | null
+  country?: string
+  verified?: boolean
 }
 
 // Allows partial updates when editing an existing organization

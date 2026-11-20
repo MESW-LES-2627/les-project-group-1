@@ -2,8 +2,13 @@ import { useMemo } from "react"
 import { flexRender, getCoreRowModel, useReactTable, type ColumnDef } from "@tanstack/react-table"
 import { HeartHandshake, Pencil, Trash2 } from "lucide-react"
 import type { CharitableOrganization } from "@/dashboard/lib/api"
+import { flagEmoji } from "@/lib/utils"
+import { COUNTRIES } from "@/lib/countries"
+import { Badge } from "@/dashboard/components/ui/badge"
 import { Button } from "@/dashboard/components/ui/button"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/dashboard/components/ui/table"
+
+const countryNames = new Map(COUNTRIES.map((country) => [country.code, country.name]))
 
 /**
  * Administrative data table component for displaying charitable organizations.
@@ -54,6 +59,34 @@ export function CharitableOrganizationsTable({
           <p className="max-w-md truncate text-sm text-muted-foreground">
             {row.original.description || "—"}
           </p>
+        ),
+      },
+      {
+        accessorKey: "country",
+        header: "Country",
+        cell: ({ row }) => {
+          const code = row.original.country
+          return (
+            <span className="text-sm">
+              {code ? `${flagEmoji(code)} ${countryNames.get(code) ?? code}` : "—"}
+            </span>
+          )
+        },
+      },
+      {
+        accessorKey: "verified",
+        header: "Verified",
+        cell: ({ row }) => (
+          <Badge
+            variant="outline"
+            className={
+              row.original.verified
+                ? "border-transparent bg-green-100 text-green-700 dark:bg-green-500/15 dark:text-green-400"
+                : "border-transparent bg-yellow-100 text-yellow-800 dark:bg-yellow-500/15 dark:text-yellow-400"
+            }
+          >
+            {row.original.verified ? "Verified" : "Pending"}
+          </Badge>
         ),
       },
       {
