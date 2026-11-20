@@ -74,7 +74,7 @@ export function BidPanel({
   }
 
   // Derive the next allowed bid and urgency state from the live auction clock.
-  const minBid = auction.currentBid + MIN_INCREMENT;
+  const minBid = bidCount === 0 ? auction.currentBid : auction.currentBid + MIN_INCREMENT;
   const msLeft = auction.endTime - now;
   const ended = !auction.isActive || msLeft <= 0;
   const urgent = !ended && msLeft <= 10 * 60 * 1000;

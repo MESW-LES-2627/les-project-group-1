@@ -2,6 +2,7 @@ import type { Request, Response } from "express";
 import * as User from "../models/user.model";
 import { findPaidByEmail } from "../models/winner.model";
 import { validateAvatar, validateProfileInput } from "../utils/profileValidation";
+import { findActiveBidsByBidder } from "../models/bid.model";
 
 export async function getMe(req: Request, res: Response) {
   try {
@@ -81,6 +82,19 @@ export async function removeMyAvatar(req: Request, res: Response) {
     return res.status(200).json({ avatar: null });
   } catch (error) {
     console.error("Remove avatar error:", (error as Error).message);
+    return res.status(500).json({ error: "Internal server error." });
+  }
+}
+
+// Lists active auctions where the logged-in user placed bids
+export async function getMyActiveBids(req: Request, res: Response) {
+  try {
+    const user = await User.findMe(req.user!.id);
+    if (!user) return res.status(404).json({ error: "not_found" });
+    const activeBids = await findActiveBidsByBidder(user.username);
+    return res.status(200).json({ activeBids });
+  } catch (error) {
+    console.error("Get active bids error:", (error as Error).message);
     return res.status(500).json({ error: "Internal server error." });
   }
 }

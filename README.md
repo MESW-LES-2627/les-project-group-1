@@ -200,3 +200,11 @@ The tests also run automatically in CI on every push and pull request to `develo
 - [Retrospective](docs/iterations/1/retrospective.md)
 - [CLAIM](docs/iterations/1/CLAIM.md)
 - [Snapshot](docs/iterations/1/snapshot.md)
+
+### Iteration 2
+
+- [Snapshot](docs/iterations/2/snapshot.md)
+- [AI log](docs/iterations/2/AI-log.md)
+- [Retrospective](docs/iterations/2/retrospective.md)
+- [CLAIM](docs/iterations/2/CLAIM.md)
+
