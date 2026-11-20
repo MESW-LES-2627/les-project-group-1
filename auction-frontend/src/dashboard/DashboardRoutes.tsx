@@ -14,6 +14,7 @@ import CharitableOrganizations from "@/dashboard/pages/charitable-organizations.
 import {RoleRoute} from "@/dashboard/components/layout/role-route.tsx";
 import MyListings from "@/dashboard/pages/my-listings.tsx";
 import ClubProfilePage from "@/dashboard/pages/club-profile.tsx";
+import AdminListings from "@/dashboard/pages/admin-listings.tsx";
 const queryClient = new QueryClient();
 
 // /dashboard: admins see the overview, clubs go straight to their listings
@@ -46,6 +47,8 @@ export default function DashboardRoutes() {
                                 <Route path="charitable-organizations" element={<CharitableOrganizations />} />
                                 <Route path="analytics" element={<Placeholder title="Analytics" />} />
                                 <Route path="settings" element={<Placeholder title="Settings" />} />
+                                <Route path="listings" element={<AdminListings />} />
+
                             </Route>
 
                             <Route element={<RoleRoute allow={["CLUB"]} />}>

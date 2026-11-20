@@ -8,6 +8,7 @@ const links = [
   { to: "/dashboard", label: "Overview", icon: LayoutDashboard, roles: ["ADMIN"] },
   { to: "/dashboard/users", label: "Users", icon: Users , roles: ["ADMIN"]},
   { to: "/dashboard/clubs", label: "Clubs", icon: Building2 , roles: ["ADMIN"]},
+  { to: "/dashboard/listings", label: "Listings", icon: Shirt, roles: ["ADMIN"] },
   { to: "/dashboard/charitable-organizations", label: "Charities", icon: HeartHandshake , roles: ["ADMIN"]},
   { to: "/dashboard/analytics", label: "Analytics", icon: BarChart3 , roles: ["ADMIN"]},
   { to: "/dashboard/settings", label: "Settings", icon: Settings , roles: ["ADMIN"]},
