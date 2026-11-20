@@ -1,6 +1,7 @@
 import type { Request, Response } from "express";
 import * as Club from "../models/club.model";
 import * as Listings from "../models/listing.model";
+import * as CharitableOrganization from "../models/charitableOrganization.model";
 import { EDITABLE_STATUSES } from "../models/listing.model";
 import { detectImageType, removeUploadedFiles, saveImage, saveImages } from "../utils/imageFiles.ts";
 import {
@@ -139,6 +140,12 @@ function writeError(res: Response, error: unknown, label: string) {
   return res.status(500).json({ error: "Internal server error." });
 }
 
+/** A club may only associate its listing with a verified charitable organization. */
+async function charityIsSelectable(id: number | null | undefined) {
+  if (id === undefined || id === null) return true;
+  return Boolean(await CharitableOrganization.findVerifiedById(id));
+}
+
 /** GET /api/clubs/me/listings?status=&page=&limit= */
 export async function listMyListings(req: Request, res: Response) {
   try {
@@ -208,6 +215,8 @@ export async function createMyListing(req: Request, res: Response) {
     const images = uploadedFiles(req, "images");
     const evidence = uploadedFiles(req, "evidenceImages");
     if (!allAreImages([...images, ...evidence])) return res.status(400).json({ error: "invalid_image" });
+    if (!(await charityIsSelectable(input.charitableOrganizationId)))
+      return res.status(400).json({ error: "invalid_charitable_organization" });
 
     if (input.status === "pending_verification") {
       const missing = missingForSubmission({ ...input, imageCount: images.length });
@@ -269,6 +278,9 @@ export async function updateMyListing(req: Request, res: Response) {
     if (parsed.ok) input = parsed.value;
     else if (parsed.error === "no_fields" && (imagesChanged || evidenceChanged)) input = {}; // only images changed
     else return res.status(400).json({ error: parsed.error });
+
+    if (!(await charityIsSelectable(input.charitableOrganizationId)))
+      return res.status(400).json({ error: "invalid_charitable_organization" });
 
     const keptImages = existing.images.filter((p) => !removeImages.includes(p));
     const keptEvidence = existing.evidenceImages.filter((p) => !removeEvidence.includes(p));

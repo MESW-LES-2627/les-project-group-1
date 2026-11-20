@@ -16,6 +16,10 @@ export type ListingInput = {
   evidenceImages?: string[];
   startingPrice?: number | null;
   auctionEndsAt?: Date | null;
+  /** The verified charity supported by this auction. null clears the selection. */
+  charitableOrganizationId?: number | null;
+  /** Share of the winning bid donated to the selected charity (0-100). */
+  donationPercentage?: number | null;
   /** Clubs can only move a listing between these two. "verified" and "rejected" are set by an admin. */
   status?: "draft" | "pending_verification";
 };
@@ -140,6 +144,20 @@ export function validateListingInput(body: unknown, mode: "create" | "update"): 
     } else return fail("invalid_auction_ends_at");
   }
 
+  if (d.charitableOrganizationId !== undefined) {
+    const v = d.charitableOrganizationId;
+    if (v === null) out.charitableOrganizationId = null;
+    else if (Number.isInteger(v) && (v as number) > 0) out.charitableOrganizationId = v as number;
+    else return fail("invalid_charitable_organization");
+  }
+
+  if (d.donationPercentage !== undefined) {
+    const v = d.donationPercentage;
+    if (v === null) out.donationPercentage = null;
+    else if (Number.isInteger(v) && (v as number) >= 0 && (v as number) <= 100) out.donationPercentage = v as number;
+    else return fail("invalid_donation_percentage");
+  }
+
   if (d.status !== undefined) {
     if (d.status !== "draft" && d.status !== "pending_verification") return fail("invalid_status");
     out.status = d.status;
@@ -189,7 +207,7 @@ export function parseStringList(v: unknown): string[] | null {
 export function normalizeFormBody(raw: Record<string, unknown>): Record<string, unknown> {
   const out: Record<string, unknown> = { ...raw };
 
-  for (const key of ["categoryId", "startingPrice"]) {
+  for (const key of ["categoryId", "startingPrice", "charitableOrganizationId", "donationPercentage"]) {
     const v = out[key];
     if (typeof v === "string") out[key] = v.trim() === "" ? null : Number(v);
   }

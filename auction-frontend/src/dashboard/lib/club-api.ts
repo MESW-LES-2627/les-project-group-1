@@ -51,6 +51,22 @@ export async function fetchCategories(): Promise<CategoryOption[]> {
   return data
 }
 
+// ---------- Charities ----------
+
+export interface SelectableCharity {
+  id: number
+  name: string
+  description: string
+  logoUrl: string | null
+  country: string
+  auctionCount: number
+}
+
+export async function fetchSelectableCharities(): Promise<SelectableCharity[]> {
+  const { data } = await http.get<SelectableCharity[]>("/charities")
+  return data
+}
+
 // ---------- Listings ----------
 
 export const LISTING_STATUSES = ["draft", "pending_verification", "verified", "rejected"] as const
@@ -75,6 +91,16 @@ export interface MyListing {
   certificateCode: string | null
   startingPrice: number | null
   auctionEndsAt: string | null
+  charitableOrganizationId: number | null
+  charitableOrganization: {
+    id: number
+    name: string
+    description: string
+    logoUrl: string | null
+    country: string
+    verified: boolean
+  } | null
+  donationPercentage: number | null
   createdAt: string
   verifiedAt: string | null
 }

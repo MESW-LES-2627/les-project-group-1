@@ -15,7 +15,9 @@ beforeAll(async () => {
   }
 
   // Clean up tables before running tests
-  await prisma.charitableOrganization.deleteMany();
+  await prisma.charitableOrganization.deleteMany({
+    where: { name: { in: ["Causa Compartilhada", "Causa Compartilhada Brasil"] } },
+  });
   await prisma.user.deleteMany({
     where: {
       email: { in: ["charity-admin@feup.pt", "charity-buyer@feup.pt"] },
@@ -74,7 +76,9 @@ beforeAll(async () => {
 });
 
 afterAll(async () => {
-  await prisma.charitableOrganization.deleteMany();
+  await prisma.charitableOrganization.deleteMany({
+    where: { name: { in: ["Causa Compartilhada", "Causa Compartilhada Brasil"] } },
+  });
   await prisma.user.deleteMany({
     where: {
       email: { in: ["charity-admin@feup.pt", "charity-buyer@feup.pt"] },

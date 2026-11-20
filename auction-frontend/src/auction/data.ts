@@ -23,17 +23,14 @@ export const ITEM = {
     logoUrl: null,
   },
 
-  //Charities supported by the auction.
+  //Verified charity supported by the demo auction.
   causes: [
     {
-      name: 'Fundação Semear Futuro',
-      description: '100% of proceeds support sports access for underprivileged children.',
-      logo: '/cause-semear-futuro.png',
-    },
-    {
-      name: 'Play for All Foundation',
-      description: 'Supporting youth sports and community programs.',
-      logo: '/cause-play-for-all.png',
+      name: 'Right to Play',
+      description: 'Uses play and sport to help children build life skills, stay in school and recover from adversity.',
+      logo: '/images/charities/right-to-play.png',
+      country: 'CA',
+      donationPercentage: 10,
     },
   ],
 };
