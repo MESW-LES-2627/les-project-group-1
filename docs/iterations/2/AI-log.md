@@ -13,6 +13,7 @@ Adopted output was reviewed by at least one team member and checked with tests, 
 |---|---|---|---|---|
 | 2026-11-20 | Claude | Show buyers whether they can bid on an auction | Status badges and an "Opens in …" countdown on the catalogue and auction page | Checked in the browser and covered by frontend tests |
 | 2026-11-19 | Gemini | Give immediate UI feedback when non-buyer accounts try to place a bid | Added role check in `handleBid` and socket `bid_error` listener in `AuctionApp.tsx` | Adopted. Tested with a club account in browser |
+| 2026-11-19 | Claude | Get help to make the expanded bidding history scroll when it gets long | A suggestion to limit the list height and scroll it, with a fixed table header | Adapted. We applied it to the Latest bids card and checked it in the browser |
 
 ## Architecture and data
 
@@ -34,8 +35,8 @@ Adopted output was reviewed by at least one team member and checked with tests, 
 | 2026-11-20 | Claude | Let clubs create and edit auctions | The club's new auction page and editing of auction settings until the auction opens | Adopted. Covered by tests |
 | 2026-11-19 | Deepseek | Give the admin dashboard a clubs management page | A React Query hook, a searchable and filterable table and approve/reject actions | Adopted. Tested in the browser against the running backend |
 | 2026-11-19 | Gemini | Review our custom club/role status check and verify if the bidding logic made sense | Confirmed the `role === "BUYER"` restriction and pointed out where to enforce it on both REST and Socket endpoints | Adapted. Applied the checks on the backend and added UI error feedback for clubs |
-| 2026-11-18 | Clude | generate crud API for Memorabilia listing | Api endpoints for the backend | Adapted. Applied the code |
-| 2026-11-19 | Clude | generate dashboard components and pages for the listing | components to get/edit/delete listing using endpoints | Adapted. Applied the code |
+| 2026-11-18 | Claude | generate crud API for Memorabilia listing | Api endpoints for the backend | Adapted. Applied the code |
+| 2026-11-19 | Claude | generate dashboard components and pages for the listing | components to get/edit/delete listing using endpoints | Adapted. Applied the code |
 
 ## Debugging
 
@@ -57,6 +58,7 @@ Adopted output was reviewed by at least one team member and checked with tests, 
 | 2026-11-20 | Deepseek | Cover the charity selection rules end to end | Tests for verified-only selection, donation bounds and rejected selections | Adapted. Ran them in CI and kept the cases that matched our rules |
 | 2026-11-19 | Gemini | Test all bid submission and validation acceptance criteria | Created `place-bid.test.ts` and updated `AuctionApp.test.tsx` | Adapted. Fixed a variable typo in test and verified full suite passes |
 | 2026-11-19 | Gemini | Update frontend unit tests to match the new first-bid rule | Adjusted minimum bid placeholder assertions in `AuctionApp.test.tsx` | Adopted. Verified `bun test` passes |
+| 2026-11-19 | Claude | Get help writing tests for the highest bid and bidding history | Drafts of backend and frontend tests for the bid rules and the history | Adapted. We fixed the drafts that failed and ran them with `bun test` |
 
 
 
