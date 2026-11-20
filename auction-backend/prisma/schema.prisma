@@ -93,9 +93,10 @@ model Listing {
   status                   String                  @default("draft")
   authenticityNotes        String?                 @map("authenticity_notes")
   evidenceImages           String[]                @default([]) @map("evidence_images")
-  certificateCode          String?                 @unique @map("certificate_code")
+  certificateCode           String?                 @unique @map("certificate_code")
   startingPrice            Decimal?                @map("starting_price") @db.Decimal(10, 2)
   auctionEndsAt            DateTime?               @map("auction_ends_at") @db.Timestamptz(6)
+  donationPercentage       Int?                    @map("donation_percentage")
   createdAt                DateTime                @default(now()) @map("created_at") @db.Timestamptz(6)
   verifiedAt               DateTime?               @map("verified_at") @db.Timestamptz(6)
   club                     Club                    @relation(fields: [clubId], references: [id], onDelete: NoAction, onUpdate: NoAction)
@@ -141,6 +142,8 @@ model CharitableOrganization {
   name        String    @unique
   description String    @default("")
   logoUrl     String?   @map("logo_url")
+  country     String    @default("")
+  verified    Boolean   @default(false)
   createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt   DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
   listings    Listing[]

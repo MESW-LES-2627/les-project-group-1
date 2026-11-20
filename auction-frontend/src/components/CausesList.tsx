@@ -1,4 +1,6 @@
 import { useItem } from '../auction/ItemContext';
+import { flagEmoji } from '../auction/utils';
+import { COUNTRIES } from '../lib/countries';
 
 const styles = {
   section: 'mt-8 max-mobile:mt-7',
@@ -8,9 +10,16 @@ const styles = {
   logo: 'flex size-[clamp(82px,8vw,112px)] shrink-0 items-center justify-center max-mobile:size-[72px]',
   causeName: 'mb-[3px] text-[clamp(1.2rem,1.7vw,2rem)] font-bold tracking-[-0.03em] max-mobile:text-[1.1rem]',
   description: 'm-0 max-w-[760px] text-[clamp(1rem,1.45vw,1.65rem)] leading-[1.2] font-normal max-mobile:text-[0.9rem]',
+  meta: 'mt-3 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm font-semibold text-slate max-mobile:text-xs',
+  donation: 'inline-flex items-center rounded-full bg-ink-strong px-3 py-1 font-bold text-white',
 };
 
-//Displays the list of chariable causes supported by this auction
+const countryName = (code?: string) => {
+  if (!code) return '';
+  return COUNTRIES.find((country) => country.code === code.toUpperCase())?.name ?? code;
+};
+
+//Displays the verified charitable cause supported by this auction.
 export function CausesList() {
   const item = useItem();
   if (item.causes.length === 0) return null;
@@ -22,11 +31,21 @@ export function CausesList() {
         {item.causes.map((cause) => (
           <li key={cause.name} className={styles.row}>
             <div className={styles.logo}>
-              <img src={cause.logo} alt="" />
+              {cause.logo && <img src={cause.logo} alt="" />}
             </div>
             <div>
               <h3 className={styles.causeName}>{cause.name}</h3>
               <p className={styles.description}>{cause.description}</p>
+              <div className={styles.meta}>
+                {cause.donationPercentage != null && (
+                  <span className={styles.donation}>{cause.donationPercentage}% donation</span>
+                )}
+                {cause.country && (
+                  <span>
+                    {flagEmoji(cause.country)} {countryName(cause.country)}
+                  </span>
+                )}
+              </div>
             </div>
           </li>
         ))}

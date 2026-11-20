@@ -20,6 +20,12 @@ export interface ListingRow {
   verified_at: Date | null;
   starting_price: number | null;
   auction_ends_at: Date | null;
+  donation_percentage: number | null;
+  charity_id: number | null;
+  charity_name: string | null;
+  charity_description: string | null;
+  charity_logo_url: string | null;
+  charity_country: string | null;
   club_slug: string;
   club_name: string;
   club_logo_url: string | null;
@@ -130,6 +136,11 @@ export const listingSelect = {
   certificateCode: true,
   startingPrice: true,
   auctionEndsAt: true,
+  donationPercentage: true,
+  charitableOrganizationId: true,
+  charitableOrganization: {
+    select: { id: true, name: true, description: true, logoUrl: true, country: true, verified: true },
+  },
   createdAt: true,
   verifiedAt: true,
 } as const;

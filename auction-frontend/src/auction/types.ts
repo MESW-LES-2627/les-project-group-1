@@ -42,7 +42,9 @@ export interface PlayerInfo {
 export interface Cause {
   name: string;
   description: string;
-  logo: string;
+  logo: string | null;
+  country?: string;
+  donationPercentage?: number | null;
 }
 
 //Item data shown on the auction page (tags, subtitle, images, player, team and causes).

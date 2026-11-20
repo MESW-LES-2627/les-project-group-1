@@ -11,7 +11,8 @@ insert into clubs (slug, name, description, logo_url) values
   ('liverpool-fc', 'Liverpool FC', 'English football club based in Liverpool, with a rich history of domestic and European success.', '/images/clubs/liverpool-fc.svg'),
   ('portugal', 'Portugal', 'National team representing Portugal, with a growing collection of international honours and special-edition shirts.', '/images/clubs/portugal.svg'),
   ('sc-braga', 'SC Braga', 'Portuguese football club based in Braga, known for its strong home support and regular European appearances.', '/images/clubs/sc-braga.svg'),
-  ('celtic', 'Celtic', 'Scottish football club based in Glasgow, with a long record of league titles and a famous home atmosphere.', '/images/clubs/celtic.svg')
+  ('celtic', 'Celtic', 'Scottish football club based in Glasgow, with a long record of league titles and a famous home atmosphere.', '/images/clubs/celtic.svg'),
+  ('sc-farense', 'SC Farense', 'Portuguese football club based in Faro, with a strong history, identity and passionate supporters.', '/images/clubs/sc-farense.svg')
 on conflict (slug) do update set
   name = excluded.name,
   description = excluded.description,
@@ -122,6 +123,16 @@ values
    'This Celtic football shirt was match-worn by Kieran Tierney in the UEFA Europa League match against Beşiktaş JK at Celtic Park on 5 November 2026. A starting defender wearing number 63, Tierney was part of the 3–2 victory.',
    array['/images/items/celtic/tierney-front.png', '/images/items/celtic/tierney-back.png'],
    'verified', 'Signing witnessed by team staff. Matched against official broadcast footage.', 'AC-2026-0010', now(),
+   520, now() + interval '4 days'),
+
+  ((select id from clubs where slug = 'sc-farense'),
+   (select id from categories where slug = 'player-jerseys'),
+   'João Pinto', 'João Pinto',
+   '{"age":27,"position":"Defender","number":23,"size":"S","nationality":"Portuguese","placeOfBirth":"Portugal","preferredFoot":"N/A"}'::jsonb,
+   '1998/99', 'Primeira Divisão', 'SC Farense vs SC Salgueiros', array['worn'],
+   'This wonderful and extremely rare shirt was worn by João Pinto in the Primeira Divisão match against SC Salgueiros at Estádio de São Luís. A collector piece with lots of history. João left us too soon due to cancer, so any profits from this auction go to a charity association in Portugal that supports cancer patients and research.',
+   array['/images/items/sc-farense/pinto-front.png', '/images/items/sc-farense/pinto-back.png'],
+   'verified', 'Shirt provided by the club archives.', 'AC-2026-0011', now(),
    520, now() + interval '4 days')
 on conflict (certificate_code) do update set
   club_id = excluded.club_id,
@@ -141,14 +152,48 @@ on conflict (certificate_code) do update set
   starting_price = excluded.starting_price,
   auction_ends_at = excluded.auction_ends_at;
 
-insert into charitable_organizations (name, description, logo_url, updated_at) values
-  ('Goal for Kids', 'Free coaching and kit for children from low-income neighbourhoods.', '/images/charities/goal-for-kids.svg', now()),
-  ('Second Half Foundation', 'Helps retired athletes recover from injury and return to everyday life.', '/images/charities/second-half-foundation.svg', now()),
-  ('Pitch Perfect Community', 'Builds and repairs public football pitches in small towns.', '/images/charities/pitch-perfect-community.svg', now()),
-  ('Her Game', 'Funds girls'' teams, referees and coaches across the country.', '/images/charities/her-game.svg', now()),
-  ('Open Stand', 'Makes stadiums welcoming for fans with disabilities.', '/images/charities/open-stand.svg', now()),
-  ('Green Kick', 'Plants a tree for every match played by partner clubs.', '/images/charities/green-kick.svg', now())
+-- Remove the old fictional demo charities, replacing them with real organizations.
+delete from charitable_organizations
+where name in (
+  'Goal for Kids',
+  'Second Half Foundation',
+  'Pitch Perfect Community',
+  'Her Game',
+  'Open Stand',
+  'Green Kick'
+);
+
+insert into charitable_organizations (name, description, logo_url, country, verified, updated_at) values
+  ('Right to Play', 'Uses play and sport to help children build life skills, stay in school and recover from adversity.', '/images/charities/right-to-play.png', 'CA', true, now()),
+  ('Magic Bus', 'Mentors children and young people from low-income communities through sport-based programmes.', '/images/charities/magic-bus.png', 'IN', true, now()),
+  ('Street League', 'Uses football to help young people facing homelessness and unemployment into work and education.', '/images/charities/street-league.png', 'GB', true, now()),
+  ('Kick It Out', 'Campaigns against discrimination and promotes equality, inclusion and diversity in football.', '/images/charities/kick-it-out.svg', 'GB', true, now()),
+  ('The Football Foundation', 'Funds grassroots football pitches, clubs and community facilities across England.', '/images/charities/football-foundation.png', 'GB', true, now()),
+  ('Common Goal', 'Moves footballers and fans to pledge a share of their income to high-impact community organisations.', '/images/charities/common-goal.png', 'DE', true, now()),
+  ('Liga Portuguesa Contra o Cancro', 'Supports cancer patients and their families, promotes prevention and health education, and backs oncology training and research.', '/images/charities/lpcc.png', 'PT', true, now())
 on conflict (name) do update set
   description = excluded.description,
   logo_url = excluded.logo_url,
+  country = excluded.country,
+  verified = excluded.verified,
   updated_at = now();
+
+-- Each demo auction supports one of the verified charities above.
+update listings l
+set charitable_organization_id = c.id,
+    donation_percentage = v.percentage
+from (values
+  ('AC-2026-0001', 'Right to Play', 10),
+  ('AC-2026-0002', 'Magic Bus', 15),
+  ('AC-2026-0003', 'Street League', 20),
+  ('AC-2026-0004', 'Kick It Out', 10),
+  ('AC-2026-0005', 'The Football Foundation', 5),
+  ('AC-2026-0006', 'Common Goal', 12),
+  ('AC-2026-0007', 'Right to Play', 10),
+  ('AC-2026-0008', 'Magic Bus', 25),
+  ('AC-2026-0009', 'Street League', 8),
+  ('AC-2026-0010', 'Kick It Out', 15),
+  ('AC-2026-0011', 'Liga Portuguesa Contra o Cancro', 100)
+) as v(certificate_code, charity_name, percentage)
+join charitable_organizations c on c.name = v.charity_name
+where l.certificate_code = v.certificate_code;

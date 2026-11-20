@@ -51,6 +51,8 @@ export interface ListingFormValues {
   authenticityNotes: string
   startingPrice: string
   auctionEndsAt: string // value of <input type="datetime-local">, in the user's time zone
+  charitableOrganizationId: string
+  donationPercentage: string
   playerDetails: Record<string, string>
 }
 
@@ -64,6 +66,8 @@ const SIMPLE_KEYS = [
   "match",
   "authenticityNotes",
   "startingPrice",
+  "charitableOrganizationId",
+  "donationPercentage",
 ] as const
 
 export function emptyForm(): ListingFormValues {
@@ -79,6 +83,8 @@ export function emptyForm(): ListingFormValues {
     authenticityNotes: "",
     startingPrice: "",
     auctionEndsAt: "",
+    charitableOrganizationId: "",
+    donationPercentage: "",
     playerDetails: {},
   }
 }
@@ -111,6 +117,9 @@ export function formFromListing(listing: MyListing): ListingFormValues {
     authenticityNotes: listing.authenticityNotes ?? "",
     startingPrice: listing.startingPrice === null ? "" : String(listing.startingPrice),
     auctionEndsAt: toLocalInput(listing.auctionEndsAt),
+    charitableOrganizationId:
+      listing.charitableOrganizationId === null ? "" : String(listing.charitableOrganizationId),
+    donationPercentage: listing.donationPercentage === null ? "" : String(listing.donationPercentage),
     playerDetails: details,
   }
 }

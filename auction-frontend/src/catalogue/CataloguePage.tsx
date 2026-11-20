@@ -50,6 +50,52 @@ function CatalogueHome({ account }: { account: AccountNav }) {
       <Navbar {...account} searchValue={search} onSearchChange={setSearch} />
 
       <main className={styles.main}>
+        <div className="relative mb-10 hidden sm:block">
+          <img
+            src="/images/hero.svg"
+            alt="Assist Club memorabilia"
+            className="h-auto w-full rounded-[22px] object-cover"
+          />
+
+          <div className="pointer-events-none absolute inset-0 [container-type:inline-size]">
+            <div className="pointer-events-auto absolute top-[58%] left-1/2 flex w-[28cqw] -translate-x-1/2 -translate-y-1/2 flex-col items-center gap-[0.65cqw] text-center text-white">
+              <div className="flex items-center justify-center gap-[1.1cqw]">
+                <img
+                  src="/images/clubs/sc-farense.svg"
+                  alt="SC Farense"
+                  className="h-[6.6cqw] w-auto"
+                />
+                <img
+                  src="/images/clubs/santos-fc.svg"
+                  alt="Santos FC"
+                  className="h-[6.6cqw] w-auto"
+                />
+              </div>
+
+              <p className="m-0 text-[1.65cqw] leading-[1.06] font-black uppercase">
+                Assist Club
+                <br />
+                Premium Partners
+              </p>
+
+              <div className="flex items-center justify-center gap-[0.55cqw]">
+                <Link
+                  to="/club/sc-farense"
+                  className="rounded-full bg-white px-[0.8cqw] py-[0.3cqw] text-[0.62cqw] font-black whitespace-nowrap text-black uppercase"
+                >
+                  Shop SC Farense
+                </Link>
+                <Link
+                  to="/club/santos-fc"
+                  className="rounded-full bg-white px-[0.8cqw] py-[0.3cqw] text-[0.62cqw] font-black whitespace-nowrap text-black uppercase"
+                >
+                  Shop Santos FC
+                </Link>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <div className={styles.header}>
           <div>
             <h1 className={styles.title}>Memorabilia</h1>

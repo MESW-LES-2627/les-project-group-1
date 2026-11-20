@@ -4,6 +4,7 @@ import {
   deleteMyListing,
   fetchCategories,
   fetchMyListings,
+  fetchSelectableCharities,
   submitMyListing,
   updateMyListing,
   type ListingPayload,
@@ -24,6 +25,11 @@ export function useMyListings(params: MyListingsParams, enabled = true) {
 
 export function useCategories() {
   return useQuery({ queryKey: ["categories"], queryFn: fetchCategories, staleTime: Infinity })
+}
+
+/** Verified charities only, as returned by the public endpoint. */
+export function useSelectableCharities() {
+  return useQuery({ queryKey: ["selectable-charities"], queryFn: fetchSelectableCharities, staleTime: Infinity })
 }
 
 function useRefreshMyListings() {

@@ -1,5 +1,6 @@
 import type { Request, Response } from "express";
 import * as Listing from "../models/listing.model";
+import * as CharitableOrganization from "../models/charitableOrganization.model";
 import { toDetail, toSummary } from "../services/listings.service";
 
 /** Public memorabilia catalogue. Only verified listings are returned. */
@@ -24,6 +25,11 @@ export async function getListing(req: Request, res: Response) {
 
 export async function getCategories(_req: Request, res: Response) {
   res.json(await Listing.findCategories());
+}
+
+/** Public list of verified charitable organizations, used by the charities page and by clubs. */
+export async function getCharities(_req: Request, res: Response) {
+  res.json(await CharitableOrganization.listVerified());
 }
 
 // Club page: club profile plus its verified listings.

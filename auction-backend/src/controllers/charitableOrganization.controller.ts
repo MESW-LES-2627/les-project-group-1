@@ -49,7 +49,7 @@ export async function getCharitableOrganization(req: Request, res: Response) {
 // POST /api/admin/charitable-organizations
 export async function createCharitableOrganization(req: Request, res: Response) {
   try {
-    const { name, description, logoUrl } = req.body;
+    const { name, description, logoUrl, country, verified } = req.body;
 
     if (typeof name !== "string" || !name.trim()) {
       return res.status(400).json({ error: "Name is required." });
@@ -60,11 +60,19 @@ export async function createCharitableOrganization(req: Request, res: Response) 
     if (logoUrl !== undefined && logoUrl !== null && typeof logoUrl !== "string") {
       return res.status(400).json({ error: "Invalid logoUrl." });
     }
+    if (country !== undefined && typeof country !== "string") {
+      return res.status(400).json({ error: "Invalid country." });
+    }
+    if (verified !== undefined && typeof verified !== "boolean") {
+      return res.status(400).json({ error: "Invalid verified flag." });
+    }
 
     const organization = await CharitableOrganization.createCharitableOrganization({
       name: name.trim(),
       description: description?.trim() ?? "",
       logoUrl: logoUrl ? logoUrl.trim() : null,
+      country: country?.trim().toUpperCase() ?? "",
+      verified: verified ?? false,
     });
 
     return res.status(201).json({
@@ -86,7 +94,7 @@ export async function updateCharitableOrganization(req: Request, res: Response) 
     const id = parseId(req);
     if (!id) return res.status(400).json({ error: "Invalid id." });
 
-    const { name, description, logoUrl } = req.body;
+    const { name, description, logoUrl, country, verified } = req.body;
     const data: Parameters<typeof CharitableOrganization.updateCharitableOrganization>[1] = {};
 
     if (name !== undefined) {
@@ -106,6 +114,18 @@ export async function updateCharitableOrganization(req: Request, res: Response) 
         return res.status(400).json({ error: "Invalid logoUrl." });
       }
       data.logoUrl = logoUrl ? logoUrl.trim() : null;
+    }
+    if (country !== undefined) {
+      if (typeof country !== "string") {
+        return res.status(400).json({ error: "Invalid country." });
+      }
+      data.country = country.trim().toUpperCase();
+    }
+    if (verified !== undefined) {
+      if (typeof verified !== "boolean") {
+        return res.status(400).json({ error: "Invalid verified flag." });
+      }
+      data.verified = verified;
     }
 
     if (Object.keys(data).length === 0) {

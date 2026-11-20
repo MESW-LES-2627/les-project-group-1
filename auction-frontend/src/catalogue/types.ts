@@ -7,6 +7,15 @@ export interface Category {
   name: string;
 }
 
+// Verified charity supported by an auction.
+export interface ListingCharity {
+  id: number;
+  name: string;
+  description: string;
+  logoUrl: string | null;
+  country: string;
+}
+
 // Short listing data shown on catalogue cards.
 export interface ListingSummary {
   id: number;
@@ -19,6 +28,8 @@ export interface ListingSummary {
   images: string[];
   club: { slug: string; name: string; logoUrl: string | null };
   category: Category;
+  charity?: ListingCharity | null;
+  donationPercentage?: number | null;
   currentBid: number | null;
   auctionEndsAt: string | null;
 }

@@ -17,6 +17,16 @@ export function toSummary(row: ListingRow) {
     images: row.images,
     club: { slug: row.club_slug, name: row.club_name, logoUrl: row.club_logo_url },
     category: { slug: row.category_slug, name: row.category_name },
+    charity: row.charity_id
+      ? {
+          id: row.charity_id,
+          name: row.charity_name,
+          description: row.charity_description,
+          logoUrl: row.charity_logo_url,
+          country: row.charity_country,
+        }
+      : null,
+    donationPercentage: row.donation_percentage,
     currentBid: live?.currentBid ?? row.starting_price,
     auctionEndsAt: live ? new Date(live.endTime) : row.auction_ends_at,
   };
